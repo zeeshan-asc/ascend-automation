@@ -24,11 +24,45 @@ class DomainModel(BaseModel):
 
 
 class SubmissionRequest(DomainModel):
-    user_name: str = Field(min_length=1, max_length=200)
-    user_email: EmailStr
     rss_url: AnyHttpUrl
     tone_instructions: str | None = Field(default=None, max_length=5000)
     submitted_at: datetime
+
+
+class User(DomainModel):
+    user_id: str = Field(default_factory=lambda: str(uuid4()))
+    name: str = Field(min_length=1, max_length=200)
+    email: EmailStr
+    password_hash: str = Field(min_length=1)
+    password_salt: str = Field(min_length=1)
+    token_version: int = Field(default=1, ge=1)
+    created_at: datetime = Field(default_factory=utcnow)
+    updated_at: datetime = Field(default_factory=utcnow)
+
+    def to_authenticated_user(self) -> AuthenticatedUser:
+        return AuthenticatedUser(
+            user_id=self.user_id,
+            name=self.name,
+            email=self.email,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
+        )
+
+
+class AuthenticatedUser(DomainModel):
+    user_id: str
+    name: str
+    email: EmailStr
+    created_at: datetime
+    updated_at: datetime
+
+
+class TokenClaims(DomainModel):
+    sub: str
+    email: EmailStr
+    name: str
+    ver: int = Field(ge=1)
+    iat: int = Field(ge=0)
 
 
 class Run(DomainModel):
@@ -45,6 +79,7 @@ class Run(DomainModel):
     completed_items: int = 0
     failed_items: int = 0
     error: str | None = None
+    retry_run_item_ids: list[str] | None = None
     started_at: datetime | None = None
     completed_at: datetime | None = None
     created_at: datetime = Field(default_factory=utcnow)

@@ -84,6 +84,7 @@ def build_worker(
     assembly_provider: CountingAssemblyAIProvider,
     openai_provider: CountingOpenAIProvider,
 ) -> WorkerService:
+    app_container.rss_provider = FakeRSSProvider(feeds)
     orchestrator = PipelineOrchestrator(
         settings=test_settings,
         run_repository=app_container.run_repository,
@@ -91,7 +92,7 @@ def build_worker(
         run_item_repository=app_container.run_item_repository,
         transcript_repository=app_container.transcript_repository,
         lead_repository=app_container.lead_repository,
-        rss_provider=FakeRSSProvider(feeds),
+        rss_provider=app_container.rss_provider,
         assemblyai_provider=assembly_provider,
         openai_provider=openai_provider,
     )
@@ -105,7 +106,7 @@ def build_worker(
 
 @pytest.mark.asyncio
 async def test_submission_to_dashboard_end_to_end(
-    client: AsyncClient,
+    authenticated_client: AsyncClient,
     app_container: AppContainer,
     test_settings: Settings,
 ) -> None:
@@ -120,11 +121,9 @@ async def test_submission_to_dashboard_end_to_end(
         openai_provider=openai_provider,
     )
 
-    submission = await client.post(
+    submission = await authenticated_client.post(
         "/api/submissions",
         json={
-            "user_name": "Ava",
-            "user_email": "ava@example.com",
             "rss_url": feed_url,
             "tone_instructions": "Keep it direct and peer-like.",
             "submitted_at": datetime.now(UTC).isoformat(),
@@ -138,30 +137,30 @@ async def test_submission_to_dashboard_end_to_end(
     assert assembly_provider.submit_calls == 1
     assert openai_provider.generate_calls == 1
 
-    run_response = await client.get(f"/api/runs/{run_id}")
+    run_response = await authenticated_client.get(f"/api/runs/{run_id}")
     assert run_response.status_code == 200
     run_payload = run_response.json()
     assert run_payload["status"] == "completed"
     assert len(run_payload["items"]) == 1
 
     lead_id = run_payload["items"][0]["lead"]["lead_id"]
-    lead_response = await client.get(f"/api/leads/{lead_id}")
+    lead_response = await authenticated_client.get(f"/api/leads/{lead_id}")
     assert lead_response.status_code == 200
     assert lead_response.json()["guest_name"] == "Dr. Jane Doe"
 
     episode_id = run_payload["items"][0]["episode_id"]
-    episode_response = await client.get(f"/api/episodes/{episode_id}")
+    episode_response = await authenticated_client.get(f"/api/episodes/{episode_id}")
     assert episode_response.status_code == 200
     assert episode_response.json()["transcript_status"] == "completed"
 
-    transcript_response = await client.get(f"/api/episodes/{episode_id}/transcript")
+    transcript_response = await authenticated_client.get(f"/api/episodes/{episode_id}/transcript")
     assert transcript_response.status_code == 200
     assert "Transcript for job:" in transcript_response.json()["transcript_text"]
 
 
 @pytest.mark.asyncio
 async def test_duplicate_submissions_share_canonical_processing(
-    client: AsyncClient,
+    authenticated_client: AsyncClient,
     app_container: AppContainer,
     test_settings: Settings,
 ) -> None:
@@ -184,12 +183,10 @@ async def test_duplicate_submissions_share_canonical_processing(
         openai_provider=openai_provider,
     )
 
-    for name in ("Ava", "Ben"):
-        response = await client.post(
+    for _ in ("Ava", "Ben"):
+        response = await authenticated_client.post(
             "/api/submissions",
             json={
-                "user_name": name,
-                "user_email": f"{name.lower()}@example.com",
                 "rss_url": feed_url,
                 "tone_instructions": None,
                 "submitted_at": datetime.now(UTC).isoformat(),
@@ -202,8 +199,8 @@ async def test_duplicate_submissions_share_canonical_processing(
         worker_two.run_until_empty(idle_cycles=2),
     )
 
-    leads_response = await client.get("/api/leads")
-    runs_response = await client.get("/api/runs")
+    leads_response = await authenticated_client.get("/api/leads")
+    runs_response = await authenticated_client.get("/api/runs")
 
     assert leads_response.status_code == 200
     assert runs_response.status_code == 200

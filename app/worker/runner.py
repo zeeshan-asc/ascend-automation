@@ -11,7 +11,6 @@ from app.application.container import AppContainer
 from app.config import Settings, get_settings
 from app.database import MongoManager, bootstrap_mongo
 from app.infrastructure.providers.assemblyai import AssemblyAIProvider
-from app.infrastructure.providers.rss import RSSProvider
 from app.logging import configure_logging
 from app.worker.orchestrator import PipelineOrchestrator
 from app.worker.service import WorkerService
@@ -24,7 +23,6 @@ def build_orchestrator(
     settings: Settings,
     container: AppContainer,
 ) -> PipelineOrchestrator:
-    rss_provider = RSSProvider(timeout_seconds=settings.rss_fetch_timeout_seconds)
     assemblyai_provider = AssemblyAIProvider(
         api_key=settings.assemblyai_api_key.get_secret_value(),
         base_url=settings.assemblyai_base_url,
@@ -39,7 +37,7 @@ def build_orchestrator(
         run_item_repository=container.run_item_repository,
         transcript_repository=container.transcript_repository,
         lead_repository=container.lead_repository,
-        rss_provider=rss_provider,
+        rss_provider=container.rss_provider,
         assemblyai_provider=assemblyai_provider,
         openai_provider=container.openai_provider,
     )

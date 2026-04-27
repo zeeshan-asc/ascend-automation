@@ -4,7 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from app.domain.enums import LeadStatus, RunItemStatus, RunStatus, TranscriptStatus
-from app.domain.models import LeadDraft, Run, SubmissionRequest
+from app.domain.models import LeadDraft, Run, SubmissionRequest, User
 
 
 def test_status_enum_values_are_stable() -> None:
@@ -14,16 +14,28 @@ def test_status_enum_values_are_stable() -> None:
     assert LeadStatus.GENERATED.value == "generated"
 
 
-def test_submission_request_validates_user_payload() -> None:
+def test_submission_request_validates_feed_payload() -> None:
     submission = SubmissionRequest(
-        user_name="Zeesh",
-        user_email="zeesh@example.com",
         rss_url="https://example.com/feed.xml",
         tone_instructions="Keep it crisp",
         submitted_at=datetime.now(UTC),
     )
-    assert submission.user_name == "Zeesh"
-    assert submission.user_email == "zeesh@example.com"
+    assert str(submission.rss_url) == "https://example.com/feed.xml"
+    assert submission.tone_instructions == "Keep it crisp"
+
+
+def test_user_exposes_authenticated_view() -> None:
+    user = User(
+        name="Zeesh",
+        email="zeesh@ascendanalytics.co",
+        password_hash="hash",
+        password_salt="salt",
+    )
+
+    authenticated_user = user.to_authenticated_user()
+
+    assert authenticated_user.user_id == user.user_id
+    assert authenticated_user.email == "zeesh@ascendanalytics.co"
 
 
 def test_run_defaults_to_queued_status() -> None:

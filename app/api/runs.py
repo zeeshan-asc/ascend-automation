@@ -1,17 +1,26 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
-from app.api.dependencies import get_dashboard_service
+from app.api.dependencies import (
+    get_current_user,
+    get_dashboard_service,
+    get_run_item_retry_service,
+)
 from app.application.dashboard import (
     DashboardQueryService,
     PaginatedRunItems,
     PaginatedRuns,
     RunDetail,
 )
-from app.domain.errors import ResourceNotFoundError
+from app.application.run_item_retry import RunItemRetryAccepted, RunItemRetryService
+from app.domain.errors import InvalidOperationError, ResourceNotFoundError
 
-router = APIRouter(prefix="/api/runs", tags=["runs"])
+router = APIRouter(
+    prefix="/api/runs",
+    tags=["runs"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 @router.get("", response_model=PaginatedRuns)
@@ -52,3 +61,18 @@ async def get_run_items(
         return await service.get_run_items(run_id=run_id, page=page, limit=limit)
     except ResourceNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.post("/items/{run_item_id}/retry", response_model=RunItemRetryAccepted)
+async def retry_run_item(
+    run_item_id: str,
+    response: Response,
+    service: Annotated[RunItemRetryService, Depends(get_run_item_retry_service)],
+) -> RunItemRetryAccepted:
+    response.status_code = status.HTTP_202_ACCEPTED
+    try:
+        return await service.queue_retry(run_item_id=run_item_id)
+    except ResourceNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except InvalidOperationError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc

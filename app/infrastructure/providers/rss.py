@@ -28,14 +28,36 @@ class RSSProvider:
 
     async def fetch_episodes(self, rss_url: str, max_results: int) -> list[ParsedEpisode]:
         logger.info("rss.fetch.started rss_url=%s max_results=%s", rss_url, max_results)
-        async with httpx.AsyncClient(
-            timeout=self._timeout_seconds,
-            follow_redirects=True,
-            headers=RSS_REQUEST_HEADERS,
-        ) as client:
-            response = await client.get(rss_url)
-            response.raise_for_status()
+        try:
+            async with httpx.AsyncClient(
+                timeout=self._timeout_seconds,
+                follow_redirects=True,
+                headers=RSS_REQUEST_HEADERS,
+            ) as client:
+                response = await client.get(rss_url)
+                response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code == 404:
+                raise FeedFetchError(
+                    "The RSS feed URL returned 404 Not Found.",
+                    reason_code="feed_not_found",
+                ) from exc
+            raise FeedFetchError(
+                "The RSS feed could not be reached. Check the URL and try again.",
+                reason_code="feed_unreachable",
+            ) from exc
+        except httpx.RequestError as exc:
+            raise FeedFetchError(
+                "The RSS feed could not be reached. Check the URL and try again.",
+                reason_code="feed_unreachable",
+            ) from exc
+
         parsed = feedparser.parse(response.text)
+        if self._is_invalid_feed(parsed):
+            raise FeedFetchError(
+                "The URL did not return a valid RSS or Atom feed.",
+                reason_code="feed_invalid",
+            )
         entries = parsed.entries[:max_results]
         episodes: list[ParsedEpisode] = []
         seen_keys: set[str] = set()
@@ -61,9 +83,22 @@ class RSSProvider:
                 ),
             )
         if not episodes:
-            raise FeedFetchError("No usable audio episodes were found in the RSS feed.")
+            message = (
+                "The feed did not contain any usable audio items "
+                f"in the latest {max_results} episodes."
+            )
+            raise FeedFetchError(
+                message,
+                reason_code="feed_has_no_audio_items",
+            )
         logger.info("rss.fetch.completed rss_url=%s episodes=%s", rss_url, len(episodes))
         return episodes
+
+    def _is_invalid_feed(self, parsed: feedparser.FeedParserDict) -> bool:
+        has_entries = bool(parsed.entries)
+        has_feed_metadata = bool(parsed.get("feed"))
+        bozo = bool(getattr(parsed, "bozo", 0))
+        return not has_entries and (bozo or not has_feed_metadata)
 
     def _extract_audio_url(self, entry: feedparser.util.FeedParserDict) -> str | None:
         enclosure_candidates: Iterable[dict[str, str]] = entry.get("enclosures", []) or []

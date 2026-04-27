@@ -5,7 +5,8 @@ import pytest
 
 from app.application.container import AppContainer
 from app.config import Settings
-from app.domain.enums import RunStatus, TranscriptStatus
+from app.domain.enums import RunItemStatus, RunStatus, TranscriptStatus
+from app.domain.errors import FeedFetchError
 from app.domain.models import LeadDraft, ParsedEpisode, Run, TranscriptResult
 from app.worker.orchestrator import PipelineOrchestrator
 from app.worker.service import WorkerService
@@ -13,10 +14,18 @@ from tests.helpers.async_mongomock import FakeMongoManager
 
 
 class FakeRSSProvider:
-    def __init__(self, feeds: dict[str, list[ParsedEpisode]]) -> None:
+    def __init__(
+        self,
+        feeds: dict[str, list[ParsedEpisode]],
+        *,
+        failing_urls: dict[str, FeedFetchError] | None = None,
+    ) -> None:
         self._feeds = feeds
+        self._failing_urls = failing_urls or {}
 
     async def fetch_episodes(self, rss_url: str, max_results: int) -> list[ParsedEpisode]:
+        if rss_url in self._failing_urls:
+            raise self._failing_urls[rss_url]
         return self._feeds[rss_url][:max_results]
 
 
@@ -87,6 +96,7 @@ async def build_worker(
     test_settings: Settings,
     *,
     feeds: dict[str, list[ParsedEpisode]],
+    failing_urls: dict[str, FeedFetchError] | None = None,
     assembly_provider: FakeAssemblyAIProvider | None = None,
     openai_provider: FakeOpenAIProvider | None = None,
 ) -> tuple[AppContainer, WorkerService]:
@@ -98,7 +108,7 @@ async def build_worker(
         run_item_repository=container.run_item_repository,
         transcript_repository=container.transcript_repository,
         lead_repository=container.lead_repository,
-        rss_provider=FakeRSSProvider(feeds),
+        rss_provider=FakeRSSProvider(feeds, failing_urls=failing_urls),
         assemblyai_provider=assembly_provider or FakeAssemblyAIProvider(),
         openai_provider=openai_provider or FakeOpenAIProvider(),
     )
@@ -161,6 +171,82 @@ async def test_worker_marks_partial_failure_when_one_episode_fails(test_settings
 
 
 @pytest.mark.asyncio
+async def test_worker_retry_processes_only_target_failed_item(test_settings: Settings) -> None:
+    feed_url = "https://example.com/feed-retry.xml"
+    episode_one = build_episode(feed_url, 1)
+    episode_two = build_episode(feed_url, 2)
+    failing_openai = FakeOpenAIProvider(
+        fail_on_text={f"Transcript for {episode_two.audio_url}"},
+    )
+    container, failing_worker = await build_worker(
+        test_settings,
+        feeds={feed_url: [episode_one, episode_two]},
+        openai_provider=failing_openai,
+    )
+    run = Run(
+        rss_url=feed_url,
+        submitted_by="Jane",
+        submitted_by_email="jane@example.com",
+        submitted_at=datetime.now(UTC),
+    )
+    await container.run_repository.create(run)
+
+    initial_result = await failing_worker.process_next_available()
+
+    assert initial_result is not None
+    assert initial_result.status == RunStatus.PARTIAL_FAILED
+    initial_items = await container.run_item_repository.list_all_by_run_id(run.run_id)
+    failed_item = next(item for item in initial_items if item.status == RunItemStatus.FAILED)
+
+    await container.run_item_repository.reset_for_retry(
+        run_item_id=failed_item.run_item_id,
+        now=datetime.now(UTC),
+    )
+    await container.run_repository.queue_retry(
+        run_id=run.run_id,
+        retry_run_item_ids=[failed_item.run_item_id],
+        now=datetime.now(UTC),
+    )
+
+    retry_assembly = FakeAssemblyAIProvider()
+    retry_openai = FakeOpenAIProvider()
+    retry_orchestrator = PipelineOrchestrator(
+        settings=test_settings,
+        run_repository=container.run_repository,
+        episode_repository=container.episode_repository,
+        run_item_repository=container.run_item_repository,
+        transcript_repository=container.transcript_repository,
+        lead_repository=container.lead_repository,
+        rss_provider=FakeRSSProvider({feed_url: [episode_one, episode_two]}),
+        assemblyai_provider=retry_assembly,
+        openai_provider=retry_openai,
+    )
+    retry_worker = WorkerService(
+        settings=test_settings,
+        worker_id="worker-retry",
+        run_repository=container.run_repository,
+        orchestrator=retry_orchestrator,
+    )
+
+    retried_run = await retry_worker.process_next_available()
+
+    assert retried_run is not None
+    assert retried_run.status == RunStatus.COMPLETED
+    assert retried_run.total_items == 2
+    assert retried_run.completed_items == 2
+    assert retried_run.failed_items == 0
+    assert retry_assembly.submit_calls == 0
+    assert retry_openai.generate_calls == 1
+    final_items = await container.run_item_repository.list_all_by_run_id(run.run_id)
+    retried_item = next(item for item in final_items if item.run_item_id == failed_item.run_item_id)
+    untouched_item = next(
+        item for item in final_items if item.run_item_id != failed_item.run_item_id
+    )
+    assert retried_item.status in {RunItemStatus.DONE, RunItemStatus.REUSED}
+    assert untouched_item.status == RunItemStatus.DONE
+
+
+@pytest.mark.asyncio
 async def test_worker_marks_failed_when_all_items_fail(test_settings: Settings) -> None:
     feed_url = "https://example.com/feed-failed.xml"
     episode_one = build_episode(feed_url, 1)
@@ -184,6 +270,36 @@ async def test_worker_marks_failed_when_all_items_fail(test_settings: Settings) 
     assert processed is not None
     assert processed.status == RunStatus.FAILED
     assert processed.completed_items == 0
+
+
+@pytest.mark.asyncio
+async def test_worker_still_fails_cleanly_when_feed_disappears_after_submission(
+    test_settings: Settings,
+) -> None:
+    feed_url = "https://example.com/feed-disappeared.xml"
+    container, worker = await build_worker(
+        test_settings,
+        feeds={},
+        failing_urls={
+            feed_url: FeedFetchError(
+                "The RSS feed could not be reached. Check the URL and try again.",
+                reason_code="feed_unreachable",
+            ),
+        },
+    )
+    run = Run(
+        rss_url=feed_url,
+        submitted_by="Jane",
+        submitted_by_email="jane@example.com",
+        submitted_at=datetime.now(UTC),
+    )
+    await container.run_repository.create(run)
+
+    processed = await worker.process_next_available()
+
+    assert processed is not None
+    assert processed.status == RunStatus.FAILED
+    assert processed.error == "The RSS feed could not be reached. Check the URL and try again."
 
 
 @pytest.mark.asyncio

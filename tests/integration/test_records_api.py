@@ -8,12 +8,12 @@ from tests.integration.test_dashboard_api import seed_dashboard_state
 
 @pytest.mark.asyncio
 async def test_list_records_returns_joined_rows_and_supports_filters(
-    client: AsyncClient,
+    authenticated_client: AsyncClient,
     app_container: AppContainer,
 ) -> None:
     await seed_dashboard_state(app_container)
 
-    response = await client.get("/api/records", params={"page": 1, "limit": 10})
+    response = await authenticated_client.get("/api/records", params={"page": 1, "limit": 10})
 
     assert response.status_code == 200
     payload = response.json()
@@ -24,7 +24,7 @@ async def test_list_records_returns_joined_rows_and_supports_filters(
     assert first_row["submitted_by"] == "Bob"
     assert first_row["rss_url"] == "https://example.com/partial.xml"
 
-    outreach_filtered = await client.get(
+    outreach_filtered = await authenticated_client.get(
         "/api/records",
         params={"page": 1, "limit": 10, "outreach_status": OutreachStatus.NOT_CONTACTED.value},
     )
@@ -36,7 +36,7 @@ async def test_list_records_returns_joined_rows_and_supports_filters(
         for row in outreach_payload["data"]
     )
 
-    submitter_filtered = await client.get(
+    submitter_filtered = await authenticated_client.get(
         "/api/records",
         params={"page": 1, "limit": 10, "submitted_by_email": "bob@example.com"},
     )
@@ -49,12 +49,12 @@ async def test_list_records_returns_joined_rows_and_supports_filters(
 
 @pytest.mark.asyncio
 async def test_patch_lead_outreach_updates_record_rows(
-    client: AsyncClient,
+    authenticated_client: AsyncClient,
     app_container: AppContainer,
 ) -> None:
     seeded = await seed_dashboard_state(app_container)
 
-    response = await client.patch(
+    response = await authenticated_client.patch(
         f"/api/leads/{seeded['leads']['one'].lead_id}/outreach",
         json={"outreach_status": OutreachStatus.CONTACTED.value},
     )
@@ -64,11 +64,11 @@ async def test_patch_lead_outreach_updates_record_rows(
     assert payload["lead_id"] == seeded["leads"]["one"].lead_id
     assert payload["outreach_status"] == OutreachStatus.CONTACTED.value
 
-    updated_detail = await client.get(f"/api/leads/{seeded['leads']['one'].lead_id}")
+    updated_detail = await authenticated_client.get(f"/api/leads/{seeded['leads']['one'].lead_id}")
     assert updated_detail.status_code == 200
     assert updated_detail.json()["outreach_status"] == OutreachStatus.CONTACTED.value
 
-    filtered = await client.get(
+    filtered = await authenticated_client.get(
         "/api/records",
         params={"page": 1, "limit": 10, "outreach_status": OutreachStatus.CONTACTED.value},
     )
@@ -80,12 +80,12 @@ async def test_patch_lead_outreach_updates_record_rows(
 
 @pytest.mark.asyncio
 async def test_export_records_returns_csv_for_current_filter(
-    client: AsyncClient,
+    authenticated_client: AsyncClient,
     app_container: AppContainer,
 ) -> None:
     await seed_dashboard_state(app_container)
 
-    response = await client.get(
+    response = await authenticated_client.get(
         "/api/records/export",
         params={"submitted_by_email": "alice@example.com"},
     )
@@ -102,9 +102,9 @@ async def test_export_records_returns_csv_for_current_filter(
 
 @pytest.mark.asyncio
 async def test_patch_lead_outreach_returns_404_for_missing_lead(
-    client: AsyncClient,
+    authenticated_client: AsyncClient,
 ) -> None:
-    response = await client.patch(
+    response = await authenticated_client.patch(
         "/api/leads/missing-lead/outreach",
         json={"outreach_status": OutreachStatus.CONTACTED.value},
     )

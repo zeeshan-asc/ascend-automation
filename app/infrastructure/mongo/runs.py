@@ -96,6 +96,21 @@ class RunRepository(MongoRepository[Run]):
             async for document in cursor
         ]
 
+    async def has_active_runs(self) -> bool:
+        active_count = int(await self.collection.count_documents(
+            {
+                "status": {
+                    "$in": [
+                        RunStatus.QUEUED.value,
+                        RunStatus.CLAIMED.value,
+                        RunStatus.RUNNING.value,
+                    ]
+                }
+            },
+            limit=1,
+        ))
+        return active_count > 0
+
     async def claim_next(self, *, worker_id: str, now: datetime) -> Run | None:
         document = await self.collection.find_one_and_update(
             {"status": RunStatus.QUEUED.value},
@@ -105,6 +120,7 @@ class RunRepository(MongoRepository[Run]):
                     "worker_id": worker_id,
                     "heartbeat_at": now,
                     "started_at": now,
+                    "completed_at": None,
                     "updated_at": now,
                 }
             },
@@ -176,8 +192,34 @@ class RunRepository(MongoRepository[Run]):
                     "failed_items": failed_items,
                     "error": error,
                     "completed_at": now,
+                    "retry_run_item_ids": None,
                     "updated_at": now,
                     "heartbeat_at": now,
+                }
+            },
+            return_document=ReturnDocument.AFTER,
+        )
+        return self.from_document(document)
+
+    async def queue_retry(
+        self,
+        *,
+        run_id: str,
+        retry_run_item_ids: Sequence[str],
+        now: datetime,
+    ) -> Run | None:
+        document = await self.collection.find_one_and_update(
+            {"run_id": run_id},
+            {
+                "$set": {
+                    "status": RunStatus.QUEUED.value,
+                    "worker_id": None,
+                    "heartbeat_at": None,
+                    "started_at": None,
+                    "completed_at": None,
+                    "error": None,
+                    "retry_run_item_ids": list(retry_run_item_ids),
+                    "updated_at": now,
                 }
             },
             return_document=ReturnDocument.AFTER,

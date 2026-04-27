@@ -12,6 +12,23 @@ class Settings(BaseSettings):
     app_base_url: str = Field(default="http://127.0.0.1:8000", alias="APP_BASE_URL")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     log_dir: str = Field(default="logs", alias="LOG_DIR")
+    auth_jwt_secret: SecretStr = Field(alias="AUTH_JWT_SECRET")
+    auth_allowed_email_domain: str = Field(
+        default="ascendanalytics.co",
+        alias="AUTH_ALLOWED_EMAIL_DOMAIN",
+    )
+    auth_cookie_name: str = Field(default="ascend_access_token", alias="AUTH_COOKIE_NAME")
+    auth_cookie_secure: bool = Field(default=False, alias="AUTH_COOKIE_SECURE")
+    auth_cookie_max_age_seconds: int = Field(
+        default=315360000,
+        alias="AUTH_COOKIE_MAX_AGE_SECONDS",
+        ge=1,
+    )
+    auth_password_hash_iterations: int = Field(
+        default=310000,
+        alias="AUTH_PASSWORD_HASH_ITERATIONS",
+        ge=1000,
+    )
 
     mongodb_uri: str = Field(alias="MONGODB_URI")
     mongodb_db_name: str = Field(default="rss_pipeline", alias="MONGODB_DB_NAME")

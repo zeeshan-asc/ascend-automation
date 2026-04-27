@@ -13,6 +13,7 @@ def test_settings_defaults_and_overrides(test_settings: Settings) -> None:
     assert test_settings.app_base_url == "http://testserver"
     assert test_settings.openai_model == "gpt-4.1-2025-04-14"
     assert test_settings.max_episodes_per_run == 5
+    assert test_settings.auth_allowed_email_domain == "ascendanalytics.co"
 
 
 def test_settings_reject_more_than_five_episodes_per_run() -> None:
@@ -23,6 +24,7 @@ def test_settings_reject_more_than_five_episodes_per_run() -> None:
             APP_PORT=8000,
             APP_BASE_URL="http://testserver",
             LOG_LEVEL="INFO",
+            AUTH_JWT_SECRET="auth-test-secret",
             MONGODB_URI="mongodb://example.invalid:27017",
             MONGODB_DB_NAME="rss_pipeline_test",
             OPENAI_API_KEY="openai-test-key",
@@ -35,17 +37,26 @@ def test_settings_reject_more_than_five_episodes_per_run() -> None:
 
 
 @pytest.mark.asyncio
-async def test_health_endpoint(client) -> None:
-    response = await client.get("/health")
+async def test_health_endpoint(authenticated_client) -> None:
+    response = await authenticated_client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
 
 
 @pytest.mark.asyncio
-async def test_landing_page_serves_existing_index(client) -> None:
-    response = await client.get("/")
+async def test_root_page_requires_authentication(client) -> None:
+    response = await client.get("/", follow_redirects=False)
+    assert response.status_code == 303
+    assert response.headers["location"] == "/auth?next=%2F"
+
+
+@pytest.mark.asyncio
+async def test_auth_page_serves_auth_shell(client) -> None:
+    response = await client.get("/auth")
     assert response.status_code == 200
     assert "Ascend Outreach Engine" in response.text
+    assert "Create account" in response.text
+    assert "Sign in" in response.text
 
 
 def test_sensitive_data_filter_redacts_secrets() -> None:

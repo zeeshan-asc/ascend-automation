@@ -8,7 +8,11 @@ from app.domain.enums import LeadStatus, RunItemStatus, RunStatus, TranscriptSta
 from app.domain.models import Episode, Lead, Run, RunItem, Transcript
 
 
-async def seed_dashboard_state(container: AppContainer) -> dict[str, object]:
+async def seed_dashboard_state(
+    container: AppContainer,
+    *,
+    include_queued_run: bool = True,
+) -> dict[str, object]:
     now = datetime.now(UTC)
     run_completed = Run(
         rss_url="https://example.com/completed.xml",
@@ -33,14 +37,18 @@ async def seed_dashboard_state(container: AppContainer) -> dict[str, object]:
         error="One or more episodes failed.",
         completed_at=now - timedelta(hours=1, minutes=30),
     )
-    run_queued = Run(
-        rss_url="https://example.com/queued.xml",
-        submitted_by="Cara",
-        submitted_by_email="cara@example.com",
-        submitted_at=now - timedelta(hours=1),
-        status=RunStatus.QUEUED,
-    )
-    for run in (run_completed, run_partial, run_queued):
+    runs = [run_completed, run_partial]
+    run_queued = None
+    if include_queued_run:
+        run_queued = Run(
+            rss_url="https://example.com/queued.xml",
+            submitted_by="Cara",
+            submitted_by_email="cara@example.com",
+            submitted_at=now - timedelta(hours=1),
+            status=RunStatus.QUEUED,
+        )
+        runs.append(run_queued)
+    for run in runs:
         await container.run_repository.create(run)
 
     episode_one = Episode(
@@ -161,12 +169,12 @@ async def seed_dashboard_state(container: AppContainer) -> dict[str, object]:
 
 @pytest.mark.asyncio
 async def test_list_runs_supports_pagination_and_filtering(
-    client: AsyncClient,
+    authenticated_client: AsyncClient,
     app_container: AppContainer,
 ) -> None:
     seeded = await seed_dashboard_state(app_container)
 
-    response = await client.get("/api/runs", params={"page": 1, "limit": 2})
+    response = await authenticated_client.get("/api/runs", params={"page": 1, "limit": 2})
 
     assert response.status_code == 200
     payload = response.json()
@@ -175,7 +183,7 @@ async def test_list_runs_supports_pagination_and_filtering(
     assert len(payload["data"]) == 2
     assert payload["data"][0]["run_id"] == seeded["runs"]["queued"].run_id
 
-    filtered = await client.get(
+    filtered = await authenticated_client.get(
         "/api/runs",
         params={"submitted_by_email": "alice@example.com"},
     )
@@ -187,7 +195,7 @@ async def test_list_runs_supports_pagination_and_filtering(
 
 @pytest.mark.asyncio
 async def test_dashboard_submitters_returns_distinct_users_with_run_counts(
-    client: AsyncClient,
+    authenticated_client: AsyncClient,
     app_container: AppContainer,
 ) -> None:
     await seed_dashboard_state(app_container)
@@ -201,7 +209,7 @@ async def test_dashboard_submitters_returns_distinct_users_with_run_counts(
     )
     await app_container.run_repository.create(duplicate_submitter_run)
 
-    response = await client.get("/api/dashboard/submitters")
+    response = await authenticated_client.get("/api/dashboard/submitters")
 
     assert response.status_code == 200
     payload = response.json()
@@ -216,12 +224,12 @@ async def test_dashboard_submitters_returns_distinct_users_with_run_counts(
 
 @pytest.mark.asyncio
 async def test_get_run_detail_includes_joined_item_state(
-    client: AsyncClient,
+    authenticated_client: AsyncClient,
     app_container: AppContainer,
 ) -> None:
     seeded = await seed_dashboard_state(app_container)
 
-    response = await client.get(f"/api/runs/{seeded['runs']['partial'].run_id}")
+    response = await authenticated_client.get(f"/api/runs/{seeded['runs']['partial'].run_id}")
 
     assert response.status_code == 200
     payload = response.json()
@@ -241,12 +249,12 @@ async def test_get_run_detail_includes_joined_item_state(
 
 @pytest.mark.asyncio
 async def test_get_run_items_returns_paginated_data(
-    client: AsyncClient,
+    authenticated_client: AsyncClient,
     app_container: AppContainer,
 ) -> None:
     seeded = await seed_dashboard_state(app_container)
 
-    response = await client.get(
+    response = await authenticated_client.get(
         f"/api/runs/{seeded['runs']['partial'].run_id}/items",
         params={"page": 1, "limit": 1},
     )
@@ -258,13 +266,68 @@ async def test_get_run_items_returns_paginated_data(
 
 
 @pytest.mark.asyncio
+async def test_retry_failed_run_item_requeues_it_when_queue_is_idle(
+    authenticated_client: AsyncClient,
+    app_container: AppContainer,
+) -> None:
+    seeded = await seed_dashboard_state(app_container, include_queued_run=False)
+    failed_item = next(
+        item
+        for item in await app_container.run_item_repository.list_all_by_run_id(
+            seeded["runs"]["partial"].run_id,
+        )
+        if item.status == RunItemStatus.FAILED
+    )
+
+    response = await authenticated_client.post(f"/api/runs/items/{failed_item.run_item_id}/retry")
+
+    assert response.status_code == 202
+    payload = response.json()
+    assert payload["run_id"] == seeded["runs"]["partial"].run_id
+    assert payload["run_item_id"] == failed_item.run_item_id
+    assert payload["status"] == "queued"
+    updated_item = await app_container.run_item_repository.get_by_run_item_id(
+        failed_item.run_item_id,
+    )
+    updated_run = await app_container.run_repository.get_by_run_id(
+        seeded["runs"]["partial"].run_id,
+    )
+    assert updated_item is not None
+    assert updated_item.status == RunItemStatus.PENDING
+    assert updated_item.error is None
+    assert updated_run is not None
+    assert updated_run.status == RunStatus.QUEUED
+    assert updated_run.retry_run_item_ids == [failed_item.run_item_id]
+
+
+@pytest.mark.asyncio
+async def test_retry_failed_run_item_is_rejected_when_any_run_is_active(
+    authenticated_client: AsyncClient,
+    app_container: AppContainer,
+) -> None:
+    seeded = await seed_dashboard_state(app_container)
+    failed_item = next(
+        item
+        for item in await app_container.run_item_repository.list_all_by_run_id(
+            seeded["runs"]["partial"].run_id,
+        )
+        if item.status == RunItemStatus.FAILED
+    )
+
+    response = await authenticated_client.post(f"/api/runs/items/{failed_item.run_item_id}/retry")
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "The queue must be idle before retrying a failed episode."
+
+
+@pytest.mark.asyncio
 async def test_get_episode_detail_returns_transcript_and_lead_summary(
-    client: AsyncClient,
+    authenticated_client: AsyncClient,
     app_container: AppContainer,
 ) -> None:
     seeded = await seed_dashboard_state(app_container)
 
-    response = await client.get(f"/api/episodes/{seeded['episodes']['one'].episode_id}")
+    response = await authenticated_client.get(f"/api/episodes/{seeded['episodes']['one'].episode_id}")
 
     assert response.status_code == 200
     payload = response.json()
@@ -275,12 +338,12 @@ async def test_get_episode_detail_returns_transcript_and_lead_summary(
 
 @pytest.mark.asyncio
 async def test_get_episode_transcript_returns_text_on_demand(
-    client: AsyncClient,
+    authenticated_client: AsyncClient,
     app_container: AppContainer,
 ) -> None:
     seeded = await seed_dashboard_state(app_container)
 
-    response = await client.get(
+    response = await authenticated_client.get(
         f"/api/episodes/{seeded['episodes']['one'].episode_id}/transcript"
     )
 
@@ -292,12 +355,12 @@ async def test_get_episode_transcript_returns_text_on_demand(
 
 @pytest.mark.asyncio
 async def test_list_and_get_leads_support_filters_and_search(
-    client: AsyncClient,
+    authenticated_client: AsyncClient,
     app_container: AppContainer,
 ) -> None:
     seeded = await seed_dashboard_state(app_container)
 
-    filtered = await client.get(
+    filtered = await authenticated_client.get(
         "/api/leads",
         params={"status": LeadStatus.REVIEW_NEEDED.value},
     )
@@ -306,13 +369,13 @@ async def test_list_and_get_leads_support_filters_and_search(
     assert filtered_payload["total"] == 1
     assert filtered_payload["data"][0]["guest_name"] == "Maya Lewis"
 
-    searched = await client.get("/api/leads", params={"search": "Northwind"})
+    searched = await authenticated_client.get("/api/leads", params={"search": "Northwind"})
     assert searched.status_code == 200
     search_payload = searched.json()
     assert search_payload["total"] == 1
     assert search_payload["data"][0]["lead_id"] == seeded["leads"]["two"].lead_id
 
-    detail = await client.get(f"/api/leads/{seeded['leads']['one'].lead_id}")
+    detail = await authenticated_client.get(f"/api/leads/{seeded['leads']['one'].lead_id}")
     assert detail.status_code == 200
     detail_payload = detail.json()
     assert detail_payload["email_subject"] == "The four keyholes you mentioned"
@@ -320,12 +383,12 @@ async def test_list_and_get_leads_support_filters_and_search(
 
 @pytest.mark.asyncio
 async def test_dashboard_stats_return_mixed_status_counts(
-    client: AsyncClient,
+    authenticated_client: AsyncClient,
     app_container: AppContainer,
 ) -> None:
     await seed_dashboard_state(app_container)
 
-    response = await client.get("/api/dashboard/stats")
+    response = await authenticated_client.get("/api/dashboard/stats")
 
     assert response.status_code == 200
     payload = response.json()
@@ -342,11 +405,11 @@ async def test_dashboard_stats_return_mixed_status_counts(
 
 @pytest.mark.asyncio
 async def test_detail_endpoints_return_404_for_missing_records(
-    client: AsyncClient,
+    authenticated_client: AsyncClient,
 ) -> None:
-    run_response = await client.get("/api/runs/missing-run")
-    episode_response = await client.get("/api/episodes/missing-episode")
-    lead_response = await client.get("/api/leads/missing-lead")
+    run_response = await authenticated_client.get("/api/runs/missing-run")
+    episode_response = await authenticated_client.get("/api/episodes/missing-episode")
+    lead_response = await authenticated_client.get("/api/leads/missing-lead")
 
     assert run_response.status_code == 404
     assert episode_response.status_code == 404

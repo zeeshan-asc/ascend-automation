@@ -18,8 +18,20 @@ class DuplicateResourceError(DomainError):
     """Raised when a unique resource already exists."""
 
 
+class AuthenticationError(DomainError):
+    """Raised when authentication fails."""
+
+
+class AuthorizationError(DomainError):
+    """Raised when an authenticated action is not permitted."""
+
+
 class FeedFetchError(DomainError):
     """Raised when an RSS feed cannot be fetched or parsed."""
+
+    def __init__(self, message: str, *, reason_code: str = "feed_invalid") -> None:
+        super().__init__(message)
+        self.reason_code = reason_code
 
 
 class TranscriptError(DomainError):

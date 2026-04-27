@@ -26,6 +26,9 @@ class RunItemRepository(MongoRepository[RunItem]):
         await self.collection.insert_many([self.to_document(item) for item in items], ordered=False)
         return list(items)
 
+    async def get_by_run_item_id(self, run_item_id: str) -> RunItem | None:
+        return self.from_document(await self.collection.find_one({"run_item_id": run_item_id}))
+
     async def get_by_run_and_episode(self, run_id: str, episode_id: str) -> RunItem | None:
         return self.from_document(
             await self.collection.find_one({"run_id": run_id, "episode_id": episode_id}),
@@ -71,6 +74,20 @@ class RunItemRepository(MongoRepository[RunItem]):
         document = await self.collection.find_one_and_update(
             {"run_item_id": run_item_id},
             {"$set": updates},
+            return_document=ReturnDocument.AFTER,
+        )
+        return self.from_document(document)
+
+    async def reset_for_retry(self, *, run_item_id: str, now: datetime) -> RunItem | None:
+        document = await self.collection.find_one_and_update(
+            {"run_item_id": run_item_id},
+            {
+                "$set": {
+                    "status": RunItemStatus.PENDING.value,
+                    "error": None,
+                    "updated_at": now,
+                }
+            },
             return_document=ReturnDocument.AFTER,
         )
         return self.from_document(document)

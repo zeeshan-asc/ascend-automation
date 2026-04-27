@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.api.dependencies import get_dashboard_service
+from app.api.dependencies import get_current_user, get_dashboard_service
 from app.application.dashboard import (
     DashboardQueryService,
     EpisodeDetail,
@@ -10,7 +10,11 @@ from app.application.dashboard import (
 )
 from app.domain.errors import ResourceNotFoundError
 
-router = APIRouter(prefix="/api/episodes", tags=["episodes"])
+router = APIRouter(
+    prefix="/api/episodes",
+    tags=["episodes"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 @router.get("/{episode_id}", response_model=EpisodeDetail)

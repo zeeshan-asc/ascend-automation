@@ -13,6 +13,8 @@ from app.domain.models import LeadDraft, LeadEmailDraft
 
 logger = logging.getLogger(__name__)
 ModelT = TypeVar("ModelT", bound=BaseModel)
+OPENAI_RATE_LIMIT_RETRY_SECONDS = 60
+OPENAI_RATE_LIMIT_MAX_RETRIES = 3
 
 ASCEND_PROMPT = """
 You are a BD assistant for Ascend Analytics, a data engineering and AI company
@@ -252,16 +254,30 @@ class OpenAIProvider:
 
     async def _post_response(self, payload: dict[str, Any]) -> dict[str, Any]:
         async with self._semaphore, httpx.AsyncClient(timeout=120) as client:
-            response = await client.post(
-                "https://api.openai.com/v1/responses",
-                headers={
-                    "Authorization": f"Bearer {self._api_key}",
-                    "Content-Type": "application/json",
-                },
-                json=payload,
-            )
-            response.raise_for_status()
-        return dict(response.json())
+            for attempt in range(1, OPENAI_RATE_LIMIT_MAX_RETRIES + 2):
+                response = await client.post(
+                    "https://api.openai.com/v1/responses",
+                    headers={
+                        "Authorization": f"Bearer {self._api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json=payload,
+                )
+                try:
+                    response.raise_for_status()
+                except httpx.HTTPStatusError:
+                    if response.status_code != 429 or attempt > OPENAI_RATE_LIMIT_MAX_RETRIES:
+                        raise
+                    logger.warning(
+                        "openai.generate.rate_limited model=%s attempt=%s retry_in_seconds=%s",
+                        self._model,
+                        attempt,
+                        OPENAI_RATE_LIMIT_RETRY_SECONDS,
+                    )
+                    await asyncio.sleep(OPENAI_RATE_LIMIT_RETRY_SECONDS)
+                    continue
+                return dict(response.json())
+        raise RuntimeError("OpenAI response retry loop exited unexpectedly.")
 
     def _parse_response(self, payload: dict[str, Any], model: type[ModelT]) -> ModelT:
         for output_item in payload.get("output", []):

@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ascend Auth Portal</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap"
+        rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #070b11;
+            --bg-strong: #05070b;
+            --surface: rgba(13, 19, 29, 0.92);
+            --surface-strong: rgba(10, 16, 24, 0.96);
+            --ink: #ecf4ff;
+            --muted: #8fa2ba;
+            --line: rgba(140, 160, 188, 0.14);
+            --line-strong: rgba(110, 231, 183, 0.22);
+            --accent: #6ee7b7;
+            --accent-soft: #38bdf8;
+            --accent-warm: #f5b965;
+            --danger: #ff9494;
+            --radius-xl: 34px;
+            --radius-lg: 22px;
+            --radius-md: 14px;
+            --shadow: 0 22px 70px rgba(0, 0, 0, 0.34);
+            --font-display: "Syne", sans-serif;
+            --font-body: "DM Mono", monospace;
+        }
+
+        @keyframes panelRise {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: var(--font-body);
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 12% 8%, rgba(56, 189, 248, 0.11), transparent 22%),
+                radial-gradient(circle at 88% 0%, rgba(110, 231, 183, 0.11), transparent 24%),
+                linear-gradient(180deg, #05070b 0%, #09121d 48%, #05070b 100%);
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(143, 162, 186, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(143, 162, 186, 0.05) 1px, transparent 1px);
+            background-size: 42px 42px;
+            pointer-events: none;
+            mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.92), transparent);
+        }
+
+        .page {
+            position: relative;
+            z-index: 1;
+            width: min(1240px, calc(100% - 36px));
+            margin: 0 auto;
+            padding: 28px 0 48px;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            padding: 14px 18px;
+            border-radius: 20px;
+            border: 1px solid var(--line);
+            background: linear-gradient(180deg, rgba(13, 19, 29, 0.94), rgba(8, 13, 20, 0.96));
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(14px);
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .brand-mark {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 800;
+            color: #062316;
+            background: linear-gradient(135deg, var(--accent), #99f6e4);
+            box-shadow: 0 0 24px rgba(110, 231, 183, 0.2);
+        }
+
+        .brand-copy {
+            display: grid;
+            gap: 3px;
+        }
+
+        .brand-copy strong {
+            font-family: var(--font-display);
+            font-size: 20px;
+            letter-spacing: -0.04em;
+        }
+
+        .brand-copy span,
+        .nav-note {
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .hero,
+        .panel {
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            animation: panelRise 0.7s ease forwards;
+        }
+
+        .hero {
+            position: relative;
+            padding: 36px;
+            background:
+                radial-gradient(circle at top right, rgba(56, 189, 248, 0.16), transparent 30%),
+                radial-gradient(circle at bottom left, rgba(110, 231, 183, 0.14), transparent 36%),
+                linear-gradient(180deg, rgba(13, 19, 29, 0.96), rgba(8, 13, 20, 0.98));
+            color: var(--ink);
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: auto -70px -90px auto;
+            width: 230px;
+            height: 230px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(245, 185, 101, 0.18), transparent 70%);
+            pointer-events: none;
+        }
+
+        .panel {
+            padding: 24px;
+            background:
+                linear-gradient(180deg, rgba(13, 19, 29, 0.94), rgba(8, 13, 20, 0.96));
+        }
+
+        .eyebrow,
+        .hero-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            width: fit-content;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 10px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .eyebrow {
+            margin-bottom: 20px;
+            border: 1px solid var(--line-strong);
+            background: rgba(11, 18, 27, 0.88);
+            color: var(--accent);
+        }
+
+        .hero-kicker {
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            background: rgba(56, 189, 248, 0.08);
+            color: var(--accent-soft);
+            margin-bottom: 18px;
+        }
+
+        .eyebrow::before,
+        .hero-kicker::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        h1,
+        h2 {
+            margin: 0;
+            font-family: var(--font-display);
+            letter-spacing: -0.05em;
+            line-height: 0.96;
+        }
+
+        h1 {
+            font-size: clamp(42px, 5vw, 74px);
+            margin-bottom: 18px;
+            max-width: 9ch;
+        }
+
+        h2 {
+            font-size: 34px;
+            margin-bottom: 8px;
+        }
+
+        .hero-copy,
+        .panel-copy,
+        .hero-note,
+        .feature p {
+            margin: 0;
+            line-height: 1.75;
+            font-size: 12px;
+        }
+
+        .hero-copy,
+        .hero-note,
+        .feature p {
+            color: var(--muted);
+        }
+
+        .panel-copy {
+            color: var(--muted);
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 28px;
+        }
+
+        .feature {
+            min-width: 0;
+            padding: 16px 18px;
+            border-radius: 18px;
+            border: 1px solid rgba(143, 162, 186, 0.12);
+            background: rgba(7, 11, 17, 0.62);
+        }
+
+        .feature strong {
+            display: block;
+            margin-bottom: 10px;
+            font-family: var(--font-display);
+            font-size: 18px;
+            letter-spacing: -0.03em;
+        }
+
+        .hero-note {
+            margin-top: 24px;
+            max-width: 54ch;
+        }
+
+        .tab-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin: 22px 0 18px;
+        }
+
+        .tab {
+            appearance: none;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: rgba(10, 16, 24, 0.82);
+            padding: 12px 14px;
+            font: inherit;
+            color: var(--muted);
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+        }
+
+        .tab:hover {
+            transform: translateY(-1px);
+            border-color: var(--line-strong);
+            color: var(--ink);
+        }
+
+        .tab.is-active {
+            background: linear-gradient(135deg, var(--accent), #99f6e4);
+            border-color: rgba(110, 231, 183, 0.28);
+            color: #062316;
+        }
+
+        .form-shell {
+            display: none;
+            gap: 14px;
+        }
+
+        .form-shell.is-active {
+            display: grid;
+        }
+
+        .field {
+            display: grid;
+            gap: 8px;
+        }
+
+        label {
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        input {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+            background: rgba(7, 11, 18, 0.92);
+            color: var(--ink);
+            padding: 14px;
+            font: inherit;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        input:focus {
+            border-color: rgba(56, 189, 248, 0.46);
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.08);
+        }
+
+        input::placeholder {
+            color: rgba(143, 162, 186, 0.72);
+        }
+
+        .inline-note {
+            padding: 12px 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(56, 189, 248, 0.14);
+            background: rgba(56, 189, 248, 0.05);
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.7;
+        }
+
+        .inline-note strong {
+            color: var(--accent);
+        }
+
+        .error-banner {
+            display: none;
+            padding: 13px 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(181, 68, 55, 0.2);
+            background: rgba(181, 68, 55, 0.08);
+            color: var(--danger);
+            font-size: 11px;
+            line-height: 1.7;
+        }
+
+        .error-banner.is-visible {
+            display: block;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+
+        .button {
+            appearance: none;
+            border: 0;
+            border-radius: 14px;
+            padding: 14px 18px;
+            cursor: pointer;
+            font: inherit;
+            transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+        }
+
+        .button:disabled {
+            opacity: 0.62;
+            cursor: wait;
+            transform: none;
+        }
+
+        .button-primary {
+            flex: 1;
+            background: linear-gradient(135deg, var(--accent), #99f6e4);
+            color: #062316;
+            box-shadow: 0 14px 28px rgba(110, 231, 183, 0.12);
+        }
+
+        .button-secondary {
+            border: 1px solid var(--line);
+            background: rgba(10, 16, 24, 0.88);
+            color: var(--muted);
+        }
+
+        .next-note {
+            margin-top: 18px;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.7;
+        }
+
+        .next-note strong {
+            color: var(--ink);
+        }
+
+        @media (max-width: 960px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .page {
+                width: min(100% - 24px, 100%);
+                padding-top: 18px;
+            }
+
+            .nav {
+                border-radius: 26px;
+            }
+
+            .hero,
+            .panel {
+                padding: 22px;
+                border-radius: 26px;
+            }
+
+            .hero-grid,
+            .tab-row {
+                grid-template-columns: 1fr;
+            }
+
+            .button-row {
+                flex-direction: column;
+            }
+
+            .button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="page">
+        <header class="nav">
+            <a class="brand" href="/auth">
+                <span class="brand-mark">P</span>
+                <span class="brand-copy">
+                    <strong>Ascend Outreach Engine</strong>
+                    <span>Shared queue, run board, and records</span>
+                </span>
+            </a>
+            <span class="nav-note">Access limited to @ascendanalytics.co</span>
+        </header>
+
+        <section class="layout">
+            <section class="hero">
+                <span class="eyebrow">Authentication boundary</span>
+                <h1>Inside access for the Ascend pipeline.</h1>
+                <p class="hero-copy">
+                    Every queue action, dashboard inspection, record export, and rewrite request now sits behind an
+                    authenticated session. Sign up once with your Ascend Analytics email, then use the same credentials
+                    to sign back in.
+                </p>
+
+                <div class="hero-grid">
+                    <article class="feature">
+                        <strong>Domain-locked</strong>
+                        <p>Only `@ascendanalytics.co` accounts can register or authenticate.</p>
+                    </article>
+                    <article class="feature">
+                        <strong>JWT-backed</strong>
+                        <p>The app issues a persistent JWT and stores it in an `HttpOnly` browser cookie.</p>
+                    </article>
+                    <article class="feature">
+                        <strong>Protected surfaces</strong>
+                        <p>Queue run, shared dashboard, records workspace, and APIs all require authentication.</p>
+                    </article>
+                    <article class="feature">
+                        <strong>No email confirmation</strong>
+                        <p>Registration is immediate. There is no verification or inbox checkpoint in this flow.</p>
+                    </article>
+                </div>
+
+                <p class="hero-note">
+                    If you were redirected here from a protected page, the app will return you there after a successful
+                    sign-in or sign-up.
+                </p>
+            </section>
+
+            <section class="panel">
+                <span class="hero-kicker">Session gate</span>
+                <h2>Authenticate</h2>
+                <p class="panel-copy">
+                    Use your Ascend Analytics email. Sign up creates the account immediately; sign in reuses the same
+                    credentials.
+                </p>
+
+                <div class="tab-row" role="tablist" aria-label="Authentication mode">
+                    <button class="tab is-active" id="signupTab" type="button" data-mode="signup" role="tab"
+                        aria-selected="true">
+                        Create account
+                    </button>
+                    <button class="tab" id="signinTab" type="button" data-mode="signin" role="tab"
+                        aria-selected="false">
+                        Sign in
+                    </button>
+                </div>
+
+                <div class="error-banner" id="errorBanner" role="alert"></div>
+
+                <form class="form-shell is-active" id="signupForm" novalidate>
+                    <div class="field">
+                        <label for="signupName">Full name</label>
+                        <input id="signupName" name="signupName" type="text" autocomplete="name"
+                            placeholder="Zeeshan Hamid" required />
+                    </div>
+                    <div class="field">
+                        <label for="signupEmail">Ascend email</label>
+                        <input id="signupEmail" name="signupEmail" type="email" autocomplete="email"
+                            placeholder="you@ascendanalytics.co" required />
+                    </div>
+                    <div class="field">
+                        <label for="signupPassword">Password</label>
+                        <input id="signupPassword" name="signupPassword" type="password"
+                            autocomplete="new-password" placeholder="At least 8 characters" required />
+                    </div>
+                    <div class="field">
+                        <label for="signupPasswordConfirm">Confirm password</label>
+                        <input id="signupPasswordConfirm" name="signupPasswordConfirm" type="password"
+                            autocomplete="new-password" placeholder="Repeat the same password" required />
+                    </div>
+                    <div class="inline-note">
+                        <strong>Registration rule:</strong> the email must end exactly with `@ascendanalytics.co`.
+                    </div>
+                    <div class="button-row">
+                        <button class="button button-primary" id="signupButton" type="submit">Create account</button>
+                        <button class="button button-secondary" id="switchToSigninButton" type="button">
+                            I already have access
+                        </button>
+                    </div>
+                </form>
+
+                <form class="form-shell" id="signinForm" novalidate>
+                    <div class="field">
+                        <label for="signinEmail">Ascend email</label>
+                        <input id="signinEmail" name="signinEmail" type="email" autocomplete="email"
+                            placeholder="you@ascendanalytics.co" required />
+                    </div>
+                    <div class="field">
+                        <label for="signinPassword">Password</label>
+                        <input id="signinPassword" name="signinPassword" type="password"
+                            autocomplete="current-password" placeholder="Your existing password" required />
+                    </div>
+                    <div class="inline-note">
+                        Existing accounts sign in directly. There is no email confirmation checkpoint in this flow.
+                    </div>
+                    <div class="button-row">
+                        <button class="button button-primary" id="signinButton" type="submit">Sign in</button>
+                        <button class="button button-secondary" id="switchToSignupButton" type="button">
+                            Create a new account
+                        </button>
+                    </div>
+                </form>
+
+                <p class="next-note">
+                    <strong>Redirect target:</strong> <span id="nextPathLabel">/</span>
+                </p>
+            </section>
+        </section>
+    </main>
+
+    <script>
+        const ALLOWED_DOMAIN = "ascendanalytics.co";
+        const signupTab = document.getElementById("signupTab");
+        const signinTab = document.getElementById("signinTab");
+        const signupForm = document.getElementById("signupForm");
+        const signinForm = document.getElementById("signinForm");
+        const signupButton = document.getElementById("signupButton");
+        const signinButton = document.getElementById("signinButton");
+        const errorBanner = document.getElementById("errorBanner");
+        const nextPathLabel = document.getElementById("nextPathLabel");
+        const switchToSigninButton = document.getElementById("switchToSigninButton");
+        const switchToSignupButton = document.getElementById("switchToSignupButton");
+
+        function resolveNextPath() {
+            const value = new URLSearchParams(window.location.search).get("next") || "/";
+            if (!value.startsWith("/") || value.startsWith("//")) {
+                return "/";
+            }
+            return value;
+        }
+
+        const nextPath = resolveNextPath();
+        nextPathLabel.textContent = nextPath;
+
+        function setMode(mode) {
+            const signUpActive = mode === "signup";
+            signupTab.classList.toggle("is-active", signUpActive);
+            signinTab.classList.toggle("is-active", !signUpActive);
+            signupTab.setAttribute("aria-selected", String(signUpActive));
+            signinTab.setAttribute("aria-selected", String(!signUpActive));
+            signupForm.classList.toggle("is-active", signUpActive);
+            signinForm.classList.toggle("is-active", !signUpActive);
+            clearError();
+        }
+
+        function showError(message) {
+            errorBanner.textContent = message;
+            errorBanner.classList.add("is-visible");
+        }
+
+        function clearError() {
+            errorBanner.textContent = "";
+            errorBanner.classList.remove("is-visible");
+        }
+
+        function normalizeEmail(value) {
+            return value.trim().toLowerCase();
+        }
+
+        function validateAllowedDomain(email) {
+            return normalizeEmail(email).endsWith(`@${ALLOWED_DOMAIN}`);
+        }
+
+        function parseApiError(payload) {
+            const detail = payload?.detail;
+            if (typeof detail === "string") {
+                return detail;
+            }
+            if (Array.isArray(detail) && detail[0]?.msg) {
+                return detail[0].msg;
+            }
+            return "Authentication request failed.";
+        }
+
+        async function submitAuthRequest(url, payload, button) {
+            clearError();
+            button.disabled = true;
+
+            try {
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) {
+                    const errorPayload = await response.json().catch(() => ({}));
+                    throw new Error(parseApiError(errorPayload));
+                }
+
+                window.location.href = nextPath;
+            } catch (error) {
+                showError(error instanceof Error ? error.message : "Authentication request failed.");
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        async function handleSignUp(event) {
+            event.preventDefault();
+
+            const payload = {
+                name: document.getElementById("signupName").value.trim(),
+                email: normalizeEmail(document.getElementById("signupEmail").value),
+                password: document.getElementById("signupPassword").value,
+            };
+            const passwordConfirm = document.getElementById("signupPasswordConfirm").value;
+
+            if (!payload.name) {
+                showError("Enter your full name.");
+                return;
+            }
+            if (!payload.email) {
+                showError("Enter your Ascend email address.");
+                return;
+            }
+            if (!validateAllowedDomain(payload.email)) {
+                showError("Use an email address ending with @ascendanalytics.co.");
+                return;
+            }
+            if (payload.password.length < 8) {
+                showError("Use a password with at least 8 characters.");
+                return;
+            }
+            if (payload.password !== passwordConfirm) {
+                showError("Password confirmation does not match.");
+                return;
+            }
+
+            await submitAuthRequest("/api/auth/signup", payload, signupButton);
+        }
+
+        async function handleSignIn(event) {
+            event.preventDefault();
+
+            const payload = {
+                email: normalizeEmail(document.getElementById("signinEmail").value),
+                password: document.getElementById("signinPassword").value,
+            };
+
+            if (!payload.email) {
+                showError("Enter your Ascend email address.");
+                return;
+            }
+            if (!validateAllowedDomain(payload.email)) {
+                showError("Use an email address ending with @ascendanalytics.co.");
+                return;
+            }
+            if (!payload.password) {
+                showError("Enter your password.");
+                return;
+            }
+
+            await submitAuthRequest("/api/auth/signin", payload, signinButton);
+        }
+
+        signupTab.addEventListener("click", () => setMode("signup"));
+        signinTab.addEventListener("click", () => setMode("signin"));
+        switchToSigninButton.addEventListener("click", () => setMode("signin"));
+        switchToSignupButton.addEventListener("click", () => setMode("signup"));
+        signupForm.addEventListener("submit", (event) => {
+            void handleSignUp(event);
+        });
+        signinForm.addEventListener("submit", (event) => {
+            void handleSignIn(event);
+        });
+    </script>
+</body>
+
+</html>

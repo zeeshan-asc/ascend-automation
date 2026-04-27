@@ -3,10 +3,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Response
 
-from app.api.dependencies import get_records_service
+from app.api.dependencies import get_current_user, get_records_service
 from app.application.records import PaginatedLeadRecords, RecordsWorkspaceService
 
-router = APIRouter(prefix="/api/records", tags=["records"])
+router = APIRouter(
+    prefix="/api/records",
+    tags=["records"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 @router.get("", response_model=PaginatedLeadRecords)

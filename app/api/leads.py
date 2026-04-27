@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import (
+    get_current_user,
     get_dashboard_service,
     get_lead_rewrite_service,
     get_records_service,
@@ -16,7 +17,11 @@ from app.application.lead_rewrite import (
 from app.application.records import LeadOutreachState, LeadOutreachUpdate, RecordsWorkspaceService
 from app.domain.errors import InvalidOperationError, OpenAIRefusalError, ResourceNotFoundError
 
-router = APIRouter(prefix="/api/leads", tags=["leads"])
+router = APIRouter(
+    prefix="/api/leads",
+    tags=["leads"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 @router.get("", response_model=PaginatedLeads)

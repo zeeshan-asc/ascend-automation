@@ -8,6 +8,7 @@ from httpx import ASGITransport, AsyncClient
 os.environ.setdefault("MONGODB_URI", "mongodb://example.invalid:27017")
 os.environ.setdefault("OPENAI_API_KEY", "openai-test-key")
 os.environ.setdefault("ASSEMBLYAI_API_KEY", "assemblyai-test-key")
+os.environ.setdefault("AUTH_JWT_SECRET", "auth-test-secret")
 
 from app.application.container import AppContainer
 from app.config import Settings
@@ -22,6 +23,12 @@ def build_test_settings() -> Settings:
         APP_PORT=8000,
         APP_BASE_URL="http://testserver",
         LOG_LEVEL="INFO",
+        AUTH_JWT_SECRET="auth-test-secret",
+        AUTH_ALLOWED_EMAIL_DOMAIN="ascendanalytics.co",
+        AUTH_COOKIE_NAME="ascend_access_token",
+        AUTH_COOKIE_SECURE=False,
+        AUTH_COOKIE_MAX_AGE_SECONDS=315360000,
+        AUTH_PASSWORD_HASH_ITERATIONS=1000,
         MONGODB_URI="mongodb://example.invalid:27017",
         MONGODB_DB_NAME="rss_pipeline_test",
         OPENAI_API_KEY="openai-test-key",
@@ -67,3 +74,22 @@ async def client(
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://testserver") as http_client:
             yield http_client
+
+
+@pytest.fixture
+def auth_credentials() -> dict[str, str]:
+    return {
+        "name": "Test User",
+        "email": "tester@ascendanalytics.co",
+        "password": "Password123!",
+    }
+
+
+@pytest.fixture
+async def authenticated_client(
+    client: AsyncClient,
+    auth_credentials: dict[str, str],
+) -> AsyncIterator[AsyncClient]:
+    response = await client.post("/api/auth/signup", json=auth_credentials)
+    assert response.status_code == 201
+    yield client

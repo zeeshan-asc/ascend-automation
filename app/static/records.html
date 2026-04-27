@@ -543,6 +543,17 @@
             background: rgba(56, 189, 248, 0.04);
         }
 
+        tbody tr.record-row {
+            cursor: pointer;
+            transition: background 0.18s ease, transform 0.18s ease;
+        }
+
+        tbody tr.record-row:focus-visible {
+            outline: 2px solid rgba(110, 231, 183, 0.55);
+            outline-offset: -2px;
+            background: rgba(110, 231, 183, 0.05);
+        }
+
         .cell-stack {
             display: grid;
             gap: 4px;
@@ -666,6 +677,204 @@
             text-align: left;
         }
 
+        .record-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 22px;
+            background: rgba(3, 7, 12, 0.78);
+            backdrop-filter: blur(10px);
+            z-index: 20;
+        }
+
+        .record-modal-backdrop.visible {
+            display: flex;
+        }
+
+        .record-modal {
+            width: min(980px, 100%);
+            max-height: min(90vh, 960px);
+            overflow: auto;
+            border-radius: 26px;
+            border: 1px solid rgba(110, 231, 183, 0.12);
+            background: linear-gradient(180deg, rgba(13, 19, 29, 0.98), rgba(8, 13, 20, 0.98));
+            box-shadow: 0 28px 100px rgba(0, 0, 0, 0.46);
+        }
+
+        .record-modal-header {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: flex-start;
+            padding: 24px 24px 18px;
+            border-bottom: 1px solid rgba(143, 162, 186, 0.12);
+            background: linear-gradient(180deg, rgba(13, 19, 29, 0.98), rgba(13, 19, 29, 0.94));
+            backdrop-filter: blur(12px);
+        }
+
+        .record-modal-header-copy {
+            display: grid;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .record-modal-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: fit-content;
+            color: var(--accent-cold);
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .record-modal-kicker::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 12px rgba(110, 231, 183, 0.48);
+        }
+
+        .record-modal-header h2 {
+            margin: 0;
+            font-family: var(--font-display);
+            font-size: clamp(28px, 3vw, 40px);
+            line-height: 0.96;
+            letter-spacing: -0.05em;
+            overflow-wrap: anywhere;
+        }
+
+        .record-modal-header p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.8;
+        }
+
+        .record-modal-close {
+            min-width: 46px;
+            min-height: 46px;
+            padding: 0;
+            border-radius: 14px;
+            font-size: 22px;
+            line-height: 1;
+        }
+
+        .record-modal-body {
+            padding: 22px 24px 26px;
+            display: grid;
+            gap: 18px;
+        }
+
+        .record-modal-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .record-modal-card,
+        .record-modal-wide {
+            border-radius: 18px;
+            border: 1px solid rgba(143, 162, 186, 0.12);
+            background: rgba(7, 11, 17, 0.7);
+            padding: 18px;
+            min-width: 0;
+        }
+
+        .record-modal-wide {
+            grid-column: 1 / -1;
+        }
+
+        .record-modal-card h3,
+        .record-modal-wide h3 {
+            margin: 0 0 14px;
+            font-family: var(--font-display);
+            font-size: 18px;
+            letter-spacing: -0.04em;
+        }
+
+        .record-modal-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .record-modal-row {
+            display: grid;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .record-modal-row label {
+            margin: 0;
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .record-modal-row strong,
+        .record-modal-row span,
+        .record-modal-row a {
+            font-size: 12px;
+            line-height: 1.8;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .record-modal-row strong {
+            color: var(--text);
+        }
+
+        .record-modal-row span {
+            color: var(--muted);
+        }
+
+        .record-modal-row a {
+            color: var(--accent-cold);
+            text-decoration: none;
+        }
+
+        .record-modal-row a:hover {
+            color: #9addff;
+        }
+
+        .record-modal-note {
+            margin: 0;
+            padding: 14px 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(56, 189, 248, 0.14);
+            background: rgba(56, 189, 248, 0.05);
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.8;
+        }
+
+        .record-modal-draft {
+            display: grid;
+            gap: 14px;
+        }
+
+        .record-modal-body-copy {
+            border-radius: 16px;
+            border: 1px solid rgba(143, 162, 186, 0.12);
+            background: rgba(4, 9, 15, 0.72);
+            padding: 16px;
+            color: var(--text);
+            font-size: 12px;
+            line-height: 1.9;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
         @media (max-width: 1180px) {
             .stats-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -694,6 +903,16 @@
 
             .nav-links {
                 width: 100%;
+            }
+
+            .record-modal-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .record-modal-header,
+            .record-modal-body {
+                padding-left: 18px;
+                padding-right: 18px;
             }
         }
     </style>
@@ -730,6 +949,8 @@
                 </p>
             </div>
             <div class="topbar-actions">
+                <span class="button button-ghost" id="sessionBadge" style="cursor: default;">Loading session</span>
+                <button class="button button-ghost" id="signOutButton" type="button">Sign out</button>
                 <button class="button button-primary" id="exportButton" type="button">Export CSV</button>
             </div>
         </header>
@@ -839,6 +1060,21 @@
                 </div>
             </div>
         </section>
+
+        <div class="record-modal-backdrop" id="recordDetailModal" aria-hidden="true">
+            <div class="record-modal" role="dialog" aria-modal="true" aria-labelledby="recordDetailTitle">
+                <div class="record-modal-header">
+                    <div class="record-modal-header-copy">
+                        <span class="record-modal-kicker">Complete record view</span>
+                        <h2 id="recordDetailTitle">Record details</h2>
+                        <p id="recordDetailSubtitle">Full lead and email details for the selected record.</p>
+                    </div>
+                    <button class="button button-ghost record-modal-close" id="recordDetailCloseButton"
+                        type="button" aria-label="Close record detail view">×</button>
+                </div>
+                <div class="record-modal-body" id="recordDetailBody"></div>
+            </div>
+        </div>
     </main>
 
     <script>
@@ -852,6 +1088,7 @@
             search: initialQuery.get("search") || "",
             submittedByEmail: initialQuery.get("submitted_by_email") || "",
             outreachStatus: initialQuery.get("outreach_status") || "",
+            activeRecordId: null,
         };
 
         const loadingRibbon = document.getElementById("loadingRibbon");
@@ -869,8 +1106,15 @@
         const previousPageButton = document.getElementById("previousPageButton");
         const nextPageButton = document.getElementById("nextPageButton");
         const exportButton = document.getElementById("exportButton");
+        const sessionBadge = document.getElementById("sessionBadge");
+        const signOutButton = document.getElementById("signOutButton");
         const refreshButton = document.getElementById("refreshButton");
         const resetButton = document.getElementById("resetButton");
+        const recordDetailModal = document.getElementById("recordDetailModal");
+        const recordDetailBody = document.getElementById("recordDetailBody");
+        const recordDetailTitle = document.getElementById("recordDetailTitle");
+        const recordDetailSubtitle = document.getElementById("recordDetailSubtitle");
+        const recordDetailCloseButton = document.getElementById("recordDetailCloseButton");
 
         function escapeHtml(value) {
             return String(value)
@@ -889,6 +1133,179 @@
                 return value;
             }
             return parsed.toLocaleString();
+        }
+
+        function buildAuthRedirectPath() {
+            return `${window.location.pathname}${window.location.search}`;
+        }
+
+        function redirectToAuth() {
+            window.location.href = `/auth?next=${encodeURIComponent(buildAuthRedirectPath())}`;
+        }
+
+        function getRecordById(runItemId) {
+            return state.rows.find((row) => row.run_item_id === runItemId) || null;
+        }
+
+        function statusLabel(value, fallback = "Not available") {
+            return value ? value.replaceAll("_", " ") : fallback;
+        }
+
+        function closeRecordModal() {
+            state.activeRecordId = null;
+            recordDetailModal.classList.remove("visible");
+            recordDetailModal.setAttribute("aria-hidden", "true");
+            recordDetailBody.innerHTML = "";
+        }
+
+        function renderRecordModal() {
+            if (!state.activeRecordId) {
+                closeRecordModal();
+                return;
+            }
+
+            const row = getRecordById(state.activeRecordId);
+            if (!row) {
+                closeRecordModal();
+                return;
+            }
+
+            recordDetailTitle.textContent = row.guest_name || row.episode_title || "Record details";
+            recordDetailSubtitle.textContent =
+                `Submitted by ${row.submitted_by} • Run ${row.run_id.slice(0, 8)} • Transcript intentionally omitted.`;
+
+            recordDetailBody.innerHTML = `
+                <div class="record-modal-grid">
+                    <section class="record-modal-card">
+                        <h3>Submission</h3>
+                        <div class="record-modal-list">
+                            <div class="record-modal-row">
+                                <label>Submitter</label>
+                                <strong>${escapeHtml(row.submitted_by)}</strong>
+                                <span>${escapeHtml(row.submitted_by_email)}</span>
+                            </div>
+                            <div class="record-modal-row">
+                                <label>Submitted at</label>
+                                <span>${escapeHtml(formatDate(row.submitted_at))}</span>
+                            </div>
+                            <div class="record-modal-row">
+                                <label>RSS feed</label>
+                                <a href="${escapeHtml(row.rss_url)}" target="_blank" rel="noreferrer noopener">${escapeHtml(row.rss_url)}</a>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="record-modal-card">
+                        <h3>Run state</h3>
+                        <div class="record-modal-list">
+                            <div class="record-modal-row">
+                                <label>Run</label>
+                                <strong>${escapeHtml(row.run_id)}</strong>
+                                <span class="status-tag" data-status="${escapeHtml(row.run_status)}">${escapeHtml(statusLabel(row.run_status))}</span>
+                            </div>
+                            <div class="record-modal-row">
+                                <label>Run item</label>
+                                <strong>${escapeHtml(row.run_item_id)}</strong>
+                                <span class="status-tag" data-status="${escapeHtml(row.run_item_status)}">${escapeHtml(statusLabel(row.run_item_status))}</span>
+                            </div>
+                            <div class="record-modal-row">
+                                <label>Error</label>
+                                <span class="${row.error ? "error-copy" : ""}">${escapeHtml(row.error || "No run-item error recorded")}</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="record-modal-card">
+                        <h3>Episode</h3>
+                        <div class="record-modal-list">
+                            <div class="record-modal-row">
+                                <label>Episode title</label>
+                                <strong>${escapeHtml(row.episode_title)}</strong>
+                            </div>
+                            <div class="record-modal-row">
+                                <label>Published</label>
+                                <span>${escapeHtml(row.published_at || "Not available")}</span>
+                            </div>
+                            <div class="record-modal-row">
+                                <label>Episode URL</label>
+                                ${row.episode_url
+                    ? `<a href="${escapeHtml(row.episode_url)}" target="_blank" rel="noreferrer noopener">${escapeHtml(row.episode_url)}</a>`
+                    : '<span>No episode URL available</span>'}
+                            </div>
+                            <div class="record-modal-row">
+                                <label>Audio URL</label>
+                                ${row.audio_url
+                    ? `<a href="${escapeHtml(row.audio_url)}" target="_blank" rel="noreferrer noopener">${escapeHtml(row.audio_url)}</a>`
+                    : '<span>No audio URL available</span>'}
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="record-modal-card">
+                        <h3>Lead profile</h3>
+                        <div class="record-modal-list">
+                            <div class="record-modal-row">
+                                <label>Lead</label>
+                                <strong>${escapeHtml(row.guest_name || "No lead created")}</strong>
+                                <span>${escapeHtml(row.role || "Role unavailable")} ${row.guest_company ? `at ${escapeHtml(row.guest_company)}` : ""}</span>
+                            </div>
+                            <div class="record-modal-row">
+                                <label>Lead state</label>
+                                <span class="status-tag" data-status="${escapeHtml(row.lead_status || "")}">${escapeHtml(statusLabel(row.lead_status, "No lead"))}</span>
+                            </div>
+                            <div class="record-modal-row">
+                                <label>Outreach</label>
+                                <span class="status-tag" data-status="${escapeHtml(row.outreach_status || "")}">${escapeHtml(statusLabel(row.outreach_status, "No outreach state"))}</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="record-modal-wide">
+                        <h3>Lead notes</h3>
+                        <div class="record-modal-grid">
+                            <div class="record-modal-card">
+                                <div class="record-modal-list">
+                                    <div class="record-modal-row">
+                                        <label>Pain point</label>
+                                        <span>${escapeHtml(row.pain_point || "No pain point captured")}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="record-modal-card">
+                                <div class="record-modal-list">
+                                    <div class="record-modal-row">
+                                        <label>Memorable quote</label>
+                                        <span>${escapeHtml(row.memorable_quote || "No memorable quote captured")}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="record-modal-wide">
+                        <h3>Draft email</h3>
+                        <div class="record-modal-draft">
+                            <div class="record-modal-row">
+                                <label>Subject</label>
+                                <strong>${escapeHtml(row.email_subject || "No draft subject")}</strong>
+                            </div>
+                            <div class="record-modal-row">
+                                <label>Body</label>
+                                <div class="record-modal-body-copy">${escapeHtml(row.email_body || "No draft email body available.")}</div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+                <p class="record-modal-note">Transcript is intentionally omitted from this record detail view. Use the dashboard if you need transcript-level inspection.</p>
+            `;
+
+            recordDetailModal.classList.add("visible");
+            recordDetailModal.setAttribute("aria-hidden", "false");
+        }
+
+        function openRecordModal(runItemId) {
+            state.activeRecordId = runItemId;
+            renderRecordModal();
         }
 
         function setRibbonLoading(isLoading, title, detail) {
@@ -936,11 +1353,37 @@
         async function fetchJson(url, options = {}) {
             const response = await fetch(url, options);
             if (!response.ok) {
+                if (response.status === 401) {
+                    redirectToAuth();
+                    throw new Error("Authentication required.");
+                }
                 const payload = await response.json().catch(() => ({}));
                 const detail = payload.detail || payload.error || "Request failed";
                 throw new Error(typeof detail === "string" ? detail : "Request failed");
             }
             return response.json();
+        }
+
+        async function loadSession() {
+            const payload = await fetchJson("/api/auth/session");
+            sessionBadge.textContent = payload.user.email;
+        }
+
+        async function signOut() {
+            signOutButton.disabled = true;
+            signOutButton.textContent = "Signing out...";
+            try {
+                const response = await fetch("/api/auth/signout", { method: "POST" });
+                if (!response.ok && response.status !== 401) {
+                    throw new Error("Failed to sign out.");
+                }
+            } catch (error) {
+                signOutButton.disabled = false;
+                signOutButton.textContent = "Sign out";
+                window.alert(error instanceof Error ? error.message : "Failed to sign out.");
+                return;
+            }
+            window.location.href = "/auth";
         }
 
         function buildQueryString(includePage = true) {
@@ -992,6 +1435,7 @@
 
         function renderRows() {
             if (!state.rows.length) {
+                closeRecordModal();
                 recordsTableBody.innerHTML = `
                     <tr>
                         <td colspan="7">
@@ -1007,7 +1451,7 @@
             }
 
             recordsTableBody.innerHTML = state.rows.map((row) => `
-                <tr>
+                <tr class="record-row" data-run-item-id="${escapeHtml(row.run_item_id)}" tabindex="0" role="button" aria-label="Open complete record for ${escapeHtml(row.episode_title)}">
                     <td>
                         <div class="cell-stack">
                             <strong>${escapeHtml(row.submitted_by)}</strong>
@@ -1091,6 +1535,7 @@
             pageLabel.textContent = `Page ${state.page} of ${totalPages}`;
             previousPageButton.disabled = state.page <= 1;
             nextPageButton.disabled = state.page >= totalPages;
+            renderRecordModal();
         }
 
         async function loadSubmitters() {
@@ -1144,6 +1589,10 @@
             setRibbonLoading(true, "Exporting CSV", "Preparing the current filtered record set for download.");
             try {
                 const response = await fetch(`/api/records/export?${buildQueryString(false)}`);
+                if (response.status === 401) {
+                    redirectToAuth();
+                    return;
+                }
                 if (!response.ok) {
                     throw new Error("Export failed.");
                 }
@@ -1196,6 +1645,10 @@
             void exportCsv();
         });
 
+        signOutButton.addEventListener("click", () => {
+            void signOut();
+        });
+
         previousPageButton.addEventListener("click", () => {
             if (state.page <= 1) {
                 return;
@@ -1237,8 +1690,45 @@
             void loadRecords();
         });
 
+        recordsTableBody.addEventListener("click", (event) => {
+            const interactiveTarget = event.target.closest("a, select, option, button");
+            if (interactiveTarget) {
+                return;
+            }
+            const row = event.target.closest("[data-run-item-id]");
+            if (!row) {
+                return;
+            }
+            openRecordModal(row.getAttribute("data-run-item-id"));
+        });
+
+        recordsTableBody.addEventListener("keydown", (event) => {
+            const row = event.target.closest("[data-run-item-id]");
+            if (!row) {
+                return;
+            }
+            if (event.key !== "Enter" && event.key !== " ") {
+                return;
+            }
+            event.preventDefault();
+            openRecordModal(row.getAttribute("data-run-item-id"));
+        });
+
+        recordDetailCloseButton.addEventListener("click", closeRecordModal);
+        recordDetailModal.addEventListener("click", (event) => {
+            if (event.target === recordDetailModal) {
+                closeRecordModal();
+            }
+        });
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" && recordDetailModal.classList.contains("visible")) {
+                closeRecordModal();
+            }
+        });
+
         async function boot() {
             try {
+                await loadSession();
                 await loadSubmitters();
                 await loadRecords();
             } catch (error) {

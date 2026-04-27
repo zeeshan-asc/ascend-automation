@@ -50,8 +50,10 @@ async def test_rss_provider_raises_when_no_audio_entries_exist() -> None:
     respx.get(feed_url).mock(return_value=Response(200, text=fixture_text("no_audio_feed.xml")))
     provider = RSSProvider(timeout_seconds=10)
 
-    with pytest.raises(FeedFetchError):
+    with pytest.raises(FeedFetchError) as exc_info:
         await provider.fetch_episodes(feed_url, max_results=5)
+
+    assert exc_info.value.reason_code == "feed_has_no_audio_items"
 
 
 @pytest.mark.asyncio
@@ -61,8 +63,36 @@ async def test_rss_provider_raises_for_unreachable_feed() -> None:
     respx.get(feed_url).mock(return_value=Response(404, text="missing"))
     provider = RSSProvider(timeout_seconds=10)
 
-    with pytest.raises(httpx.HTTPStatusError):
+    with pytest.raises(FeedFetchError) as exc_info:
         await provider.fetch_episodes(feed_url, max_results=5)
+
+    assert exc_info.value.reason_code == "feed_not_found"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_rss_provider_raises_for_timeout_or_connection_errors() -> None:
+    feed_url = "https://example.com/timeout.xml"
+    respx.get(feed_url).mock(side_effect=httpx.ConnectTimeout("timed out"))
+    provider = RSSProvider(timeout_seconds=10)
+
+    with pytest.raises(FeedFetchError) as exc_info:
+        await provider.fetch_episodes(feed_url, max_results=5)
+
+    assert exc_info.value.reason_code == "feed_unreachable"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_rss_provider_raises_for_invalid_feed_documents() -> None:
+    feed_url = "https://example.com/not-a-feed.xml"
+    respx.get(feed_url).mock(return_value=Response(200, text="<html>no feed here</html>"))
+    provider = RSSProvider(timeout_seconds=10)
+
+    with pytest.raises(FeedFetchError) as exc_info:
+        await provider.fetch_episodes(feed_url, max_results=5)
+
+    assert exc_info.value.reason_code == "feed_invalid"
 
 
 @pytest.mark.asyncio

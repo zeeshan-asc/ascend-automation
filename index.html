@@ -695,6 +695,7 @@
         }
 
         .error-banner,
+        .field-error,
         .status-shell {
             margin-top: 18px;
             border-radius: var(--radius-lg);
@@ -711,8 +712,20 @@
         }
 
         .error-banner.visible,
+        .field-error.visible,
         .status-shell.visible {
             display: block;
+        }
+
+        .field-error {
+            margin-top: 8px;
+            padding: 10px 12px;
+            border: 1px solid rgba(255, 141, 141, 0.2);
+            background: rgba(255, 141, 141, 0.06);
+            color: var(--danger);
+            font-size: 11px;
+            line-height: 1.6;
+            border-radius: 10px;
         }
 
         .status-shell {
@@ -873,6 +886,10 @@
         </header>
         <div class="masthead">
             <span class="eyebrow">Shared RSS queue + lead drafting</span>
+            <div class="top-actions">
+                <span class="pill" id="sessionBadge">Signed in</span>
+                <button class="btn btn-secondary" id="signOutButton" type="button">Sign out</button>
+            </div>
         </div>
         <div class="layout">
             <section class="hero">
@@ -881,11 +898,10 @@
                         <span class="hero-kicker">Workflow posture</span>
                         <h1>Turn podcast feeds into a <span class="headline-accent">reviewable lead board.</span></h1>
                         <p class="hero-copy">
-                            Submit an RSS feed once. The worker queue fans out episode discovery, AssemblyAI
-                            transcription, OpenAI lead extraction, and email drafting without blocking the next
-                            teammate.
-                            Every run lands in a shared dashboard so your team can inspect status, transcripts, and
-                            outreach.
+                            Queue a feed from your authenticated Ascend account. The worker fans out episode discovery,
+                            AssemblyAI transcription, OpenAI lead extraction, and email drafting without blocking the
+                            next teammate. Every run lands in a shared dashboard so your team can inspect status,
+                            transcripts, and outreach.
                         </p>
                     </div>
 
@@ -923,28 +939,44 @@
                     <span class="panel-kicker">Feed intake</span>
                     <h2>Queue a new run</h2>
                     <p>
-                        Submit the feed and optional tone guidance. Once the run is accepted you will be
-                        redirected to the dashboard view for that run.
+                        Your authenticated Ascend profile is attached automatically. Submit the feed and optional tone
+                        guidance, then jump straight into the dashboard view for that run.
                     </p>
                 </div>
 
                 <form id="submissionForm" novalidate>
-                    <div class="field">
-                        <label for="userName">Your name <span class="required">*</span></label>
-                        <input type="text" id="userName" name="userName" placeholder="Zeeshan Hamid" autocomplete="name"
-                            required />
-                    </div>
+                    <section class="status-shell visible" aria-live="polite">
+                        <div class="status-top">
+                            <div>
+                                <p class="status-title">Authenticated operator</p>
+                                <p class="status-copy">
+                                    This run will be attributed to your signed-in Ascend Analytics account.
+                                </p>
+                            </div>
+                            <span class="pill">session active</span>
+                        </div>
 
-                    <div class="field">
-                        <label for="userEmail">Your email <span class="required">*</span></label>
-                        <input type="email" id="userEmail" name="userEmail" placeholder="you@company.com"
-                            autocomplete="email" required />
-                    </div>
+                        <div class="status-grid">
+                            <div class="status-card">
+                                <small>Name</small>
+                                <strong id="sessionNameValue">Loading profile...</strong>
+                            </div>
+                            <div class="status-card">
+                                <small>Email</small>
+                                <strong id="sessionEmailValue">Loading profile...</strong>
+                            </div>
+                            <div class="status-card">
+                                <small>Policy</small>
+                                <strong>@ascendanalytics.co only</strong>
+                            </div>
+                        </div>
+                    </section>
 
                     <div class="field">
                         <label for="rssUrl">RSS feed URL <span class="required">*</span></label>
                         <input type="url" id="rssUrl" name="rssUrl"
                             placeholder="https://feeds.buzzsprout.com/podcast.rss" required />
+                        <div class="field-error" id="rssFieldError" role="alert"></div>
                     </div>
 
                     <div class="field">
@@ -1007,6 +1039,7 @@
         const submitButton = document.getElementById("submitButton");
         const resetButton = document.getElementById("resetButton");
         const errorBanner = document.getElementById("errorBanner");
+        const rssFieldError = document.getElementById("rssFieldError");
         const statusShell = document.getElementById("statusShell");
         const runIdValue = document.getElementById("runIdValue");
         const runStatusValue = document.getElementById("runStatusValue");
@@ -1016,31 +1049,39 @@
         const globalLoadingTitle = document.getElementById("globalLoadingTitle");
         const globalLoadingText = document.getElementById("globalLoadingText");
         const panelLoader = document.getElementById("panelLoader");
+        const sessionBadge = document.getElementById("sessionBadge");
+        const sessionNameValue = document.getElementById("sessionNameValue");
+        const sessionEmailValue = document.getElementById("sessionEmailValue");
+        const signOutButton = document.getElementById("signOutButton");
 
         function showError(message) {
             errorBanner.textContent = message;
             errorBanner.classList.add("visible");
         }
 
+        function showRssFieldError(message) {
+            rssFieldError.textContent = message;
+            rssFieldError.classList.add("visible");
+        }
+
         function clearError() {
             errorBanner.textContent = "";
             errorBanner.classList.remove("visible");
+            rssFieldError.textContent = "";
+            rssFieldError.classList.remove("visible");
+        }
+
+        function buildNextPath() {
+            return `${window.location.pathname}${window.location.search}`;
+        }
+
+        function redirectToAuth() {
+            window.location.href = `/auth?next=${encodeURIComponent(buildNextPath())}`;
         }
 
         function validateForm(payload) {
-            if (!payload.user_name.trim()) {
-                return "Please enter your name.";
-            }
-            if (!payload.user_email.trim()) {
-                return "Please enter your email address.";
-            }
             if (!payload.rss_url.trim()) {
                 return "Please enter an RSS feed URL.";
-            }
-
-            const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.user_email);
-            if (!emailOk) {
-                return "Please enter a valid email address.";
             }
 
             try {
@@ -1053,6 +1094,62 @@
             }
 
             return null;
+        }
+
+        function parseApiError(errorPayload) {
+            const detail = errorPayload?.detail;
+            if (typeof detail === "string") {
+                return { message: detail };
+            }
+            if (Array.isArray(detail)) {
+                const first = detail[0];
+                if (first?.msg) {
+                    return { message: first.msg };
+                }
+                return { message: "The submission could not be queued." };
+            }
+            if (detail && typeof detail === "object") {
+                return {
+                    code: detail.code,
+                    message: detail.message || "The submission could not be queued.",
+                };
+            }
+            return { message: "The submission could not be queued." };
+        }
+
+        async function loadSession() {
+            const response = await fetch("/api/auth/session");
+            if (response.status === 401) {
+                redirectToAuth();
+                return;
+            }
+            if (!response.ok) {
+                throw new Error("Failed to load your authenticated session.");
+            }
+
+            const payload = await response.json();
+            sessionBadge.textContent = payload.user.email;
+            sessionNameValue.textContent = payload.user.name;
+            sessionEmailValue.textContent = payload.user.email;
+        }
+
+        async function signOut() {
+            signOutButton.disabled = true;
+            signOutButton.textContent = "Signing out...";
+
+            try {
+                const response = await fetch("/api/auth/signout", { method: "POST" });
+                if (!response.ok && response.status !== 401) {
+                    throw new Error("Failed to sign out.");
+                }
+            } catch (error) {
+                showError(error instanceof Error ? error.message : "Failed to sign out.");
+                signOutButton.disabled = false;
+                signOutButton.textContent = "Sign out";
+                return;
+            }
+
+            window.location.href = "/auth";
         }
 
         function setLoadingMessage(title, detail) {
@@ -1089,8 +1186,6 @@
             statusShell.classList.remove("visible");
 
             const payload = {
-                user_name: document.getElementById("userName").value.trim(),
-                user_email: document.getElementById("userEmail").value.trim(),
                 rss_url: document.getElementById("rssUrl").value.trim(),
                 tone_instructions: document.getElementById("toneInstructions").value.trim() || null,
                 submitted_at: new Date().toISOString(),
@@ -1114,9 +1209,17 @@
                 });
 
                 if (!response.ok) {
+                    if (response.status === 401) {
+                        redirectToAuth();
+                        return;
+                    }
                     const errorPayload = await response.json().catch(() => ({}));
-                    const detail = errorPayload.detail || "The submission could not be queued.";
-                    throw new Error(typeof detail === "string" ? detail : "The submission could not be queued.");
+                    const parsedError = parseApiError(errorPayload);
+                    if (response.status === 422 && parsedError.code && parsedError.code.startsWith("feed_")) {
+                        showRssFieldError(parsedError.message);
+                        return;
+                    }
+                    throw new Error(parsedError.message);
                 }
 
                 const accepted = await response.json();
@@ -1136,6 +1239,16 @@
 
         form.addEventListener("submit", submitRun);
         resetButton.addEventListener("click", resetForm);
+        signOutButton.addEventListener("click", () => {
+            void signOut();
+        });
+        document.getElementById("rssUrl").addEventListener("input", () => {
+            rssFieldError.textContent = "";
+            rssFieldError.classList.remove("visible");
+        });
+        void loadSession().catch((error) => {
+            showError(error instanceof Error ? error.message : "Failed to load your session.");
+        });
     </script>
 </body>
 

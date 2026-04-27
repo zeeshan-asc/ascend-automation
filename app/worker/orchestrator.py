@@ -20,6 +20,8 @@ from app.domain.models import Episode, Lead, Run, RunItem, Transcript, utcnow
 
 logger = logging.getLogger(__name__)
 
+FINALIZED_RUN_ITEM_STATUSES = {RunItemStatus.DONE.value, RunItemStatus.REUSED.value}
+
 
 class PipelineOrchestrator:
     def __init__(
@@ -57,10 +59,7 @@ class PipelineOrchestrator:
         )
         await self._run_repository.mark_running(run_id, utcnow())
         try:
-            parsed_episodes = await self._rss_provider.fetch_episodes(
-                run.rss_url,
-                self._settings.max_episodes_per_run,
-            )
+            all_items, items_to_process = await self._prepare_run_items(run=run)
         except Exception as exc:
             await self._run_repository.finalize(
                 run_id=run_id,
@@ -74,52 +73,32 @@ class PipelineOrchestrator:
             logger.exception("pipeline.run.failed run_id=%s during_feed_fetch", run_id)
             return await self._run_repository.get_by_run_id(run_id)
 
-        prepared_items: list[tuple[Episode, RunItem]] = []
-        new_items: list[RunItem] = []
-        for parsed in parsed_episodes:
-            episode = await self._episode_repository.upsert(
-                Episode(
-                    dedupe_key=parsed.dedupe_key,
-                    title=parsed.title,
-                    episode_url=parsed.episode_url,
-                    audio_url=parsed.audio_url,
-                    published_at=parsed.published_at,
-                    feed_url=parsed.feed_url,
-                ),
-            )
-            existing_item = await self._run_item_repository.get_by_run_and_episode(
-                run_id,
-                episode.episode_id,
-            )
-            if existing_item is None:
-                new_item = RunItem(
-                    run_id=run_id,
-                    episode_id=episode.episode_id,
-                    title=episode.title,
-                )
-                prepared_items.append(
-                    (
-                        episode,
-                        new_item,
-                    ),
-                )
-                new_items.append(new_item)
-            else:
-                prepared_items.append((episode, existing_item))
-
-        if new_items:
-            await self._run_item_repository.create_many(new_items)
-
-        total_items = len(prepared_items)
+        total_items = len(all_items)
+        baseline_items = [
+            run_item
+            for _, run_item in all_items
+            if run_item.run_item_id not in {item.run_item_id for _, item in items_to_process}
+        ]
+        baseline_completed = sum(
+            1
+            for run_item in baseline_items
+            if str(run_item.status) in FINALIZED_RUN_ITEM_STATUSES
+        )
+        baseline_failed = sum(
+            1 for run_item in baseline_items if str(run_item.status) == RunItemStatus.FAILED.value
+        )
         await self._run_repository.update_progress(
             run_id=run_id,
             total_items=total_items,
+            completed_items=baseline_completed,
+            failed_items=baseline_failed,
+            error=None,
             now=utcnow(),
         )
 
         semaphore = asyncio.Semaphore(self._settings.episodes_per_run_concurrency)
         counter_lock = asyncio.Lock()
-        progress = {"completed": 0, "failed": 0}
+        progress = {"completed": baseline_completed, "failed": baseline_failed}
 
         async def process_pair(episode: Episode, run_item: RunItem) -> None:
             async with semaphore:
@@ -141,7 +120,7 @@ class PipelineOrchestrator:
                         now=utcnow(),
                     )
 
-        await asyncio.gather(*(process_pair(episode, item) for episode, item in prepared_items))
+        await asyncio.gather(*(process_pair(episode, item) for episode, item in items_to_process))
 
         if progress["failed"] == 0:
             final_status = RunStatus.COMPLETED
@@ -168,6 +147,71 @@ class PipelineOrchestrator:
             progress["failed"],
         )
         return await self._run_repository.get_by_run_id(run_id)
+
+    async def _prepare_run_items(
+        self,
+        *,
+        run: Run,
+    ) -> tuple[list[tuple[Episode, RunItem]], list[tuple[Episode, RunItem]]]:
+        if run.retry_run_item_ids:
+            logger.info(
+                "pipeline.run.retry_mode run_id=%s retry_run_item_ids=%s",
+                run.run_id,
+                ",".join(run.retry_run_item_ids),
+            )
+            run_items = await self._run_item_repository.list_all_by_run_id(run.run_id)
+            episodes = await self._episode_repository.list_by_episode_ids(
+                [run_item.episode_id for run_item in run_items],
+            )
+            episodes_by_id = {episode.episode_id: episode for episode in episodes}
+            all_items = [
+                (episodes_by_id[run_item.episode_id], run_item)
+                for run_item in run_items
+                if run_item.episode_id in episodes_by_id
+            ]
+            retry_ids = set(run.retry_run_item_ids)
+            retry_items = [
+                pair for pair in all_items if pair[1].run_item_id in retry_ids
+            ]
+            if not retry_items:
+                raise RuntimeError("Retry targets could not be resolved for this run.")
+            return all_items, retry_items
+
+        parsed_episodes = await self._rss_provider.fetch_episodes(
+            run.rss_url,
+            self._settings.max_episodes_per_run,
+        )
+        prepared_items: list[tuple[Episode, RunItem]] = []
+        new_items: list[RunItem] = []
+        for parsed in parsed_episodes:
+            episode = await self._episode_repository.upsert(
+                Episode(
+                    dedupe_key=parsed.dedupe_key,
+                    title=parsed.title,
+                    episode_url=parsed.episode_url,
+                    audio_url=parsed.audio_url,
+                    published_at=parsed.published_at,
+                    feed_url=parsed.feed_url,
+                ),
+            )
+            existing_item = await self._run_item_repository.get_by_run_and_episode(
+                run.run_id,
+                episode.episode_id,
+            )
+            if existing_item is None:
+                new_item = RunItem(
+                    run_id=run.run_id,
+                    episode_id=episode.episode_id,
+                    title=episode.title,
+                )
+                prepared_items.append((episode, new_item))
+                new_items.append(new_item)
+            else:
+                prepared_items.append((episode, existing_item))
+
+        if new_items:
+            await self._run_item_repository.create_many(new_items)
+        return prepared_items, prepared_items
 
     async def _process_episode(
         self,

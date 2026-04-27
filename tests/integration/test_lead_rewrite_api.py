@@ -39,14 +39,14 @@ class FakeRewriteOpenAIProvider:
 
 @pytest.mark.asyncio
 async def test_rewrite_lead_updates_stored_subject_and_body(
-    client: AsyncClient,
+    authenticated_client: AsyncClient,
     app_container: AppContainer,
 ) -> None:
     seeded = await seed_dashboard_state(app_container)
     fake_provider = FakeRewriteOpenAIProvider()
     app_container.openai_provider = fake_provider
 
-    response = await client.post(
+    response = await authenticated_client.post(
         f"/api/leads/{seeded['leads']['one'].lead_id}/rewrite",
         json={"instruction": "Make it more concise and more executive."},
     )
@@ -65,7 +65,7 @@ async def test_rewrite_lead_updates_stored_subject_and_body(
         }
     ]
 
-    updated_detail = await client.get(f"/api/leads/{seeded['leads']['one'].lead_id}")
+    updated_detail = await authenticated_client.get(f"/api/leads/{seeded['leads']['one'].lead_id}")
     assert updated_detail.status_code == 200
     assert updated_detail.json()["email_subject"] == "Rewritten subject"
     assert updated_detail.json()["email_body"] == "Rewritten body"
@@ -73,7 +73,7 @@ async def test_rewrite_lead_updates_stored_subject_and_body(
 
 @pytest.mark.asyncio
 async def test_rewrite_lead_returns_conflict_when_transcript_text_is_missing(
-    client: AsyncClient,
+    authenticated_client: AsyncClient,
     app_container: AppContainer,
 ) -> None:
     seeded = await seed_dashboard_state(app_container)
@@ -95,7 +95,7 @@ async def test_rewrite_lead_returns_conflict_when_transcript_text_is_missing(
     )
     await app_container.lead_repository.create(lead_without_transcript)
 
-    response = await client.post(
+    response = await authenticated_client.post(
         f"/api/leads/{lead_without_transcript.lead_id}/rewrite",
         json={"instruction": "Make it more direct."},
     )
@@ -106,8 +106,8 @@ async def test_rewrite_lead_returns_conflict_when_transcript_text_is_missing(
 
 
 @pytest.mark.asyncio
-async def test_rewrite_lead_returns_404_for_missing_lead(client: AsyncClient) -> None:
-    response = await client.post(
+async def test_rewrite_lead_returns_404_for_missing_lead(authenticated_client: AsyncClient) -> None:
+    response = await authenticated_client.post(
         "/api/leads/missing-lead/rewrite",
         json={"instruction": "Shorten it."},
     )
@@ -117,12 +117,12 @@ async def test_rewrite_lead_returns_404_for_missing_lead(client: AsyncClient) ->
 
 @pytest.mark.asyncio
 async def test_rewrite_lead_rejects_blank_instruction(
-    client: AsyncClient,
+    authenticated_client: AsyncClient,
     app_container: AppContainer,
 ) -> None:
     seeded = await seed_dashboard_state(app_container)
 
-    response = await client.post(
+    response = await authenticated_client.post(
         f"/api/leads/{seeded['leads']['one'].lead_id}/rewrite",
         json={"instruction": "   "},
     )

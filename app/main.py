@@ -4,13 +4,16 @@ import logging
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from time import perf_counter
+from urllib.parse import quote
 from uuid import uuid4
 
 import uvicorn
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
+from app.api.auth import router as auth_router
+from app.api.dependencies import authenticate_request_user
 from app.api.dashboard import router as dashboard_router
 from app.api.episodes import router as episodes_router
 from app.api.health import router as health_router
@@ -21,10 +24,31 @@ from app.api.submissions import router as submissions_router
 from app.application.container import AppContainer
 from app.config import Settings, get_settings
 from app.database import MongoManager, bootstrap_mongo
+from app.domain.errors import AuthenticationError
 from app.logging import configure_logging
 from app.worker.runner import run_worker
 
 logger = logging.getLogger(__name__)
+PROTECTED_PAGE_PATHS = {
+    "/",
+    "/dashboard",
+    "/records",
+    "/static/dashboard.html",
+    "/static/records.html",
+}
+
+
+def _normalize_path(path: str) -> str:
+    normalized = path.rstrip("/")
+    return normalized or "/"
+
+
+def _sanitize_next_path(next_path: str | None) -> str:
+    if not next_path:
+        return "/"
+    if not next_path.startswith("/") or next_path.startswith("//"):
+        return "/"
+    return next_path
 
 
 def _configure_logging(settings: Settings) -> None:
@@ -65,7 +89,13 @@ def create_app(
         if container is None and manager is not None:
             await manager.close()
 
-    app = FastAPI(title="RSS Automation", lifespan=lifespan)
+    app = FastAPI(
+        title="RSS Automation",
+        lifespan=lifespan,
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None,
+    )
 
     @app.middleware("http")
     async def request_logging_middleware(
@@ -102,6 +132,25 @@ def create_app(
         )
         return response
 
+    @app.middleware("http")
+    async def page_auth_middleware(
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
+        if _normalize_path(request.url.path) not in PROTECTED_PAGE_PATHS:
+            return await call_next(request)
+
+        try:
+            request.state.current_user = await authenticate_request_user(request)
+        except AuthenticationError:
+            next_path = request.url.path
+            if request.url.query:
+                next_path = f"{next_path}?{request.url.query}"
+            redirect_target = quote(_sanitize_next_path(next_path), safe="")
+            return RedirectResponse(url=f"/auth?next={redirect_target}", status_code=303)
+        return await call_next(request)
+
+    app.include_router(auth_router)
     app.include_router(dashboard_router)
     app.include_router(episodes_router)
     app.include_router(health_router)
@@ -113,6 +162,17 @@ def create_app(
     static_path = project_root / "app" / "static"
     static_path.mkdir(parents=True, exist_ok=True)
     app.mount("/static", StaticFiles(directory=static_path), name="static")
+
+    @app.get("/auth", include_in_schema=False)
+    async def auth_page(request: Request) -> Response:
+        try:
+            await authenticate_request_user(request)
+        except AuthenticationError:
+            auth_path = project_root / "app" / "static" / "auth.html"
+            return FileResponse(auth_path)
+
+        redirect_target = _sanitize_next_path(request.query_params.get("next"))
+        return RedirectResponse(url=redirect_target, status_code=303)
 
     @app.get("/", include_in_schema=False)
     async def landing_page() -> FileResponse:

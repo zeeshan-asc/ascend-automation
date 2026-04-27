@@ -2,14 +2,18 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from app.api.dependencies import get_dashboard_service
+from app.api.dependencies import get_current_user, get_dashboard_service
 from app.application.dashboard import (
     DashboardQueryService,
     DashboardStats,
     DashboardSubmitters,
 )
 
-router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
+router = APIRouter(
+    prefix="/api/dashboard",
+    tags=["dashboard"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 @router.get("/stats", response_model=DashboardStats)
