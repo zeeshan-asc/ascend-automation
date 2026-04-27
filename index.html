@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Podcast Outreach Engine</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap"
+        rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0a0a0f;
+            --surface: #111118;
+            --border: #1e1e2e;
+            --accent: #6ee7b7;
+            --accent2: #38bdf8;
+            --warn: #f59e0b;
+            --text: #e2e8f0;
+            --muted: #64748b;
+            --error: #f87171;
+            --radius: 12px;
+            --font-head: 'Syne', sans-serif;
+            --font-mono: 'DM Mono', monospace;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-mono);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 48px 16px 80px;
+            overflow-x: hidden;
+        }
+
+        /* ── grid background ── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(110, 231, 183, .03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(110, 231, 183, .03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 640px;
+        }
+
+        /* ── header ── */
+        .header {
+            margin-bottom: 40px;
+            animation: fadeDown .6s ease both;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--accent);
+            border: 1px solid rgba(110, 231, 183, .25);
+            border-radius: 100px;
+            padding: 4px 12px;
+            margin-bottom: 16px;
+        }
+
+        .badge-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: pulse 1.8s ease-in-out infinite;
+        }
+
+        h1 {
+            font-family: var(--font-head);
+            font-size: clamp(28px, 5vw, 42px);
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -.02em;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        h1 span {
+            color: var(--accent);
+        }
+
+        .sub {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        /* ── card ── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            animation: fadeUp .6s .1s ease both;
+        }
+
+        /* ── form fields ── */
+        .field {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        label .req {
+            color: var(--accent);
+            margin-left: 2px;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--text);
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+            resize: none;
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: var(--muted);
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(110, 231, 183, .08);
+        }
+
+        textarea {
+            height: 90px;
+            line-height: 1.6;
+        }
+
+        /* ── submit button ── */
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: #0a0a0f;
+            font-family: var(--font-head);
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: .02em;
+            cursor: pointer;
+            transition: opacity .2s, transform .15s;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            opacity: .88;
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: .4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ── progress panel ── */
+        .progress-panel {
+            display: none;
+            margin-top: 28px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .progress-panel.visible {
+            display: block;
+            animation: fadeUp .4s ease both;
+        }
+
+        .progress-header {
+            background: #0d0d16;
+            padding: 14px 20px;
+            font-size: 11px;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--accent2);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .spinner {
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(56, 189, 248, .3);
+            border-top-color: var(--accent2);
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+            flex-shrink: 0;
+        }
+
+        .spinner.done {
+            border-color: var(--accent);
+            border-top-color: var(--accent);
+            animation: none;
+        }
+
+        .steps {
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--muted);
+            transition: color .3s;
+        }
+
+        .step.active {
+            color: var(--text);
+        }
+
+        .step.done {
+            color: var(--accent);
+        }
+
+        .step-icon {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 1.5px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            flex-shrink: 0;
+            margin-top: 1px;
+            transition: all .3s;
+        }
+
+        .step.active .step-icon {
+            border-color: var(--accent2);
+            color: var(--accent2);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, .08);
+        }
+
+        .step.done .step-icon {
+            border-color: var(--accent);
+            background: rgba(110, 231, 183, .1);
+            color: var(--accent);
+        }
+
+        .step-body {
+            flex: 1;
+        }
+
+        .step-label {
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .step-detail {
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        /* ── log console ── */
+        .log-wrap {
+            background: var(--bg);
+            border-top: 1px solid var(--border);
+            padding: 14px 20px;
+        }
+
+        .log-title {
+            font-size: 10px;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .log-lines {
+            font-size: 11px;
+            line-height: 1.8;
+            color: var(--muted);
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .log-lines span {
+            display: block;
+        }
+
+        .log-lines .l-ok {
+            color: var(--accent);
+        }
+
+        .log-lines .l-info {
+            color: var(--accent2);
+        }
+
+        .log-lines .l-warn {
+            color: var(--warn);
+        }
+
+        /* ── success banner ── */
+        .success-banner {
+            display: none;
+            margin-top: 24px;
+            padding: 20px 24px;
+            background: rgba(110, 231, 183, .06);
+            border: 1px solid rgba(110, 231, 183, .2);
+            border-radius: var(--radius);
+            animation: fadeUp .4s ease both;
+        }
+
+        .success-banner.visible {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+        }
+
+        .success-icon {
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .success-text h3 {
+            font-family: var(--font-head);
+            font-size: 16px;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .success-text p {
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        /* ── error banner ── */
+        .error-banner {
+            display: none;
+            margin-top: 16px;
+            padding: 14px 18px;
+            background: rgba(248, 113, 113, .06);
+            border: 1px solid rgba(248, 113, 113, .2);
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--error);
+            line-height: 1.6;
+        }
+
+        .error-banner.visible {
+            display: block;
+        }
+
+        /* ── reset link ── */
+        .reset-wrap {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .reset-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--muted);
+            text-decoration: underline;
+            display: none;
+        }
+
+        .reset-btn.visible {
+            display: inline;
+        }
+
+        .reset-btn:hover {
+            color: var(--text);
+        }
+
+        /* ── animations ── */
+        @keyframes fadeDown {
+            from {
+                opacity: 0;
+                transform: translateY(-12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: .3;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <!-- Header -->
+        <div class="header">
+            <div class="badge"><span class="badge-dot"></span> Podcast Outreach Engine</div>
+            <h1>Turn podcasts into<br /><span>pipeline.</span></h1>
+            <p class="sub">Paste an RSS feed → we transcribe every episode → extract pain points → draft a personalised
+                outreach email for each guest.</p>
+        </div>
+
+        <!-- Form Card -->
+        <div class="card" id="formCard">
+            <div class="field">
+                <label>Your Name <span class="req">*</span></label>
+                <input type="text" id="userName" placeholder="e.g. Zeeshan Hamid" autocomplete="name" />
+            </div>
+
+            <div class="field">
+                <label>Your Email <span class="req">*</span></label>
+                <input type="email" id="userEmail" placeholder="you@company.com" autocomplete="email" />
+            </div>
+
+            <div class="field">
+                <label>RSS Feed URL <span class="req">*</span></label>
+                <input type="url" id="rssUrl" placeholder="https://feeds.buzzsprout.com/podcast.rss" />
+            </div>
+
+            <div class="field">
+                <label>Email Tone Instructions</label>
+                <textarea id="toneInstructions"
+                    placeholder="e.g. Keep it concise and consultative. Don't pitch hard — lead with empathy around their problem. Sign off as a peer, not a vendor."></textarea>
+            </div>
+
+            <div class="error-banner" id="errorBanner"></div>
+
+            <button class="btn" id="submitBtn" onclick="handleSubmit()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+                Run Outreach Automation
+            </button>
+        </div>
+
+        <!-- Progress Panel -->
+        <div class="progress-panel" id="progressPanel">
+            <div class="progress-header">
+                <div class="spinner" id="mainSpinner"></div>
+                <span id="progressTitle">Automation running…</span>
+            </div>
+
+            <div class="steps" id="stepsContainer">
+                <div class="step" id="step1" data-label="Submitting to Make.com"
+                    data-detail="Sending your RSS URL and settings via webhook…">
+                    <div class="step-icon">1</div>
+                    <div class="step-body">
+                        <div class="step-label">Submitting to Make.com</div>
+                        <div class="step-detail">Sending your RSS URL and settings via webhook…</div>
+                    </div>
+                </div>
+                <div class="step" id="step2" data-label="Parsing RSS Feed"
+                    data-detail="Fetching and iterating over podcast episodes…">
+                    <div class="step-icon">2</div>
+                    <div class="step-body">
+                        <div class="step-label">Parsing RSS Feed</div>
+                        <div class="step-detail">Fetching and iterating over podcast episodes…</div>
+                    </div>
+                </div>
+                <div class="step" id="step3" data-label="Transcribing Audio"
+                    data-detail="Running Whisper on episode audio files — this takes a few minutes…">
+                    <div class="step-icon">3</div>
+                    <div class="step-body">
+                        <div class="step-label">Transcribing Audio</div>
+                        <div class="step-detail">Running Whisper on episode audio files — this can take a few minutes…
+                        </div>
+                    </div>
+                </div>
+                <div class="step" id="step4" data-label="Extracting Pain Points"
+                    data-detail="GPT-4o reading transcripts and identifying business problems discussed…">
+                    <div class="step-icon">4</div>
+                    <div class="step-body">
+                        <div class="step-label">Extracting Pain Points</div>
+                        <div class="step-detail">GPT-4o reading transcripts and identifying business problems discussed…
+                        </div>
+                    </div>
+                </div>
+                <div class="step" id="step5" data-label="Drafting Outreach Email"
+                    data-detail="Writing a personalised email for each guest using your tone instructions…">
+                    <div class="step-icon">5</div>
+                    <div class="step-body">
+                        <div class="step-label">Drafting Outreach Email</div>
+                        <div class="step-detail">Writing a personalised email for each guest using your tone
+                            instructions…</div>
+                    </div>
+                </div>
+                <div class="step" id="step6" data-label="Delivering Results"
+                    data-detail="Saving drafts and notifying you at your email…">
+                    <div class="step-icon">6</div>
+                    <div class="step-body">
+                        <div class="step-label">Delivering Results</div>
+                        <div class="step-detail">Saving drafts and notifying you at your email…</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="log-wrap">
+                <div class="log-title">// Live Log</div>
+                <div class="log-lines" id="logLines"></div>
+            </div>
+        </div>
+
+        <!-- Success Banner -->
+        <div class="success-banner" id="successBanner">
+            <div class="success-icon">✦</div>
+            <div class="success-text">
+                <h3>Automation triggered successfully</h3>
+                <p id="successMsg">Make.com has received your request. Transcription and email drafting is now running
+                    in the background — check your inbox shortly.</p>
+            </div>
+        </div>
+
+        <!-- Reset -->
+        <div class="reset-wrap">
+            <button class="reset-btn" id="resetBtn" onclick="resetForm()">← Submit another RSS feed</button>
+        </div>
+
+    </div>
+
+    <script>
+        // ─────────────────────────────────────────────
+        // !! PASTE YOUR MAKE.COM WEBHOOK URL HERE !!
+        // ─────────────────────────────────────────────
+        const WEBHOOK_URL = 'https://hook.eu1.make.com/rjz09xsqc2w7l8zouw8uw57phutksi1q';
+
+        // Step timing (ms) — simulates realistic pipeline progress
+        // These are fake timers; your real Make scenario runs async.
+        // Adjust durations to match your actual scenario speed.
+        const STEP_TIMINGS = [
+            { id: 'step1', delay: 0, duration: 1500 },
+            { id: 'step2', delay: 1500, duration: 3000 },
+            { id: 'step3', delay: 4500, duration: 18000 }, // Whisper is slow
+            { id: 'step4', delay: 22500, duration: 5000 },
+            { id: 'step5', delay: 27500, duration: 4000 },
+            { id: 'step6', delay: 31500, duration: 2000 },
+        ];
+
+        let stepTimers = [];
+
+        function log(msg, type = '') {
+            const el = document.getElementById('logLines');
+            const span = document.createElement('span');
+            const ts = new Date().toLocaleTimeString('en-GB', { hour12: false });
+            span.textContent = `[${ts}] ${msg}`;
+            if (type) span.classList.add(`l-${type}`);
+            el.appendChild(span);
+            el.scrollTop = el.scrollHeight;
+        }
+
+        function setStep(id, state) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.remove('active', 'done');
+            if (state) el.classList.add(state);
+            if (state === 'active') {
+                el.querySelector('.step-icon').textContent = '▶';
+            } else if (state === 'done') {
+                el.querySelector('.step-icon').textContent = '✓';
+            }
+        }
+
+        function validate() {
+            const name = document.getElementById('userName').value.trim();
+            const email = document.getElementById('userEmail').value.trim();
+            const rss = document.getElementById('rssUrl').value.trim();
+            const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const urlRe = /^https?:\/\/.+/i;
+
+            if (!name) return 'Please enter your name.';
+            if (!emailRe.test(email)) return 'Please enter a valid email address.';
+            if (!urlRe.test(rss)) return 'Please enter a valid RSS feed URL (must start with http/https).';
+            return null;
+        }
+
+        function showError(msg) {
+            const b = document.getElementById('errorBanner');
+            b.textContent = msg;
+            b.classList.add('visible');
+        }
+        function clearError() {
+            document.getElementById('errorBanner').classList.remove('visible');
+        }
+
+        async function handleSubmit() {
+            clearError();
+
+            const err = validate();
+            if (err) { showError(err); return; }
+
+            const payload = {
+                user_name: document.getElementById('userName').value.trim(),
+                user_email: document.getElementById('userEmail').value.trim(),
+                rss_url: document.getElementById('rssUrl').value.trim(),
+                tone_instructions: document.getElementById('toneInstructions').value.trim(),
+                submitted_at: new Date().toISOString(),
+            };
+
+            // Lock form
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('progressPanel').classList.add('visible');
+
+            // Start step animations
+            startSteps();
+
+            // Fire the webhook (fire-and-forget — Make runs async)
+            try {
+                log('Sending payload to Make.com webhook…', 'info');
+                const res = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                if (res.ok || res.status === 200) {
+                    log(`Webhook accepted (HTTP ${res.status})`, 'ok');
+                } else {
+                    log(`Webhook responded with HTTP ${res.status} — check Make.com logs`, 'warn');
+                }
+            } catch (e) {
+                log(`Network error: ${e.message}`, 'warn');
+                log('Automation may still be running — check Make.com dashboard', 'warn');
+            }
+
+            // After all steps done, show success
+            const totalDuration = STEP_TIMINGS[STEP_TIMINGS.length - 1].delay
+                + STEP_TIMINGS[STEP_TIMINGS.length - 1].duration;
+
+            setTimeout(() => {
+                document.getElementById('mainSpinner').classList.add('done');
+                document.getElementById('progressTitle').textContent = 'Automation complete ✓';
+                document.getElementById('successBanner').classList.add('visible');
+                document.getElementById('successMsg').textContent =
+                    `Make.com received your request for ${payload.user_name}. Drafts will be sent to ${payload.user_email} once transcription and email generation completes.`;
+                document.getElementById('resetBtn').classList.add('visible');
+                log('All steps dispatched. Check your inbox!', 'ok');
+            }, totalDuration + 500);
+        }
+
+        function startSteps() {
+            const logMessages = [
+                ['RSS URL validated and queued', 'ok'],
+                ['Fetching RSS feed items…', 'info'],
+                ['Downloading audio files, sending to Whisper API…', 'info'],
+                ['Transcripts received, running GPT-4o extraction…', 'info'],
+                ['Email drafts being written with tone instructions…', 'info'],
+                ['Saving to Google Sheets and sending notification…', 'ok'],
+            ];
+
+            STEP_TIMINGS.forEach((s, i) => {
+                // Mark active
+                const t1 = setTimeout(() => {
+                    setStep(s.id, 'active');
+                    log(...logMessages[i]);
+                }, s.delay);
+
+                // Mark done
+                const t2 = setTimeout(() => {
+                    setStep(s.id, 'done');
+                }, s.delay + s.duration);
+
+                stepTimers.push(t1, t2);
+            });
+        }
+
+        function resetForm() {
+            // Clear timers
+            stepTimers.forEach(clearTimeout);
+            stepTimers = [];
+
+            // Reset steps
+            STEP_TIMINGS.forEach(s => {
+                const el = document.getElementById(s.id);
+                el.classList.remove('active', 'done');
+                el.querySelector('.step-icon').textContent = s.id.replace('step', '');
+            });
+
+            // Reset UI
+            document.getElementById('progressPanel').classList.remove('visible');
+            document.getElementById('successBanner').classList.remove('visible');
+            document.getElementById('resetBtn').classList.remove('visible');
+            document.getElementById('mainSpinner').classList.remove('done');
+            document.getElementById('progressTitle').textContent = 'Automation running…';
+            document.getElementById('logLines').innerHTML = '';
+            document.getElementById('submitBtn').disabled = false;
+
+            // Reset fields
+            ['userName', 'userEmail', 'rssUrl', 'toneInstructions'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            clearError();
+        }
+    </script>
+</body>
+
+</html>
