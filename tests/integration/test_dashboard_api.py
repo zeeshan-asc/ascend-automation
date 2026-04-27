@@ -269,8 +269,25 @@ async def test_get_episode_detail_returns_transcript_and_lead_summary(
     assert response.status_code == 200
     payload = response.json()
     assert payload["title"] == "Fixing Patient Flow"
-    assert payload["transcript_text"] == "Transcript one"
+    assert payload["transcript_status"] == TranscriptStatus.COMPLETED.value
     assert payload["lead"]["guest_company"] == "St. Mary's Health System"
+
+
+@pytest.mark.asyncio
+async def test_get_episode_transcript_returns_text_on_demand(
+    client: AsyncClient,
+    app_container: AppContainer,
+) -> None:
+    seeded = await seed_dashboard_state(app_container)
+
+    response = await client.get(
+        f"/api/episodes/{seeded['episodes']['one'].episode_id}/transcript"
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["episode_id"] == seeded["episodes"]["one"].episode_id
+    assert payload["transcript_text"] == "Transcript one"
 
 
 @pytest.mark.asyncio

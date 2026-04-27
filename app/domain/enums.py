@@ -32,3 +32,8 @@ class LeadStatus(StrEnum):
     GENERATED = "generated"
     REVIEW_NEEDED = "review_needed"
     FAILED = "failed"
+
+
+class OutreachStatus(StrEnum):
+    NOT_CONTACTED = "not_contacted"
+    CONTACTED = "contacted"

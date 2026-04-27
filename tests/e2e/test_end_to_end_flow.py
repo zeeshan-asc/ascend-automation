@@ -152,7 +152,11 @@ async def test_submission_to_dashboard_end_to_end(
     episode_id = run_payload["items"][0]["episode_id"]
     episode_response = await client.get(f"/api/episodes/{episode_id}")
     assert episode_response.status_code == 200
-    assert "Transcript for job:" in episode_response.json()["transcript_text"]
+    assert episode_response.json()["transcript_status"] == "completed"
+
+    transcript_response = await client.get(f"/api/episodes/{episode_id}/transcript")
+    assert transcript_response.status_code == 200
+    assert "Transcript for job:" in transcript_response.json()["transcript_text"]
 
 
 @pytest.mark.asyncio

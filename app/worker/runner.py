@@ -11,7 +11,6 @@ from app.application.container import AppContainer
 from app.config import Settings, get_settings
 from app.database import MongoManager, bootstrap_mongo
 from app.infrastructure.providers.assemblyai import AssemblyAIProvider
-from app.infrastructure.providers.openai_client import OpenAIProvider
 from app.infrastructure.providers.rss import RSSProvider
 from app.logging import configure_logging
 from app.worker.orchestrator import PipelineOrchestrator
@@ -33,12 +32,6 @@ def build_orchestrator(
         timeout_seconds=settings.assemblyai_timeout_seconds,
         max_inflight=settings.assemblyai_max_inflight,
     )
-    openai_provider = OpenAIProvider(
-        api_key=settings.openai_api_key.get_secret_value(),
-        model=settings.openai_model,
-        prompt_version=settings.openai_prompt_version,
-        max_inflight=settings.openai_max_inflight,
-    )
     return PipelineOrchestrator(
         settings=settings,
         run_repository=container.run_repository,
@@ -48,7 +41,7 @@ def build_orchestrator(
         lead_repository=container.lead_repository,
         rss_provider=rss_provider,
         assemblyai_provider=assemblyai_provider,
-        openai_provider=openai_provider,
+        openai_provider=container.openai_provider,
     )
 
 

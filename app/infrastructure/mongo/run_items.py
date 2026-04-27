@@ -49,6 +49,10 @@ class RunItemRepository(MongoRepository[RunItem]):
         total = await self.collection.count_documents(filters)
         return results, total
 
+    async def list_all(self) -> list[RunItem]:
+        cursor = self.collection.find({}).sort("created_at", -1)
+        return [self.model.model_validate(document) async for document in cursor]
+
     async def list_all_by_run_id(self, run_id: str) -> list[RunItem]:
         cursor = self.collection.find({"run_id": run_id}).sort("created_at", 1)
         return [self.model.model_validate(document) async for document in cursor]

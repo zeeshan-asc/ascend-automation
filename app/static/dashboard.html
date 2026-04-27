@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RSS Automation Dashboard</title>
     <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap"
-        rel="stylesheet"
-    />
+        rel="stylesheet" />
     <style>
         *,
         *::before,
@@ -40,6 +40,7 @@
             0% {
                 transform: translateX(-100%);
             }
+
             100% {
                 transform: translateX(320%);
             }
@@ -52,10 +53,12 @@
         }
 
         @keyframes glowPulse {
+
             0%,
             100% {
                 opacity: 0.32;
             }
+
             50% {
                 opacity: 1;
             }
@@ -90,6 +93,97 @@
             width: min(1360px, calc(100% - 28px));
             margin: 0 auto;
             padding: 24px 0 40px;
+        }
+
+        .app-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+            padding: 14px 18px;
+            margin-bottom: 18px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: linear-gradient(180deg, rgba(13, 19, 29, 0.94), rgba(8, 13, 20, 0.96));
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(14px);
+        }
+
+        .nav-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .nav-brand-mark {
+            width: 40px;
+            height: 40px;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 800;
+            color: #062316;
+            background: linear-gradient(135deg, var(--accent), #99f6e4);
+            box-shadow: 0 0 24px rgba(110, 231, 183, 0.2);
+        }
+
+        .nav-brand-copy {
+            display: grid;
+            gap: 3px;
+            min-width: 0;
+        }
+
+        .nav-brand-copy strong {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+        }
+
+        .nav-brand-copy span {
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            padding: 10px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(143, 162, 186, 0.18);
+            background: rgba(10, 16, 24, 0.82);
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            transition: transform 0.2s ease, border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+        }
+
+        .nav-link:hover {
+            transform: translateY(-1px);
+            border-color: rgba(110, 231, 183, 0.28);
+            color: var(--text);
+        }
+
+        .nav-link[aria-current="page"] {
+            border-color: rgba(110, 231, 183, 0.28);
+            background: rgba(110, 231, 183, 0.14);
+            color: var(--accent);
         }
 
         .loading-ribbon {
@@ -235,6 +329,12 @@
             color: var(--muted);
         }
 
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -317,7 +417,7 @@
             display: flex;
         }
 
-        .loading-host.is-loading > :not(.loading-overlay) {
+        .loading-host.is-loading> :not(.loading-overlay) {
             opacity: 0.38;
             filter: saturate(0.82);
             pointer-events: none;
@@ -371,7 +471,7 @@
             margin-bottom: 16px;
         }
 
-        .section-title > div {
+        .section-title>div {
             min-width: 0;
         }
 
@@ -399,7 +499,7 @@
             flex-wrap: wrap;
         }
 
-        .filter-row > * {
+        .filter-row>* {
             flex: 1 1 150px;
             min-width: 0;
         }
@@ -416,10 +516,48 @@
             outline: none;
         }
 
+        textarea {
+            width: 100%;
+            min-height: 110px;
+            resize: vertical;
+            border: 1px solid rgba(143, 162, 186, 0.16);
+            border-radius: 14px;
+            background: rgba(7, 11, 18, 0.92);
+            color: var(--text);
+            padding: 13px 14px;
+            font: inherit;
+            line-height: 1.75;
+            outline: none;
+        }
+
+        textarea::placeholder {
+            color: rgba(143, 162, 186, 0.72);
+        }
+
         .run-list,
         .item-list {
             display: grid;
             gap: 10px;
+        }
+
+        .run-pagination {
+            margin-top: 14px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .run-pagination .button {
+            min-height: 42px;
+        }
+
+        .pagination-label {
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
         }
 
         .run-row,
@@ -609,6 +747,38 @@
             word-break: break-word;
         }
 
+        .rewrite-stack {
+            display: grid;
+            gap: 12px;
+        }
+
+        .rewrite-feedback {
+            padding: 12px 13px;
+            border-radius: 14px;
+            border: 1px solid rgba(143, 162, 186, 0.16);
+            font-size: 11px;
+            line-height: 1.8;
+        }
+
+        .rewrite-feedback[data-tone="success"] {
+            border-color: rgba(110, 231, 183, 0.22);
+            background: rgba(110, 231, 183, 0.08);
+            color: var(--success);
+        }
+
+        .rewrite-feedback[data-tone="error"] {
+            border-color: rgba(255, 148, 148, 0.22);
+            background: rgba(255, 148, 148, 0.08);
+            color: var(--danger);
+        }
+
+        .rewrite-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
         .transcript-shell {
             margin-top: 6px;
             border-radius: 16px;
@@ -726,21 +896,42 @@
         }
 
         @media (max-width: 840px) {
+
             .stats-grid,
             .summary-grid,
             .workspace {
                 grid-template-columns: 1fr;
             }
 
+            .app-nav,
             .topbar {
                 flex-direction: column;
                 align-items: start;
             }
+
+            .nav-links {
+                width: 100%;
+            }
         }
     </style>
 </head>
+
 <body>
     <main class="shell">
+        <header class="app-nav">
+            <a class="nav-brand" href="/">
+                <span class="nav-brand-mark">P</span>
+                <span class="nav-brand-copy">
+                    <strong>Ascend Outreach Engine</strong>
+                    <span>Shared queue, run board, and records</span>
+                </span>
+            </a>
+            <nav class="nav-links" aria-label="Primary navigation">
+                <a class="nav-link" href="/">Queue run</a>
+                <a class="nav-link" aria-current="page" href="/dashboard">Shared dashboard</a>
+                <a class="nav-link" href="/records">Records workspace</a>
+            </nav>
+        </header>
         <header class="topbar">
             <div class="brand">
                 <span class="brand-chip">Shared run board</span>
@@ -753,7 +944,6 @@
             <div class="topbar-actions">
                 <span class="muted-inline" id="pollState">Polling only while a run is active</span>
                 <button class="button button-ghost" id="refreshButton" type="button">Refresh board</button>
-                <a class="button button-primary" href="/">Queue another run</a>
             </div>
         </header>
 
@@ -785,7 +975,8 @@
                 <div class="section-title">
                     <div>
                         <h2>Runs</h2>
-                        <p id="runRailSubtitle">Newest submissions first. Select one to open its items and draft output.</p>
+                        <p id="runRailSubtitle">Newest submissions first. Select one to open its items and draft output.
+                        </p>
                     </div>
                 </div>
                 <div class="filter-row">
@@ -803,6 +994,11 @@
                     </select>
                 </div>
                 <div class="run-list" id="runsList"></div>
+                <div class="run-pagination">
+                    <button class="button button-ghost" id="previousRunsPageButton" type="button">Previous 5</button>
+                    <span class="pagination-label" id="runsPageLabel">Page 1 of 1</span>
+                    <button class="button button-ghost" id="nextRunsPageButton" type="button">Next 5</button>
+                </div>
             </aside>
 
             <section class="main-panel">
@@ -840,7 +1036,8 @@
                 <div class="section-title">
                     <div>
                         <h3>Episodes in run</h3>
-                        <p>Each item inherits canonical episode state. Reused means the transcript and lead already existed.</p>
+                        <p>Each item inherits canonical episode state. Reused means the transcript and lead already
+                            existed.</p>
                     </div>
                 </div>
                 <div class="item-list" id="itemsList">
@@ -853,19 +1050,23 @@
                     <div class="loader-orbit"></div>
                     <div class="loading-overlay-copy">
                         <strong id="detailLoaderTitle">Loading episode</strong>
-                        <span id="detailLoaderText">Fetching transcript, lead identity, and draft email from the backend.</span>
+                        <span id="detailLoaderText">Fetching transcript, lead identity, and draft email from the
+                            backend.</span>
                     </div>
                 </div>
                 <div class="section-title">
                     <div>
                         <h2>Lead inspector</h2>
-                        <p>Open a run item to inspect the lead, expand the transcript preview, and review the stored email draft.</p>
+                        <p>Open a run item to inspect the lead, expand the transcript preview, and review the stored
+                            email draft.</p>
                     </div>
                 </div>
                 <div class="detail-stack" id="leadInspector">
                     <div class="empty-state">
-                        Choose a run item on the board. If a lead exists, the guest identity, expandable transcript preview,
-                        and draft email will render here. If the item failed, the transcript or provider error will surface instead.
+                        Choose a run item on the board. If a lead exists, the guest identity, expandable transcript
+                        preview,
+                        and draft email will render here. If the item failed, the transcript or provider error will
+                        surface instead.
                     </div>
                 </div>
             </aside>
@@ -875,16 +1076,31 @@
     <script>
         const ACTIVE_RUN_STATUSES = new Set(["queued", "claimed", "running"]);
         const POLL_INTERVAL_MS = 3000;
+        const RUNS_PER_PAGE = 5;
 
         const initialQuery = new URLSearchParams(window.location.search);
+        function readPositiveInt(value, fallback = 1) {
+            const parsed = Number.parseInt(value ?? "", 10);
+            return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+        }
+
         const state = {
             runs: [],
+            runTotal: 0,
+            runLimit: RUNS_PER_PAGE,
+            runPage: readPositiveInt(initialQuery.get("run_page"), 1),
             submitters: [],
             selectedRunId: initialQuery.get("run_id"),
             selectedEpisodeId: null,
             selectedLeadId: null,
             selectedSubmitterEmail: initialQuery.get("submitted_by_email") || "",
             pollHandle: null,
+            pollInFlight: false,
+            transcriptCache: {},
+            currentEpisode: null,
+            currentLead: null,
+            rewriteFeedback: null,
+            rewriteInstructionText: "",
         };
 
         const runsList = document.getElementById("runsList");
@@ -893,6 +1109,9 @@
         const refreshButton = document.getElementById("refreshButton");
         const statusFilter = document.getElementById("statusFilter");
         const submitterFilter = document.getElementById("submitterFilter");
+        const previousRunsPageButton = document.getElementById("previousRunsPageButton");
+        const nextRunsPageButton = document.getElementById("nextRunsPageButton");
+        const runsPageLabel = document.getElementById("runsPageLabel");
         const pollState = document.getElementById("pollState");
         const runRailSubtitle = document.getElementById("runRailSubtitle");
         const runTitle = document.getElementById("runTitle");
@@ -926,8 +1145,8 @@
                 .replaceAll('"', "&quot;");
         }
 
-        async function fetchJson(url) {
-            const response = await fetch(url);
+        async function fetchJson(url, options = undefined) {
+            const response = await fetch(url, options);
             if (!response.ok) {
                 const payload = await response.json().catch(() => ({}));
                 const detail = payload.detail || payload.error || "Request failed";
@@ -953,6 +1172,12 @@
                 nextUrl.searchParams.set("submitted_by_email", state.selectedSubmitterEmail);
             } else {
                 nextUrl.searchParams.delete("submitted_by_email");
+            }
+
+            if (state.runPage > 1) {
+                nextUrl.searchParams.set("run_page", String(state.runPage));
+            } else {
+                nextUrl.searchParams.delete("run_page");
             }
 
             window.history.replaceState({}, "", nextUrl);
@@ -1019,9 +1244,20 @@
             }
 
             state.pollHandle = window.setInterval(async () => {
-                await Promise.all([loadStats(), loadSubmitterFilters()]);
-                await loadRuns(false);
-                await loadSelectedRun(false);
+                if (state.pollInFlight) {
+                    return;
+                }
+                state.pollInFlight = true;
+                try {
+                    await loadStats();
+                    await loadRuns(false);
+                    await loadSelectedRun(false);
+                } catch (error) {
+                    const message = error instanceof Error ? error.message : "Background refresh failed.";
+                    renderInspectorError(message);
+                } finally {
+                    state.pollInFlight = false;
+                }
             }, POLL_INTERVAL_MS);
         }
 
@@ -1038,6 +1274,7 @@
         function renderRuns() {
             if (!state.runs.length) {
                 runsList.innerHTML = '<div class="empty-state">No runs found for the current filter.</div>';
+                renderRunPagination();
                 return;
             }
 
@@ -1066,6 +1303,14 @@
                     }
                 });
             });
+            renderRunPagination();
+        }
+
+        function renderRunPagination() {
+            const totalPages = Math.max(1, Math.ceil(state.runTotal / state.runLimit));
+            runsPageLabel.textContent = `Page ${state.runPage} of ${totalPages}`;
+            previousRunsPageButton.disabled = state.runPage <= 1;
+            nextRunsPageButton.disabled = state.runPage >= totalPages || state.runTotal === 0;
         }
 
         function renderRunSummary(run) {
@@ -1151,20 +1396,34 @@
                         <small>Email body</small>
                         <pre>${escapeHtml(payload.lead.email_body)}</pre>
                     </div>
+                    <div class="detail-card">
+                        <small>Rewrite email</small>
+                        <div class="rewrite-stack">
+                            
+                            ${state.rewriteFeedback && state.rewriteFeedback.leadId === payload.lead.lead_id
+                    ? `<div class="rewrite-feedback" data-tone="${escapeHtml(state.rewriteFeedback.tone)}">${escapeHtml(state.rewriteFeedback.message)}</div>`
+                    : ""}
+                            <textarea id="rewriteInstruction" data-rewrite-instruction placeholder="Example: tighten the opening, keep the same transcript hook, and sound more executive.">${escapeHtml(state.rewriteInstructionText)}</textarea>
+                            <div class="rewrite-actions">
+                                <button class="button button-primary" type="button" data-rewrite-trigger="${payload.lead.lead_id}">
+                                    Rewrite draft
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 `
                 : "";
 
-            const transcriptText = payload.episode.transcript_text || "Transcript not available yet.";
-            const transcriptBlock = payload.episode.transcript_text
+            const transcriptBlock = payload.episode.transcript_status
                 ? `
-                    <details class="transcript-shell">
+                    <details class="transcript-shell" data-transcript-episode="${escapeHtml(payload.episode.episode_id)}" data-transcript-loaded="false">
                         <summary class="transcript-toggle">Transcript preview</summary>
                         <div class="transcript-frame">
-                            <pre class="transcript-pre">${escapeHtml(transcriptText)}</pre>
+                            <pre class="transcript-pre" data-transcript-pre>Expand to load the stored transcript preview.</pre>
                         </div>
                     </details>
                 `
-                : `<p>${escapeHtml(transcriptText)}</p>`;
+                : `<p>Transcript not available yet.</p>`;
             const leadIdentity = payload.lead
                 ? `
                     <div class="detail-card">
@@ -1197,16 +1456,135 @@
                 </div>
                 ${emailBlocks}
             `;
+            bindTranscriptLoader(payload.episode.episode_id);
+            bindRewriteComposer(payload.lead ? payload.lead.lead_id : null);
         }
 
         function renderInspectorError(message) {
             leadInspector.innerHTML = `<div class="inline-error">${escapeHtml(message)}</div>`;
         }
 
+        function bindTranscriptLoader(episodeId) {
+            const transcriptShell = leadInspector.querySelector("[data-transcript-episode]");
+            const transcriptPre = leadInspector.querySelector("[data-transcript-pre]");
+            if (!transcriptShell || !transcriptPre) {
+                return;
+            }
+
+            transcriptShell.addEventListener("toggle", async () => {
+                if (!transcriptShell.open) {
+                    return;
+                }
+                if (transcriptShell.dataset.transcriptLoaded === "true") {
+                    return;
+                }
+
+                transcriptPre.textContent = "Loading transcript preview...";
+                setInspectorLoading(
+                    true,
+                    "Loading transcript",
+                    "Fetching the stored transcript text from the backend.",
+                );
+                try {
+                    let payload = state.transcriptCache[episodeId];
+                    if (!payload) {
+                        payload = await fetchJson(`/api/episodes/${episodeId}/transcript`);
+                        state.transcriptCache[episodeId] = payload;
+                    }
+                    transcriptPre.textContent = payload.transcript_text || "Transcript not available yet.";
+                    transcriptShell.dataset.transcriptLoaded = "true";
+                } catch (error) {
+                    transcriptPre.textContent = error instanceof Error
+                        ? error.message
+                        : "Failed to load transcript preview.";
+                } finally {
+                    setInspectorLoading(false);
+                }
+            });
+        }
+
+        function bindRewriteComposer(leadId) {
+            if (!leadId) {
+                return;
+            }
+
+            const trigger = leadInspector.querySelector("[data-rewrite-trigger]");
+            const instructionInput = leadInspector.querySelector("[data-rewrite-instruction]");
+            if (!trigger || !instructionInput) {
+                return;
+            }
+
+            trigger.addEventListener("click", async () => {
+                const instruction = instructionInput.value.trim();
+                state.rewriteInstructionText = instructionInput.value;
+                if (!instruction) {
+                    state.rewriteFeedback = {
+                        leadId,
+                        tone: "error",
+                        message: "Add a rewrite instruction before sending it to OpenAI.",
+                    };
+                    renderInspector({
+                        episode: state.currentEpisode,
+                        lead: state.currentLead,
+                    });
+                    return;
+                }
+
+                setInspectorLoading(
+                    true,
+                    "Rewriting email",
+                    "Sending your remarks, current draft, and transcript to OpenAI.",
+                );
+                try {
+                    const rewritten = await fetchJson(`/api/leads/${leadId}/rewrite`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ instruction }),
+                    });
+                    state.currentLead = {
+                        ...state.currentLead,
+                        email_subject: rewritten.email_subject,
+                        email_body: rewritten.email_body,
+                        updated_at: rewritten.updated_at,
+                    };
+                    state.rewriteInstructionText = "";
+                    state.rewriteFeedback = {
+                        leadId,
+                        tone: "success",
+                        message: "Draft rewritten and saved to the database.",
+                    };
+                    renderInspector({
+                        episode: state.currentEpisode,
+                        lead: state.currentLead,
+                    });
+                } catch (error) {
+                    state.rewriteFeedback = {
+                        leadId,
+                        tone: "error",
+                        message: error instanceof Error
+                            ? error.message
+                            : "Failed to rewrite the draft.",
+                    };
+                    renderInspector({
+                        episode: state.currentEpisode,
+                        lead: state.currentLead,
+                    });
+                } finally {
+                    setInspectorLoading(false);
+                }
+            });
+        }
+
         function resetRunSelection(message) {
             state.selectedRunId = null;
             state.selectedEpisodeId = null;
             state.selectedLeadId = null;
+            state.currentEpisode = null;
+            state.currentLead = null;
+            state.rewriteFeedback = null;
+            state.rewriteInstructionText = "";
             runTitle.textContent = "Select a run";
             runSubtitle.textContent = message;
             runStatusBadge.textContent = "idle";
@@ -1264,7 +1642,10 @@
         async function loadRuns(selectDefault = true) {
             const status = statusFilter.value;
             state.selectedSubmitterEmail = submitterFilter.value;
-            const params = new URLSearchParams({ page: "1", limit: "20" });
+            const params = new URLSearchParams({
+                page: String(state.runPage),
+                limit: String(state.runLimit),
+            });
             if (status) {
                 params.set("status", status);
             }
@@ -1272,9 +1653,18 @@
                 params.set("submitted_by_email", state.selectedSubmitterEmail);
             }
             const payload = await fetchJson(`/api/runs?${params.toString()}`);
+            state.runTotal = payload.total;
+            const totalPages = Math.max(1, Math.ceil(state.runTotal / state.runLimit));
+            if (!payload.data.length && payload.total > 0 && state.runPage > totalPages) {
+                state.runPage = totalPages;
+                syncDashboardQuery();
+                await loadRuns(selectDefault);
+                return;
+            }
             state.runs = payload.data;
             renderRuns();
             updateRunRailCopy();
+            syncDashboardQuery();
 
             if (!state.runs.length) {
                 resetRunSelection("No runs found for the current filter.");
@@ -1286,7 +1676,7 @@
                 return;
             }
 
-            if (state.selectedRunId && !state.runs.some((run) => run.run_id === state.selectedRunId)) {
+            if (selectDefault && state.selectedRunId && !state.runs.some((run) => run.run_id === state.selectedRunId)) {
                 await selectRun(state.runs[0].run_id, true);
             }
         }
@@ -1329,6 +1719,10 @@
         async function selectItem(episodeId, leadId) {
             state.selectedEpisodeId = episodeId;
             state.selectedLeadId = leadId;
+            state.currentEpisode = null;
+            state.currentLead = null;
+            state.rewriteFeedback = null;
+            state.rewriteInstructionText = "";
             document.querySelectorAll(".item-row").forEach((element) => {
                 element.classList.toggle("active", element.getAttribute("data-episode-id") === episodeId);
             });
@@ -1339,13 +1733,13 @@
                 "Fetching transcript, lead identity, and draft email from the backend.",
             );
             try {
-                const episode = await fetchJson(`/api/episodes/${episodeId}`);
-                if (leadId) {
-                    const lead = await fetchJson(`/api/leads/${leadId}`);
-                    renderInspector({ episode, lead });
-                } else {
-                    renderInspector({ episode, lead: null });
-                }
+                const [episode, lead] = await Promise.all([
+                    fetchJson(`/api/episodes/${episodeId}`),
+                    leadId ? fetchJson(`/api/leads/${leadId}`) : Promise.resolve(null),
+                ]);
+                state.currentEpisode = episode;
+                state.currentLead = lead;
+                renderInspector({ episode, lead });
             } catch (error) {
                 renderInspectorError(error instanceof Error ? error.message : "Failed to load item detail.");
             } finally {
@@ -1355,9 +1749,13 @@
 
         async function refreshBoard() {
             try {
-                await Promise.all([loadStats(), loadSubmitterFilters()]);
-                await loadRuns(true);
-                if (state.selectedRunId) {
+                const shouldAutoSelect = !state.selectedRunId;
+                await Promise.all([
+                    loadStats(),
+                    loadSubmitterFilters(),
+                    loadRuns(shouldAutoSelect),
+                ]);
+                if (state.selectedRunId && !shouldAutoSelect) {
                     await loadSelectedRun(false);
                 }
             } catch (error) {
@@ -1371,6 +1769,7 @@
         });
 
         statusFilter.addEventListener("change", () => {
+            state.runPage = 1;
             state.selectedRunId = null;
             state.selectedEpisodeId = null;
             state.selectedLeadId = null;
@@ -1378,6 +1777,7 @@
         });
 
         submitterFilter.addEventListener("change", () => {
+            state.runPage = 1;
             state.selectedRunId = null;
             state.selectedEpisodeId = null;
             state.selectedLeadId = null;
@@ -1386,7 +1786,31 @@
             void refreshBoard();
         });
 
+        previousRunsPageButton.addEventListener("click", () => {
+            if (state.runPage <= 1) {
+                return;
+            }
+            state.runPage -= 1;
+            state.selectedRunId = null;
+            state.selectedEpisodeId = null;
+            state.selectedLeadId = null;
+            void refreshBoard();
+        });
+
+        nextRunsPageButton.addEventListener("click", () => {
+            const totalPages = Math.max(1, Math.ceil(state.runTotal / state.runLimit));
+            if (state.runPage >= totalPages) {
+                return;
+            }
+            state.runPage += 1;
+            state.selectedRunId = null;
+            state.selectedEpisodeId = null;
+            state.selectedLeadId = null;
+            void refreshBoard();
+        });
+
         void refreshBoard();
     </script>
 </body>
+
 </html>

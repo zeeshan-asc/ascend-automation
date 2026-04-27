@@ -45,7 +45,7 @@ async def test_health_endpoint(client) -> None:
 async def test_landing_page_serves_existing_index(client) -> None:
     response = await client.get("/")
     assert response.status_code == 200
-    assert "Podcast Outreach Engine" in response.text
+    assert "Ascend Outreach Engine" in response.text
 
 
 def test_sensitive_data_filter_redacts_secrets() -> None:

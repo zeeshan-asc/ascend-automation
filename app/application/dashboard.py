@@ -42,6 +42,7 @@ class LeadSummary(ApiModel):
     guest_company: str
     role: str
     status: str
+    outreach_status: str
 
 
 class RunItemDetail(ApiModel):
@@ -68,9 +69,13 @@ class EpisodeDetail(ApiModel):
     audio_url: str
     published_at: str | None
     feed_url: str
-    transcript_text: str | None
     transcript_status: str | None
     lead: LeadSummary | None
+
+
+class EpisodeTranscriptDetail(ApiModel):
+    episode_id: str
+    transcript_text: str | None
 
 
 class LeadDetail(ApiModel):
@@ -87,6 +92,7 @@ class LeadDetail(ApiModel):
     prompt_version: str
     model_name: str
     status: str
+    outreach_status: str
     created_at: datetime
     updated_at: datetime
 
@@ -173,9 +179,7 @@ class DashboardQueryService:
         if run is None:
             raise ResourceNotFoundError(f"Run {run_id} was not found.")
         run_items = await self._run_item_repository.list_all_by_run_id(run_id)
-        item_details = await asyncio.gather(
-            *(self._build_run_item_detail(run_item) for run_item in run_items),
-        )
+        item_details = await self._hydrate_run_item_details(run_items)
         return RunDetail(**self._build_run_summary(run).model_dump(), items=item_details)
 
     async def get_run_items(
@@ -193,19 +197,22 @@ class DashboardQueryService:
             page=page,
             limit=limit,
         )
+        item_details = await self._hydrate_run_item_details(items)
         return PaginatedRunItems(
             total=total,
             page=page,
             limit=limit,
-            data=await asyncio.gather(*(self._build_run_item_detail(item) for item in items)),
+            data=item_details,
         )
 
     async def get_episode_detail(self, *, episode_id: str) -> EpisodeDetail:
         episode = await self._episode_repository.get_by_episode_id(episode_id)
         if episode is None:
             raise ResourceNotFoundError(f"Episode {episode_id} was not found.")
-        transcript = await self._transcript_repository.get_by_episode_id(episode_id)
-        lead = await self._lead_repository.get_by_episode_id(episode_id)
+        transcript_status, lead = await asyncio.gather(
+            self._transcript_repository.get_status_by_episode_id(episode_id),
+            self._lead_repository.get_by_episode_id(episode_id),
+        )
         return EpisodeDetail(
             episode_id=episode.episode_id,
             title=episode.title,
@@ -213,9 +220,17 @@ class DashboardQueryService:
             audio_url=episode.audio_url,
             published_at=episode.published_at,
             feed_url=episode.feed_url,
-            transcript_text=transcript.text if transcript else None,
-            transcript_status=str(transcript.status) if transcript else None,
+            transcript_status=transcript_status,
             lead=self._build_lead_summary(lead) if lead else None,
+        )
+
+    async def get_episode_transcript(self, *, episode_id: str) -> EpisodeTranscriptDetail:
+        episode = await self._episode_repository.get_by_episode_id(episode_id)
+        if episode is None:
+            raise ResourceNotFoundError(f"Episode {episode_id} was not found.")
+        return EpisodeTranscriptDetail(
+            episode_id=episode_id,
+            transcript_text=await self._transcript_repository.get_text_by_episode_id(episode_id),
         )
 
     async def list_leads(
@@ -264,11 +279,16 @@ class DashboardQueryService:
             self._episode_repository.count_all(),
             self._lead_repository.count_all(),
         )
+        run_status_counts, lead_status_counts, recent_runs_payload = await asyncio.gather(
+            self._run_repository.get_status_counts(),
+            self._lead_repository.get_status_counts(),
+            self._run_repository.list_runs(page=1, limit=5),
+        )
         runs_by_status = {status.value: 0 for status in RunStatus}
-        runs_by_status.update(await self._run_repository.get_status_counts())
+        runs_by_status.update(run_status_counts)
         leads_by_status = {status.value: 0 for status in LeadStatus}
-        leads_by_status.update(await self._lead_repository.get_status_counts())
-        recent_runs, _ = await self._run_repository.list_runs(page=1, limit=5)
+        leads_by_status.update(lead_status_counts)
+        recent_runs, _ = recent_runs_payload
         return DashboardStats(
             total_runs=total_runs,
             runs_by_status=runs_by_status,
@@ -294,24 +314,47 @@ class DashboardQueryService:
             completed_at=run.completed_at,
         )
 
-    async def _build_run_item_detail(self, run_item: RunItem) -> RunItemDetail:
-        episode, transcript, lead = await asyncio.gather(
-            self._episode_repository.get_by_episode_id(run_item.episode_id),
-            self._transcript_repository.get_by_episode_id(run_item.episode_id),
-            self._lead_repository.get_by_episode_id(run_item.episode_id),
+    async def _hydrate_run_item_details(self, run_items: list[RunItem]) -> list[RunItemDetail]:
+        if not run_items:
+            return []
+
+        episode_ids = [run_item.episode_id for run_item in run_items]
+        episodes, transcript_episode_ids, leads = await asyncio.gather(
+            self._episode_repository.list_by_episode_ids(episode_ids),
+            self._transcript_repository.list_existing_episode_ids(episode_ids),
+            self._lead_repository.list_by_episode_ids(episode_ids),
         )
-        return RunItemDetail(
-            run_item_id=run_item.run_item_id,
-            episode_id=run_item.episode_id,
-            title=run_item.title,
-            status=str(run_item.status),
-            error=run_item.error,
-            episode_url=episode.episode_url if episode else None,
-            audio_url=episode.audio_url if episode else None,
-            published_at=episode.published_at if episode else None,
-            transcript_ready=transcript is not None,
-            lead=self._build_lead_summary(lead) if lead else None,
-        )
+        episodes_by_id = {
+            episode.episode_id: episode
+            for episode in episodes
+        }
+        leads_by_episode_id = {
+            lead.episode_id: lead
+            for lead in leads
+        }
+        return [
+            RunItemDetail(
+                run_item_id=run_item.run_item_id,
+                episode_id=run_item.episode_id,
+                title=run_item.title,
+                status=str(run_item.status),
+                error=run_item.error,
+                episode_url=episodes_by_id[run_item.episode_id].episode_url
+                if run_item.episode_id in episodes_by_id
+                else None,
+                audio_url=episodes_by_id[run_item.episode_id].audio_url
+                if run_item.episode_id in episodes_by_id
+                else None,
+                published_at=episodes_by_id[run_item.episode_id].published_at
+                if run_item.episode_id in episodes_by_id
+                else None,
+                transcript_ready=run_item.episode_id in transcript_episode_ids,
+                lead=self._build_lead_summary(leads_by_episode_id[run_item.episode_id])
+                if run_item.episode_id in leads_by_episode_id
+                else None,
+            )
+            for run_item in run_items
+        ]
 
     def _build_lead_summary(self, lead: Lead) -> LeadSummary:
         return LeadSummary(
@@ -320,6 +363,7 @@ class DashboardQueryService:
             guest_company=lead.guest_company,
             role=lead.role,
             status=str(lead.status),
+            outreach_status=str(lead.outreach_status),
         )
 
     def _build_lead_detail(self, lead: Lead) -> LeadDetail:
@@ -337,6 +381,7 @@ class DashboardQueryService:
             prompt_version=lead.prompt_version,
             model_name=lead.model_name,
             status=str(lead.status),
+            outreach_status=str(lead.outreach_status),
             created_at=lead.created_at,
             updated_at=lead.updated_at,
         )

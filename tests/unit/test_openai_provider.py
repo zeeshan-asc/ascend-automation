@@ -6,7 +6,11 @@ from httpx import Response
 from pydantic import ValidationError
 
 from app.domain.errors import OpenAIRefusalError
-from app.infrastructure.providers.openai_client import ASCEND_PROMPT, OpenAIProvider
+from app.infrastructure.providers.openai_client import (
+    ASCEND_PROMPT,
+    ASCEND_REWRITE_PROMPT,
+    OpenAIProvider,
+)
 
 
 @pytest.mark.asyncio
@@ -125,3 +129,68 @@ def test_openai_provider_exposes_prompt_version() -> None:
         max_inflight=2,
     )
     assert provider.prompt_version == "v1.0-test"
+
+
+def test_openai_provider_builds_rewrite_payload_with_instruction_and_existing_draft() -> None:
+    provider = OpenAIProvider(
+        api_key="openai-key",
+        model="gpt-4.1-2025-04-14",
+        prompt_version="v1.0-test",
+        max_inflight=2,
+    )
+
+    payload = provider.build_rewrite_request_payload(
+        transcript_text="Transcript body",
+        current_email_subject="Current subject",
+        current_email_body="Current body",
+        user_instruction="Make it shorter and sharper",
+    )
+
+    assert payload["instructions"] == ASCEND_REWRITE_PROMPT
+    text_block = payload["input"][0]["content"][0]["text"]
+    assert "Make it shorter and sharper" in text_block
+    assert "Current subject" in text_block
+    assert "Current body" in text_block
+    assert "Transcript body" in text_block
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_openai_provider_returns_structured_email_rewrite() -> None:
+    provider = OpenAIProvider(
+        api_key="openai-key",
+        model="gpt-4.1-2025-04-14",
+        prompt_version="v1.0-test",
+        max_inflight=2,
+    )
+    response_payload = {
+        "output": [
+            {
+                "type": "message",
+                "content": [
+                    {
+                        "type": "output_text",
+                        "text": json.dumps(
+                            {
+                                "email_subject": "Updated subject",
+                                "email_body": "Updated body",
+                            },
+                        ),
+                    }
+                ],
+            }
+        ]
+    }
+    respx.post("https://api.openai.com/v1/responses").mock(
+        return_value=Response(200, json=response_payload),
+    )
+
+    draft = await provider.rewrite_email_draft(
+        transcript_text="Transcript body",
+        current_email_subject="Current subject",
+        current_email_body="Current body",
+        user_instruction="Make it shorter and sharper",
+    )
+
+    assert draft.email_subject == "Updated subject"
+    assert draft.email_body == "Updated body"

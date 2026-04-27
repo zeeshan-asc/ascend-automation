@@ -6,6 +6,10 @@ class InvalidStateTransitionError(DomainError):
     """Raised when a model attempts an invalid status transition."""
 
 
+class InvalidOperationError(DomainError):
+    """Raised when a requested operation cannot be completed in the current state."""
+
+
 class ResourceNotFoundError(DomainError):
     """Raised when a requested resource does not exist."""
 

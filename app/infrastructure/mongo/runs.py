@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import datetime
 
 from pymongo import ReturnDocument
@@ -15,6 +16,8 @@ class RunRepository(MongoRepository[Run]):
 
     async def ensure_indexes(self) -> None:
         await self.collection.create_index("run_id", unique=True)
+        await self.collection.create_index("submitted_at")
+        await self.collection.create_index([("submitted_by_email", 1), ("submitted_at", -1)])
         await self.collection.create_index(
             [("status", 1), ("heartbeat_at", 1), ("submitted_at", -1)],
         )
@@ -26,6 +29,12 @@ class RunRepository(MongoRepository[Run]):
 
     async def get_by_run_id(self, run_id: str) -> Run | None:
         return self.from_document(await self.collection.find_one({"run_id": run_id}))
+
+    async def list_by_run_ids(self, run_ids: Sequence[str]) -> list[Run]:
+        if not run_ids:
+            return []
+        cursor = self.collection.find({"run_id": {"$in": list(run_ids)}})
+        return [self.model.model_validate(document) async for document in cursor]
 
     async def count_all(self) -> int:
         return int(await self.collection.count_documents({}))
@@ -64,29 +73,28 @@ class RunRepository(MongoRepository[Run]):
         return results, total
 
     async def list_submitters(self) -> list[RunSubmitter]:
-        cursor = self.collection.find(
-            {},
+        pipeline = [
+            {"$sort": {"submitted_at": -1}},
             {
-                "_id": 0,
-                "submitted_by": 1,
-                "submitted_by_email": 1,
+                "$group": {
+                    "_id": "$submitted_by_email",
+                    "submitted_by": {"$first": "$submitted_by"},
+                    "submitted_by_email": {"$first": "$submitted_by_email"},
+                    "run_count": {"$sum": 1},
+                    "submitted_at": {"$first": "$submitted_at"},
+                }
             },
-        ).sort("submitted_at", -1)
-        submitters_by_email: dict[str, RunSubmitter] = {}
-        async for document in cursor:
-            email = str(document["submitted_by_email"])
-            existing = submitters_by_email.get(email)
-            if existing is None:
-                submitters_by_email[email] = RunSubmitter(
-                    submitted_by=str(document["submitted_by"]),
-                    submitted_by_email=email,
-                    run_count=1,
-                )
-                continue
-            submitters_by_email[email] = existing.model_copy(
-                update={"run_count": existing.run_count + 1},
+            {"$sort": {"submitted_at": -1}},
+        ]
+        cursor = await self.collection.aggregate(pipeline)
+        return [
+            RunSubmitter(
+                submitted_by=str(document["submitted_by"]),
+                submitted_by_email=str(document["submitted_by_email"]),
+                run_count=int(document["run_count"]),
             )
-        return list(submitters_by_email.values())
+            async for document in cursor
+        ]
 
     async def claim_next(self, *, worker_id: str, now: datetime) -> Run | None:
         document = await self.collection.find_one_and_update(

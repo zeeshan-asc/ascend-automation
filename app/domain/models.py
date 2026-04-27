@@ -6,7 +6,13 @@ from uuid import uuid4
 
 from pydantic import AnyHttpUrl, BaseModel, ConfigDict, EmailStr, Field
 
-from app.domain.enums import LeadStatus, RunItemStatus, RunStatus, TranscriptStatus
+from app.domain.enums import (
+    LeadStatus,
+    OutreachStatus,
+    RunItemStatus,
+    RunStatus,
+    TranscriptStatus,
+)
 
 
 def utcnow() -> datetime:
@@ -114,6 +120,11 @@ class LeadDraft(DomainModel):
     email_body: str
 
 
+class LeadEmailDraft(DomainModel):
+    email_subject: str
+    email_body: str
+
+
 class Lead(DomainModel):
     lead_id: str = Field(default_factory=lambda: str(uuid4()))
     run_id: str
@@ -128,5 +139,6 @@ class Lead(DomainModel):
     prompt_version: str
     model_name: str
     status: LeadStatus = LeadStatus.GENERATED
+    outreach_status: OutreachStatus = OutreachStatus.NOT_CONTACTED
     created_at: datetime = Field(default_factory=utcnow)
     updated_at: datetime = Field(default_factory=utcnow)

@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lead Records Workspace</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap"
+        rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #070b11;
+            --panel: rgba(13, 19, 29, 0.92);
+            --panel-strong: rgba(10, 16, 24, 0.96);
+            --border: rgba(140, 160, 188, 0.14);
+            --border-strong: rgba(110, 231, 183, 0.22);
+            --text: #ecf4ff;
+            --muted: #8fa2ba;
+            --accent: #6ee7b7;
+            --accent-cold: #38bdf8;
+            --accent-warm: #f5b965;
+            --danger: #ff9494;
+            --success: #6ee7b7;
+            --shadow: 0 22px 70px rgba(0, 0, 0, 0.34);
+            --radius-xl: 24px;
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --font-display: "Syne", sans-serif;
+            --font-body: "DM Mono", monospace;
+        }
+
+        @keyframes ribbonPulse {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(320%);
+            }
+        }
+
+        @keyframes orbitSpin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes glowPulse {
+
+            0%,
+            100% {
+                opacity: 0.32;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: var(--text);
+            font-family: var(--font-body);
+            background:
+                radial-gradient(circle at 12% 8%, rgba(56, 189, 248, 0.11), transparent 22%),
+                radial-gradient(circle at 88% 0%, rgba(110, 231, 183, 0.11), transparent 24%),
+                linear-gradient(180deg, #05070b 0%, #09121d 48%, #05070b 100%);
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(143, 162, 186, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(143, 162, 186, 0.05) 1px, transparent 1px);
+            background-size: 36px 36px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .shell {
+            position: relative;
+            z-index: 1;
+            width: min(1440px, calc(100% - 28px));
+            margin: 0 auto;
+            padding: 24px 0 40px;
+        }
+
+        .app-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 18px;
+            flex-wrap: wrap;
+            padding: 14px 18px;
+            margin-bottom: 18px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: linear-gradient(180deg, rgba(13, 19, 29, 0.94), rgba(8, 13, 20, 0.96));
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(14px);
+        }
+
+        .nav-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .nav-brand-mark {
+            width: 40px;
+            height: 40px;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            flex: 0 0 auto;
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 800;
+            color: #062316;
+            background: linear-gradient(135deg, var(--accent), #99f6e4);
+            box-shadow: 0 0 24px rgba(110, 231, 183, 0.2);
+        }
+
+        .nav-brand-copy {
+            display: grid;
+            gap: 3px;
+            min-width: 0;
+        }
+
+        .nav-brand-copy strong {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+        }
+
+        .nav-brand-copy span {
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            padding: 10px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(143, 162, 186, 0.18);
+            background: rgba(10, 16, 24, 0.82);
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            transition: transform 0.2s ease, border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+        }
+
+        .nav-link:hover {
+            transform: translateY(-1px);
+            border-color: rgba(110, 231, 183, 0.28);
+            color: var(--text);
+        }
+
+        .nav-link[aria-current="page"] {
+            border-color: rgba(110, 231, 183, 0.28);
+            background: rgba(110, 231, 183, 0.14);
+            color: var(--accent);
+        }
+
+        .loading-ribbon {
+            position: sticky;
+            top: 14px;
+            z-index: 12;
+            margin-bottom: 14px;
+            padding: 12px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(56, 189, 248, 0.22);
+            background: rgba(8, 14, 22, 0.9);
+            box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+            overflow: hidden;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            backdrop-filter: blur(14px);
+        }
+
+        .loading-ribbon.visible {
+            display: flex;
+        }
+
+        .loading-ribbon::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.32), transparent);
+            animation: ribbonPulse 1.2s linear infinite;
+        }
+
+        .loading-ribbon strong,
+        .loading-ribbon span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .loading-ribbon strong {
+            font-family: var(--font-display);
+            font-size: 14px;
+            color: var(--accent-cold);
+        }
+
+        .loading-ribbon span {
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.6;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .brand {
+            display: grid;
+            gap: 8px;
+        }
+
+        .brand-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--border-strong);
+            background: rgba(11, 18, 27, 0.88);
+            color: var(--accent);
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            width: fit-content;
+        }
+
+        .brand-chip::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 18px rgba(110, 231, 183, 0.5);
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-family: var(--font-display);
+            font-size: clamp(28px, 3.2vw, 48px);
+            line-height: 0.94;
+            letter-spacing: -0.05em;
+        }
+
+        .brand p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.7;
+            max-width: 72ch;
+        }
+
+        .topbar-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .button {
+            appearance: none;
+            border: 0;
+            cursor: pointer;
+            font: inherit;
+            border-radius: 12px;
+            padding: 12px 14px;
+            transition: transform 0.2s ease, opacity 0.2s ease, border-color 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+        }
+
+        .button-primary {
+            background: linear-gradient(135deg, var(--accent), #99f6e4);
+            color: #062316;
+            font-weight: 700;
+        }
+
+        .button-ghost {
+            border: 1px solid rgba(143, 162, 186, 0.18);
+            background: rgba(10, 16, 24, 0.88);
+            color: var(--muted);
+        }
+
+        .button:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .stat-card,
+        .filters-panel,
+        .records-panel {
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border);
+            background: linear-gradient(180deg, rgba(13, 19, 29, 0.94), rgba(8, 13, 20, 0.96));
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(16px);
+        }
+
+        .stat-card {
+            padding: 18px;
+        }
+
+        .stat-card small {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .stat-card strong {
+            display: block;
+            font-size: 28px;
+            font-family: var(--font-display);
+            letter-spacing: -0.04em;
+        }
+
+        .stat-card span {
+            display: block;
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .filters-panel,
+        .records-panel {
+            padding: 20px;
+        }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .section-title h2 {
+            margin: 0;
+            font-family: var(--font-display);
+            letter-spacing: -0.04em;
+        }
+
+        .section-title p {
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) repeat(2, minmax(220px, 0.55fr)) auto auto;
+            gap: 12px;
+            align-items: end;
+        }
+
+        .field {
+            display: grid;
+            gap: 8px;
+        }
+
+        .field label {
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        input,
+        select {
+            width: 100%;
+            border: 1px solid rgba(143, 162, 186, 0.16);
+            border-radius: 12px;
+            background: rgba(7, 11, 18, 0.92);
+            color: var(--text);
+            padding: 12px 12px;
+            font: inherit;
+            outline: none;
+        }
+
+        .records-panel {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 24px;
+            background: rgba(7, 11, 17, 0.74);
+            backdrop-filter: blur(10px);
+            z-index: 3;
+        }
+
+        .records-panel.is-loading .loading-overlay {
+            display: flex;
+        }
+
+        .records-panel.is-loading> :not(.loading-overlay) {
+            opacity: 0.38;
+            filter: saturate(0.82);
+            pointer-events: none;
+        }
+
+        .loader-orbit {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 2px solid rgba(56, 189, 248, 0.18);
+            border-top-color: var(--accent);
+            border-right-color: var(--accent-cold);
+            animation: orbitSpin 0.8s linear infinite;
+            box-shadow: 0 0 24px rgba(56, 189, 248, 0.18);
+            flex: 0 0 auto;
+        }
+
+        .loader-orbit::after {
+            content: "";
+            display: block;
+            width: 8px;
+            height: 8px;
+            margin: 13px auto 0;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: glowPulse 1.1s ease-in-out infinite;
+        }
+
+        .loading-overlay-copy strong {
+            display: block;
+            margin-bottom: 6px;
+            font-family: var(--font-display);
+            font-size: 18px;
+            color: var(--accent);
+        }
+
+        .loading-overlay-copy span {
+            display: block;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.8;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .table-shell {
+            overflow: auto;
+            border-radius: 18px;
+            border: 1px solid rgba(143, 162, 186, 0.12);
+            background: rgba(7, 11, 17, 0.62);
+        }
+
+        table {
+            width: 100%;
+            min-width: 1480px;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            padding: 14px 16px;
+            text-align: left;
+            background: rgba(8, 13, 20, 0.96);
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(143, 162, 186, 0.12);
+        }
+
+        tbody td {
+            padding: 16px;
+            vertical-align: top;
+            border-top: 1px solid rgba(143, 162, 186, 0.08);
+            font-size: 11px;
+            line-height: 1.8;
+        }
+
+        tbody tr:hover {
+            background: rgba(56, 189, 248, 0.04);
+        }
+
+        .cell-stack {
+            display: grid;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .cell-stack strong,
+        .cell-stack span,
+        .cell-stack a,
+        .cell-stack small {
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .cell-stack strong {
+            font-size: 12px;
+            color: var(--text);
+        }
+
+        .cell-stack span,
+        .cell-stack small {
+            color: var(--muted);
+        }
+
+        .link-cluster {
+            display: grid;
+            gap: 6px;
+        }
+
+        .link-cluster a {
+            color: var(--accent-cold);
+            text-decoration: none;
+        }
+
+        .link-cluster a:hover {
+            color: #9addff;
+        }
+
+        .status-tag {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            padding: 7px 10px;
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            border: 1px solid rgba(143, 162, 186, 0.16);
+            background: rgba(143, 162, 186, 0.08);
+            color: var(--muted);
+            width: fit-content;
+        }
+
+        .status-tag[data-status="generated"],
+        .status-tag[data-status="contacted"],
+        .status-tag[data-status="completed"],
+        .status-tag[data-status="done"],
+        .status-tag[data-status="reused"] {
+            border-color: rgba(110, 231, 183, 0.2);
+            color: var(--success);
+            background: rgba(110, 231, 183, 0.08);
+        }
+
+        .status-tag[data-status="review_needed"] {
+            border-color: rgba(245, 185, 101, 0.22);
+            color: var(--accent-warm);
+            background: rgba(245, 185, 101, 0.08);
+        }
+
+        .status-tag[data-status="failed"],
+        .status-tag[data-status="not_contacted"] {
+            border-color: rgba(255, 148, 148, 0.22);
+            color: var(--danger);
+            background: rgba(255, 148, 148, 0.08);
+        }
+
+        .status-select {
+            min-width: 160px;
+        }
+
+        .row-note {
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .error-copy {
+            color: var(--danger);
+        }
+
+        .records-footer {
+            margin-top: 14px;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .footer-meta {
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.7;
+        }
+
+        .pagination {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .empty-state {
+            padding: 28px;
+            border-radius: 16px;
+            border: 1px dashed rgba(143, 162, 186, 0.2);
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.8;
+            text-align: left;
+        }
+
+        @media (max-width: 1180px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .filters-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 760px) {
+            .shell {
+                width: min(100%, calc(100% - 20px));
+                padding-top: 18px;
+            }
+
+            .stats-grid,
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .app-nav,
+            .topbar {
+                align-items: flex-start;
+            }
+
+            .nav-links {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="shell">
+        <section class="loading-ribbon" id="loadingRibbon" aria-live="polite">
+            <strong id="loadingTitle">Loading records</strong>
+            <span id="loadingText">Fetching users, joined lead rows, and operational status.</span>
+        </section>
+
+        <header class="app-nav">
+            <a class="nav-brand" href="/">
+                <span class="nav-brand-mark">P</span>
+                <span class="nav-brand-copy">
+                    <strong>Ascend Outreach Engine</strong>
+                    <span>Shared queue, run board, and records</span>
+                </span>
+            </a>
+            <nav class="nav-links" aria-label="Primary navigation">
+                <a class="nav-link" href="/">Queue run</a>
+                <a class="nav-link" href="/dashboard">Shared dashboard</a>
+                <a class="nav-link" aria-current="page" href="/records">Records workspace</a>
+            </nav>
+        </header>
+        <header class="topbar">
+            <div class="brand">
+                <span class="brand-chip">Operational records + outreach control</span>
+                <h1>Lead records workspace</h1>
+                <p>
+                    Review every submitted RSS run in one place. This table joins users, RSS feeds, episode URLs,
+                    canonical lead data, and an editable outreach flag so the team can track who has been contacted.
+                </p>
+            </div>
+            <div class="topbar-actions">
+                <button class="button button-primary" id="exportButton" type="button">Export CSV</button>
+            </div>
+        </header>
+
+        <section class="stats-grid">
+            <article class="stat-card">
+                <small>Matching rows</small>
+                <strong id="matchingRows">0</strong>
+                <span id="rowsBreakdown">Waiting for records</span>
+            </article>
+            <article class="stat-card">
+                <small>Rows with lead</small>
+                <strong id="rowsWithLead">0</strong>
+                <span>Only rows with a canonical lead can be updated</span>
+            </article>
+            <article class="stat-card">
+                <small>Contacted</small>
+                <strong id="contactedRows">0</strong>
+                <span>Outreach completed on the currently filtered set</span>
+            </article>
+            <article class="stat-card">
+                <small>Awaiting outreach</small>
+                <strong id="pendingRows">0</strong>
+                <span>Rows whose linked lead still shows <code>not_contacted</code></span>
+            </article>
+        </section>
+
+        <section class="filters-panel">
+            <div class="section-title">
+                <div>
+                    <h2>Filters</h2>
+                    <p>Filter by user, outreach state, or text search. Export always respects the current filter set.
+                    </p>
+                </div>
+            </div>
+            <div class="filters-grid">
+                <div class="field">
+                    <label for="searchFilter">Search</label>
+                    <input id="searchFilter" type="search"
+                        placeholder="Guest, company, user, RSS URL, episode title..." />
+                </div>
+                <div class="field">
+                    <label for="submitterFilter">Submitted by</label>
+                    <select id="submitterFilter">
+                        <option value="">All teammates</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="outreachFilter">Outreach state</label>
+                    <select id="outreachFilter">
+                        <option value="">All outreach states</option>
+                        <option value="not_contacted">Not contacted</option>
+                        <option value="contacted">Contacted</option>
+                    </select>
+                </div>
+                <button class="button button-ghost" id="refreshButton" type="button">Refresh</button>
+                <button class="button button-ghost" id="resetButton" type="button">Reset</button>
+            </div>
+        </section>
+
+        <section class="records-panel" id="recordsPanel">
+            <div class="loading-overlay" id="recordsLoader" aria-hidden="true">
+                <div class="loader-orbit"></div>
+                <div class="loading-overlay-copy">
+                    <strong id="recordsLoaderTitle">Loading records</strong>
+                    <span id="recordsLoaderText">Joining runs, episodes, and leads into the workspace table.</span>
+                </div>
+            </div>
+
+            <div class="section-title">
+                <div>
+                    <h2>All submitted records</h2>
+                    <p>Rows are keyed by run item, so repeated submissions by different users remain visible even when
+                        they reuse the same canonical lead.</p>
+                </div>
+            </div>
+
+            <div class="table-shell">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Submitter</th>
+                            <th>RSS feed</th>
+                            <th>Episode</th>
+                            <th>URLs</th>
+                            <th>Lead</th>
+                            <th>Draft</th>
+                            <th>Outreach</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recordsTableBody">
+                        <tr>
+                            <td colspan="7">
+                                <div class="empty-state">No records loaded yet.</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="records-footer">
+                <div class="footer-meta" id="recordsMeta">Waiting for first response.</div>
+                <div class="pagination">
+                    <button class="button button-ghost" id="previousPageButton" type="button">Previous</button>
+                    <span class="footer-meta" id="pageLabel">Page 1</span>
+                    <button class="button button-ghost" id="nextPageButton" type="button">Next</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const initialQuery = new URLSearchParams(window.location.search);
+        const state = {
+            page: Number(initialQuery.get("page") || "1"),
+            limit: 25,
+            total: 0,
+            rows: [],
+            submitters: [],
+            search: initialQuery.get("search") || "",
+            submittedByEmail: initialQuery.get("submitted_by_email") || "",
+            outreachStatus: initialQuery.get("outreach_status") || "",
+        };
+
+        const loadingRibbon = document.getElementById("loadingRibbon");
+        const loadingTitle = document.getElementById("loadingTitle");
+        const loadingText = document.getElementById("loadingText");
+        const recordsPanel = document.getElementById("recordsPanel");
+        const recordsLoaderTitle = document.getElementById("recordsLoaderTitle");
+        const recordsLoaderText = document.getElementById("recordsLoaderText");
+        const submitterFilter = document.getElementById("submitterFilter");
+        const outreachFilter = document.getElementById("outreachFilter");
+        const searchFilter = document.getElementById("searchFilter");
+        const recordsTableBody = document.getElementById("recordsTableBody");
+        const recordsMeta = document.getElementById("recordsMeta");
+        const pageLabel = document.getElementById("pageLabel");
+        const previousPageButton = document.getElementById("previousPageButton");
+        const nextPageButton = document.getElementById("nextPageButton");
+        const exportButton = document.getElementById("exportButton");
+        const refreshButton = document.getElementById("refreshButton");
+        const resetButton = document.getElementById("resetButton");
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;");
+        }
+
+        function formatDate(value) {
+            if (!value) {
+                return "Not yet";
+            }
+            const parsed = new Date(value);
+            if (Number.isNaN(parsed.getTime())) {
+                return value;
+            }
+            return parsed.toLocaleString();
+        }
+
+        function setRibbonLoading(isLoading, title, detail) {
+            if (title) {
+                loadingTitle.textContent = title;
+            }
+            if (detail) {
+                loadingText.textContent = detail;
+            }
+            loadingRibbon.classList.toggle("visible", isLoading);
+        }
+
+        function setPanelLoading(isLoading, title, detail) {
+            if (title) {
+                recordsLoaderTitle.textContent = title;
+            }
+            if (detail) {
+                recordsLoaderText.textContent = detail;
+            }
+            recordsPanel.classList.toggle("is-loading", isLoading);
+            recordsPanel.setAttribute("aria-busy", String(isLoading));
+        }
+
+        function syncQuery() {
+            const nextUrl = new URL(window.location.href);
+            nextUrl.searchParams.set("page", String(state.page));
+            if (state.search) {
+                nextUrl.searchParams.set("search", state.search);
+            } else {
+                nextUrl.searchParams.delete("search");
+            }
+            if (state.submittedByEmail) {
+                nextUrl.searchParams.set("submitted_by_email", state.submittedByEmail);
+            } else {
+                nextUrl.searchParams.delete("submitted_by_email");
+            }
+            if (state.outreachStatus) {
+                nextUrl.searchParams.set("outreach_status", state.outreachStatus);
+            } else {
+                nextUrl.searchParams.delete("outreach_status");
+            }
+            window.history.replaceState({}, "", nextUrl);
+        }
+
+        async function fetchJson(url, options = {}) {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                const payload = await response.json().catch(() => ({}));
+                const detail = payload.detail || payload.error || "Request failed";
+                throw new Error(typeof detail === "string" ? detail : "Request failed");
+            }
+            return response.json();
+        }
+
+        function buildQueryString(includePage = true) {
+            const params = new URLSearchParams();
+            if (includePage) {
+                params.set("page", String(state.page));
+                params.set("limit", String(state.limit));
+            }
+            if (state.search) {
+                params.set("search", state.search);
+            }
+            if (state.submittedByEmail) {
+                params.set("submitted_by_email", state.submittedByEmail);
+            }
+            if (state.outreachStatus) {
+                params.set("outreach_status", state.outreachStatus);
+            }
+            return params.toString();
+        }
+
+        function renderSubmitterOptions() {
+            const options = [
+                '<option value="">All teammates</option>',
+                ...state.submitters.map((submitter) => `
+                    <option value="${escapeHtml(submitter.submitted_by_email)}">
+                        ${escapeHtml(submitter.submitted_by)} - ${escapeHtml(submitter.submitted_by_email)} (${submitter.run_count})
+                    </option>
+                `),
+            ];
+            submitterFilter.innerHTML = options.join("");
+            submitterFilter.value = state.submittedByEmail;
+            if (submitterFilter.value !== state.submittedByEmail) {
+                state.submittedByEmail = "";
+            }
+        }
+
+        function renderSummary() {
+            const rowsWithLead = state.rows.filter((row) => row.lead_id).length;
+            const contactedRows = state.rows.filter((row) => row.outreach_status === "contacted").length;
+            const pendingRows = state.rows.filter((row) => row.outreach_status === "not_contacted").length;
+
+            document.getElementById("matchingRows").textContent = String(state.total);
+            document.getElementById("rowsBreakdown").textContent =
+                `${state.rows.length} visible on this page`;
+            document.getElementById("rowsWithLead").textContent = String(rowsWithLead);
+            document.getElementById("contactedRows").textContent = String(contactedRows);
+            document.getElementById("pendingRows").textContent = String(pendingRows);
+        }
+
+        function renderRows() {
+            if (!state.rows.length) {
+                recordsTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">No rows matched the current filters.</div>
+                        </td>
+                    </tr>
+                `;
+                recordsMeta.textContent = "No rows matched the current filters.";
+                pageLabel.textContent = `Page ${state.page}`;
+                previousPageButton.disabled = state.page <= 1;
+                nextPageButton.disabled = true;
+                return;
+            }
+
+            recordsTableBody.innerHTML = state.rows.map((row) => `
+                <tr>
+                    <td>
+                        <div class="cell-stack">
+                            <strong>${escapeHtml(row.submitted_by)}</strong>
+                            <span>${escapeHtml(row.submitted_by_email)}</span>
+                            <small>${formatDate(row.submitted_at)}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="cell-stack">
+                            <a class="link-cluster" href="${escapeHtml(row.rss_url)}" target="_blank" rel="noreferrer noopener">
+                                ${escapeHtml(row.rss_url)}
+                            </a>
+                            <span class="status-tag" data-status="${row.run_status}">${escapeHtml(row.run_status.replaceAll("_", " "))}</span>
+                            <small>Run ${escapeHtml(row.run_id.slice(0, 8))}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="cell-stack">
+                            <strong>${escapeHtml(row.episode_title)}</strong>
+                            <span>${escapeHtml(row.published_at || "No publish date")}</span>
+                            <span class="status-tag" data-status="${row.run_item_status}">${escapeHtml(row.run_item_status.replaceAll("_", " "))}</span>
+                            ${row.error ? `<small class="error-copy">${escapeHtml(row.error)}</small>` : ""}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="link-cluster">
+                            ${row.episode_url ? `<a href="${escapeHtml(row.episode_url)}" target="_blank" rel="noreferrer noopener">Episode URL</a>` : '<span class="row-note">No episode URL</span>'}
+                            ${row.audio_url ? `<a href="${escapeHtml(row.audio_url)}" target="_blank" rel="noreferrer noopener">Audio URL</a>` : '<span class="row-note">No audio URL</span>'}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="cell-stack">
+                            ${row.lead_id
+                    ? `
+                                        <strong>${escapeHtml(row.guest_name || "Unknown guest")}</strong>
+                                        <span>${escapeHtml(row.role || "Role unavailable")} at ${escapeHtml(row.guest_company || "Company unavailable")}</span>
+                                        <span class="status-tag" data-status="${row.lead_status}">${escapeHtml((row.lead_status || "").replaceAll("_", " "))}</span>
+                                    `
+                    : `
+                                        <strong>No lead yet</strong>
+                                        <span>The row exists because the run item is tracked, but no canonical lead was created.</span>
+                                    `
+                }
+                        </div>
+                    </td>
+                    <td>
+                        <div class="cell-stack">
+                            <strong>${escapeHtml(row.email_subject || "No draft subject")}</strong>
+                            <span>${escapeHtml((row.email_body || "No draft email body").slice(0, 180))}${row.email_body && row.email_body.length > 180 ? "..." : ""}</span>
+                        </div>
+                    </td>
+                    <td>
+                        ${row.lead_id
+                    ? `
+                                    <div class="cell-stack">
+                                        <select class="status-select" data-lead-id="${escapeHtml(row.lead_id)}">
+                                            <option value="not_contacted" ${row.outreach_status === "not_contacted" ? "selected" : ""}>Not contacted</option>
+                                            <option value="contacted" ${row.outreach_status === "contacted" ? "selected" : ""}>Contacted</option>
+                                        </select>
+                                        <span class="status-tag" data-status="${row.outreach_status}">${escapeHtml((row.outreach_status || "").replaceAll("_", " "))}</span>
+                                    </div>
+                                `
+                    : '<span class="row-note">No lead to update</span>'
+                }
+                    </td>
+                </tr>
+            `).join("");
+
+            recordsTableBody.querySelectorAll("[data-lead-id]").forEach((element) => {
+                element.addEventListener("change", async () => {
+                    const leadId = element.getAttribute("data-lead-id");
+                    const nextStatus = element.value;
+                    if (leadId) {
+                        await updateOutreachStatus(leadId, nextStatus);
+                    }
+                });
+            });
+
+            const totalPages = Math.max(1, Math.ceil(state.total / state.limit));
+            recordsMeta.textContent = `${state.total} matching row(s). Showing page ${state.page} of ${totalPages}.`;
+            pageLabel.textContent = `Page ${state.page} of ${totalPages}`;
+            previousPageButton.disabled = state.page <= 1;
+            nextPageButton.disabled = state.page >= totalPages;
+        }
+
+        async function loadSubmitters() {
+            const payload = await fetchJson("/api/dashboard/submitters");
+            state.submitters = payload.data;
+            renderSubmitterOptions();
+        }
+
+        async function loadRecords() {
+            syncQuery();
+            setRibbonLoading(true, "Loading records", "Fetching joined rows and applying current filters.");
+            setPanelLoading(true, "Loading records", "Joining users, RSS feeds, leads, and URLs into the table.");
+            try {
+                const payload = await fetchJson(`/api/records?${buildQueryString(true)}`);
+                state.rows = payload.data;
+                state.total = payload.total;
+                renderSummary();
+                renderRows();
+            } finally {
+                setRibbonLoading(false);
+                setPanelLoading(false);
+            }
+        }
+
+        async function updateOutreachStatus(leadId, outreachStatus) {
+            setRibbonLoading(true, "Saving outreach state", "Updating the linked lead so every reused row stays consistent.");
+            try {
+                await fetchJson(`/api/leads/${leadId}/outreach`, {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ outreach_status: outreachStatus }),
+                });
+                state.rows = state.rows.map((row) => (
+                    row.lead_id === leadId
+                        ? { ...row, outreach_status: outreachStatus }
+                        : row
+                ));
+                renderSummary();
+                renderRows();
+            } catch (error) {
+                window.alert(error instanceof Error ? error.message : "Failed to update outreach state.");
+                await loadRecords();
+            } finally {
+                setRibbonLoading(false);
+            }
+        }
+
+        async function exportCsv() {
+            setRibbonLoading(true, "Exporting CSV", "Preparing the current filtered record set for download.");
+            try {
+                const response = await fetch(`/api/records/export?${buildQueryString(false)}`);
+                if (!response.ok) {
+                    throw new Error("Export failed.");
+                }
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const anchor = document.createElement("a");
+                anchor.href = url;
+                anchor.download = "lead-records.csv";
+                document.body.appendChild(anchor);
+                anchor.click();
+                anchor.remove();
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                window.alert(error instanceof Error ? error.message : "Failed to export CSV.");
+            } finally {
+                setRibbonLoading(false);
+            }
+        }
+
+        function resetFilters() {
+            state.page = 1;
+            state.search = "";
+            state.submittedByEmail = "";
+            state.outreachStatus = "";
+            searchFilter.value = "";
+            submitterFilter.value = "";
+            outreachFilter.value = "";
+        }
+
+        searchFilter.value = state.search;
+        outreachFilter.value = state.outreachStatus;
+
+        refreshButton.addEventListener("click", () => {
+            state.search = searchFilter.value.trim();
+            state.submittedByEmail = submitterFilter.value;
+            state.outreachStatus = outreachFilter.value;
+            state.page = 1;
+            void loadRecords();
+        });
+
+        resetButton.addEventListener("click", () => {
+            resetFilters();
+            void loadRecords();
+        });
+
+        exportButton.addEventListener("click", () => {
+            state.search = searchFilter.value.trim();
+            state.submittedByEmail = submitterFilter.value;
+            state.outreachStatus = outreachFilter.value;
+            void exportCsv();
+        });
+
+        previousPageButton.addEventListener("click", () => {
+            if (state.page <= 1) {
+                return;
+            }
+            state.page -= 1;
+            void loadRecords();
+        });
+
+        nextPageButton.addEventListener("click", () => {
+            const totalPages = Math.max(1, Math.ceil(state.total / state.limit));
+            if (state.page >= totalPages) {
+                return;
+            }
+            state.page += 1;
+            void loadRecords();
+        });
+
+        searchFilter.addEventListener("keydown", (event) => {
+            if (event.key !== "Enter") {
+                return;
+            }
+            event.preventDefault();
+            state.search = searchFilter.value.trim();
+            state.submittedByEmail = submitterFilter.value;
+            state.outreachStatus = outreachFilter.value;
+            state.page = 1;
+            void loadRecords();
+        });
+
+        submitterFilter.addEventListener("change", () => {
+            state.submittedByEmail = submitterFilter.value;
+            state.page = 1;
+            void loadRecords();
+        });
+
+        outreachFilter.addEventListener("change", () => {
+            state.outreachStatus = outreachFilter.value;
+            state.page = 1;
+            void loadRecords();
+        });
+
+        async function boot() {
+            try {
+                await loadSubmitters();
+                await loadRecords();
+            } catch (error) {
+                recordsTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">${escapeHtml(error instanceof Error ? error.message : "Failed to load records workspace.")}</div>
+                        </td>
+                    </tr>
+                `;
+                setRibbonLoading(false);
+                setPanelLoading(false);
+            }
+        }
+
+        void boot();
+    </script>
+</body>
+
+</html>

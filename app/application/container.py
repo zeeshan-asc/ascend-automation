@@ -8,6 +8,7 @@ from app.database import MongoManager
 from app.domain.interfaces import (
     EpisodeRepositoryProtocol,
     LeadRepositoryProtocol,
+    OpenAIProviderProtocol,
     RunItemRepositoryProtocol,
     RunRepositoryProtocol,
     TranscriptRepositoryProtocol,
@@ -17,6 +18,7 @@ from app.infrastructure.mongo.leads import LeadRepository
 from app.infrastructure.mongo.run_items import RunItemRepository
 from app.infrastructure.mongo.runs import RunRepository
 from app.infrastructure.mongo.transcripts import TranscriptRepository
+from app.infrastructure.providers.openai_client import OpenAIProvider
 
 
 @dataclass(slots=True)
@@ -28,6 +30,7 @@ class AppContainer:
     run_item_repository: RunItemRepositoryProtocol
     transcript_repository: TranscriptRepositoryProtocol
     lead_repository: LeadRepositoryProtocol
+    openai_provider: OpenAIProviderProtocol
 
     @classmethod
     async def build(
@@ -45,6 +48,12 @@ class AppContainer:
             run_item_repository=RunItemRepository(database),
             transcript_repository=TranscriptRepository(database),
             lead_repository=LeadRepository(database),
+            openai_provider=OpenAIProvider(
+                api_key=settings.openai_api_key.get_secret_value(),
+                model=settings.openai_model,
+                prompt_version=settings.openai_prompt_version,
+                max_inflight=settings.openai_max_inflight,
+            ),
         )
         await container.ensure_indexes()
         return container

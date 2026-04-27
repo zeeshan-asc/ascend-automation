@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import datetime
 
 from pymongo import ReturnDocument
@@ -31,6 +32,12 @@ class EpisodeRepository(MongoRepository[Episode]):
 
     async def get_by_episode_id(self, episode_id: str) -> Episode | None:
         return self.from_document(await self.collection.find_one({"episode_id": episode_id}))
+
+    async def list_by_episode_ids(self, episode_ids: Sequence[str]) -> list[Episode]:
+        if not episode_ids:
+            return []
+        cursor = self.collection.find({"episode_id": {"$in": episode_ids}})
+        return [self.model.model_validate(document) async for document in cursor]
 
     async def count_all(self, *, feed_url: str | None = None) -> int:
         filters: dict[str, object] = {}

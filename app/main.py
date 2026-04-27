@@ -15,6 +15,7 @@ from app.api.dashboard import router as dashboard_router
 from app.api.episodes import router as episodes_router
 from app.api.health import router as health_router
 from app.api.leads import router as leads_router
+from app.api.records import router as records_router
 from app.api.runs import router as runs_router
 from app.api.submissions import router as submissions_router
 from app.application.container import AppContainer
@@ -105,6 +106,7 @@ def create_app(
     app.include_router(episodes_router)
     app.include_router(health_router)
     app.include_router(leads_router)
+    app.include_router(records_router)
     app.include_router(runs_router)
     app.include_router(submissions_router)
 
@@ -121,6 +123,11 @@ def create_app(
     async def dashboard_page() -> FileResponse:
         dashboard_path = project_root / "app" / "static" / "dashboard.html"
         return FileResponse(dashboard_path)
+
+    @app.get("/records", include_in_schema=False)
+    async def records_page() -> FileResponse:
+        records_path = project_root / "app" / "static" / "records.html"
+        return FileResponse(records_path)
 
     return app
 

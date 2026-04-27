@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
+from datetime import datetime
+
+from pymongo import ReturnDocument
+
+from app.domain.enums import OutreachStatus
 from app.domain.models import Lead
 from app.infrastructure.mongo.base import MongoRepository
 
@@ -12,6 +18,7 @@ class LeadRepository(MongoRepository[Lead]):
         await self.collection.create_index("lead_id", unique=True)
         await self.collection.create_index("episode_id", unique=True)
         await self.collection.create_index("status")
+        await self.collection.create_index("outreach_status")
         await self.collection.create_index("created_at")
 
     async def create(self, lead: Lead) -> Lead:
@@ -23,6 +30,52 @@ class LeadRepository(MongoRepository[Lead]):
 
     async def get_by_lead_id(self, lead_id: str) -> Lead | None:
         return self.from_document(await self.collection.find_one({"lead_id": lead_id}))
+
+    async def list_by_episode_ids(self, episode_ids: Sequence[str]) -> list[Lead]:
+        if not episode_ids:
+            return []
+        cursor = self.collection.find({"episode_id": {"$in": episode_ids}})
+        return [self.model.model_validate(document) async for document in cursor]
+
+    async def update_outreach_status(
+        self,
+        *,
+        lead_id: str,
+        outreach_status: OutreachStatus,
+        now: datetime,
+    ) -> Lead | None:
+        document = await self.collection.find_one_and_update(
+            {"lead_id": lead_id},
+            {
+                "$set": {
+                    "outreach_status": str(outreach_status),
+                    "updated_at": now,
+                }
+            },
+            return_document=ReturnDocument.AFTER,
+        )
+        return self.from_document(document)
+
+    async def update_email_draft(
+        self,
+        *,
+        lead_id: str,
+        email_subject: str,
+        email_body: str,
+        now: datetime,
+    ) -> Lead | None:
+        document = await self.collection.find_one_and_update(
+            {"lead_id": lead_id},
+            {
+                "$set": {
+                    "email_subject": email_subject,
+                    "email_body": email_body,
+                    "updated_at": now,
+                }
+            },
+            return_document=ReturnDocument.AFTER,
+        )
+        return self.from_document(document)
 
     async def count_all(self) -> int:
         return int(await self.collection.count_documents({}))
