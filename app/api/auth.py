@@ -95,11 +95,11 @@ async def sign_in(
 @router.post("/signout", status_code=status.HTTP_204_NO_CONTENT)
 async def sign_out(
     request: Request,
-    response: Response,
     service: AuthServiceDep,
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
 ) -> Response:
     await service.sign_out(user_id=current_user.user_id)
+    response = Response(status_code=status.HTTP_204_NO_CONTENT)
     _clear_auth_cookie(response, request)
     return response
 

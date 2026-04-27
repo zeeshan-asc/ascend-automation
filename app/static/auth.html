@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ascend Auth Portal</title>
+    <title>Sign In | Ascend Outreach Engine</title>
     <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap"
         rel="stylesheet" />
@@ -17,21 +17,20 @@
 
         :root {
             --bg: #070b11;
-            --bg-strong: #05070b;
-            --surface: rgba(13, 19, 29, 0.92);
-            --surface-strong: rgba(10, 16, 24, 0.96);
-            --ink: #ecf4ff;
+            --panel: rgba(13, 19, 29, 0.92);
+            --panel-strong: rgba(10, 16, 24, 0.96);
+            --border: rgba(140, 160, 188, 0.14);
+            --border-strong: rgba(110, 231, 183, 0.22);
+            --text: #ecf4ff;
             --muted: #8fa2ba;
-            --line: rgba(140, 160, 188, 0.14);
-            --line-strong: rgba(110, 231, 183, 0.22);
             --accent: #6ee7b7;
-            --accent-soft: #38bdf8;
+            --accent-cold: #38bdf8;
             --accent-warm: #f5b965;
             --danger: #ff9494;
-            --radius-xl: 34px;
-            --radius-lg: 22px;
-            --radius-md: 14px;
             --shadow: 0 22px 70px rgba(0, 0, 0, 0.34);
+            --radius-xl: 24px;
+            --radius-lg: 18px;
+            --radius-md: 12px;
             --font-display: "Syne", sans-serif;
             --font-body: "DM Mono", monospace;
         }
@@ -51,8 +50,8 @@
         body {
             margin: 0;
             min-height: 100vh;
+            color: var(--text);
             font-family: var(--font-body);
-            color: var(--ink);
             background:
                 radial-gradient(circle at 12% 8%, rgba(56, 189, 248, 0.11), transparent 22%),
                 radial-gradient(circle at 88% 0%, rgba(110, 231, 183, 0.11), transparent 24%),
@@ -66,47 +65,50 @@
             background-image:
                 linear-gradient(rgba(143, 162, 186, 0.05) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(143, 162, 186, 0.05) 1px, transparent 1px);
-            background-size: 42px 42px;
+            background-size: 36px 36px;
             pointer-events: none;
-            mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.92), transparent);
+            z-index: 0;
         }
 
         .page {
             position: relative;
             z-index: 1;
-            width: min(1240px, calc(100% - 36px));
+            width: min(1280px, calc(100% - 48px));
             margin: 0 auto;
-            padding: 28px 0 48px;
+            padding: 24px 0 56px;
         }
 
-        .nav {
+        .app-nav {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 14px;
+            gap: 18px;
             flex-wrap: wrap;
             padding: 14px 18px;
+            margin-bottom: 18px;
             border-radius: 20px;
-            border: 1px solid var(--line);
+            border: 1px solid var(--border);
             background: linear-gradient(180deg, rgba(13, 19, 29, 0.94), rgba(8, 13, 20, 0.96));
             box-shadow: var(--shadow);
             backdrop-filter: blur(14px);
         }
 
-        .brand {
+        .nav-brand {
             display: inline-flex;
             align-items: center;
             gap: 14px;
+            min-width: 0;
             text-decoration: none;
-            color: inherit;
+            color: var(--text);
         }
 
-        .brand-mark {
-            width: 42px;
-            height: 42px;
+        .nav-brand-mark {
+            width: 40px;
+            height: 40px;
             border-radius: 14px;
             display: grid;
             place-items: center;
+            flex: 0 0 auto;
             font-family: var(--font-display);
             font-size: 18px;
             font-weight: 800;
@@ -115,22 +117,66 @@
             box-shadow: 0 0 24px rgba(110, 231, 183, 0.2);
         }
 
-        .brand-copy {
+        .nav-brand-copy {
             display: grid;
             gap: 3px;
+            min-width: 0;
         }
 
-        .brand-copy strong {
+        .nav-brand-copy strong {
             font-family: var(--font-display);
             font-size: 20px;
-            letter-spacing: -0.04em;
+            font-weight: 700;
+            letter-spacing: -0.03em;
         }
 
-        .brand-copy span,
-        .nav-note {
+        .nav-brand-copy span {
             color: var(--muted);
             font-size: 10px;
             letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .page-lead {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border-strong);
+            background: rgba(11, 18, 27, 0.88);
+            color: var(--accent);
+            font-size: 11px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .eyebrow::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 18px rgba(110, 231, 183, 0.5);
+        }
+
+        .redirect-chip {
+            padding: 10px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            background: rgba(56, 189, 248, 0.08);
+            color: var(--accent-cold);
+            font-size: 11px;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
         }
 
@@ -138,79 +184,66 @@
             display: grid;
             grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
             gap: 24px;
-            margin-top: 24px;
+            align-items: stretch;
         }
 
         .hero,
         .panel {
             border-radius: var(--radius-xl);
-            border: 1px solid var(--line);
+            border: 1px solid var(--border);
             box-shadow: var(--shadow);
-            overflow: hidden;
             animation: panelRise 0.7s ease forwards;
+            backdrop-filter: blur(16px);
         }
 
         .hero {
             position: relative;
-            padding: 36px;
+            display: grid;
+            gap: 24px;
+            padding: 34px;
             background:
                 radial-gradient(circle at top right, rgba(56, 189, 248, 0.16), transparent 30%),
                 radial-gradient(circle at bottom left, rgba(110, 231, 183, 0.14), transparent 36%),
-                linear-gradient(180deg, rgba(13, 19, 29, 0.96), rgba(8, 13, 20, 0.98));
-            color: var(--ink);
+                linear-gradient(180deg, rgba(13, 19, 29, 0.94), rgba(8, 13, 20, 0.96));
+            overflow: hidden;
         }
 
         .hero::after {
             content: "";
             position: absolute;
             inset: auto -70px -90px auto;
-            width: 230px;
-            height: 230px;
+            width: 220px;
+            height: 220px;
             border-radius: 50%;
             background: radial-gradient(circle, rgba(245, 185, 101, 0.18), transparent 70%);
             pointer-events: none;
         }
 
-        .panel {
-            padding: 24px;
-            background:
-                linear-gradient(180deg, rgba(13, 19, 29, 0.94), rgba(8, 13, 20, 0.96));
+        .hero-copy-block {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            gap: 14px;
         }
 
-        .eyebrow,
         .hero-kicker {
             display: inline-flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             width: fit-content;
-            padding: 8px 12px;
-            border-radius: 999px;
+            color: var(--accent-cold);
             font-size: 10px;
             letter-spacing: 0.16em;
             text-transform: uppercase;
         }
 
-        .eyebrow {
-            margin-bottom: 20px;
-            border: 1px solid var(--line-strong);
-            background: rgba(11, 18, 27, 0.88);
-            color: var(--accent);
-        }
-
-        .hero-kicker {
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            background: rgba(56, 189, 248, 0.08);
-            color: var(--accent-soft);
-            margin-bottom: 18px;
-        }
-
-        .eyebrow::before,
         .hero-kicker::before {
             content: "";
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
-            background: currentColor;
+            background: var(--accent);
+            box-shadow: 0 0 14px rgba(110, 231, 183, 0.45);
         }
 
         h1,
@@ -218,18 +251,17 @@
             margin: 0;
             font-family: var(--font-display);
             letter-spacing: -0.05em;
-            line-height: 0.96;
         }
 
         h1 {
-            font-size: clamp(42px, 5vw, 74px);
-            margin-bottom: 18px;
-            max-width: 9ch;
+            max-width: 10ch;
+            font-size: clamp(42px, 5vw, 70px);
+            line-height: 0.94;
         }
 
         h2 {
-            font-size: 34px;
-            margin-bottom: 8px;
+            font-size: 32px;
+            line-height: 0.98;
         }
 
         .hero-copy,
@@ -237,58 +269,96 @@
         .hero-note,
         .feature p {
             margin: 0;
-            line-height: 1.75;
+            color: var(--muted);
             font-size: 12px;
-        }
-
-        .hero-copy,
-        .hero-note,
-        .feature p {
-            color: var(--muted);
-        }
-
-        .panel-copy {
-            color: var(--muted);
+            line-height: 1.75;
         }
 
         .hero-grid {
+            position: relative;
+            z-index: 1;
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 14px;
-            margin-top: 28px;
         }
 
         .feature {
             min-width: 0;
             padding: 16px 18px;
-            border-radius: 18px;
+            border-radius: var(--radius-lg);
             border: 1px solid rgba(143, 162, 186, 0.12);
             background: rgba(7, 11, 17, 0.62);
         }
 
         .feature strong {
             display: block;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             font-family: var(--font-display);
             font-size: 18px;
             letter-spacing: -0.03em;
         }
 
         .hero-note {
-            margin-top: 24px;
+            position: relative;
+            z-index: 1;
             max-width: 54ch;
+        }
+
+        .panel {
+            display: grid;
+            align-content: start;
+            gap: 18px;
+            padding: 28px;
+            background: linear-gradient(180deg, rgba(13, 19, 29, 0.94), rgba(8, 13, 20, 0.96));
+        }
+
+        .panel-header {
+            display: grid;
+            gap: 10px;
+        }
+
+        .field {
+            display: grid;
+            gap: 8px;
+        }
+
+        label {
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        input {
+            width: 100%;
+            border: 1px solid rgba(143, 162, 186, 0.16);
+            border-radius: var(--radius-md);
+            background: rgba(7, 11, 18, 0.92);
+            color: var(--text);
+            padding: 14px;
+            font: inherit;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        input:focus {
+            border-color: rgba(56, 189, 248, 0.46);
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.08);
+        }
+
+        input::placeholder {
+            color: rgba(143, 162, 186, 0.72);
         }
 
         .tab-row {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 10px;
-            margin: 22px 0 18px;
         }
 
         .tab {
             appearance: none;
-            border: 1px solid var(--line);
+            border: 1px solid rgba(143, 162, 186, 0.18);
             border-radius: 999px;
             background: rgba(10, 16, 24, 0.82);
             padding: 12px 14px;
@@ -300,8 +370,8 @@
 
         .tab:hover {
             transform: translateY(-1px);
-            border-color: var(--line-strong);
-            color: var(--ink);
+            border-color: var(--border-strong);
+            color: var(--text);
         }
 
         .tab.is-active {
@@ -319,51 +389,14 @@
             display: grid;
         }
 
-        .field {
-            display: grid;
-            gap: 8px;
-        }
-
-        label {
-            color: var(--muted);
-            font-size: 10px;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-        }
-
-        input {
-            width: 100%;
-            border: 1px solid var(--line);
-            border-radius: var(--radius-md);
-            background: rgba(7, 11, 18, 0.92);
-            color: var(--ink);
-            padding: 14px;
-            font: inherit;
-            outline: none;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-        }
-
-        input:focus {
-            border-color: rgba(56, 189, 248, 0.46);
-            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.08);
-        }
-
-        input::placeholder {
-            color: rgba(143, 162, 186, 0.72);
-        }
-
         .inline-note {
             padding: 12px 14px;
-            border-radius: 16px;
+            border-radius: 14px;
             border: 1px solid rgba(56, 189, 248, 0.14);
             background: rgba(56, 189, 248, 0.05);
             color: var(--muted);
             font-size: 11px;
             line-height: 1.7;
-        }
-
-        .inline-note strong {
-            color: var(--accent);
         }
 
         .error-banner {
@@ -385,13 +418,12 @@
             display: flex;
             gap: 12px;
             flex-wrap: wrap;
-            margin-top: 6px;
         }
 
         .button {
             appearance: none;
             border: 0;
-            border-radius: 14px;
+            border-radius: 12px;
             padding: 14px 18px;
             cursor: pointer;
             font: inherit;
@@ -416,23 +448,22 @@
         }
 
         .button-secondary {
-            border: 1px solid var(--line);
+            border: 1px solid rgba(143, 162, 186, 0.18);
             background: rgba(10, 16, 24, 0.88);
             color: var(--muted);
         }
 
         .next-note {
-            margin-top: 18px;
             color: var(--muted);
             font-size: 11px;
             line-height: 1.7;
         }
 
         .next-note strong {
-            color: var(--ink);
+            color: var(--text);
         }
 
-        @media (max-width: 960px) {
+        @media (max-width: 980px) {
             .layout {
                 grid-template-columns: 1fr;
             }
@@ -444,27 +475,24 @@
 
         @media (max-width: 640px) {
             .page {
-                width: min(100% - 24px, 100%);
+                width: min(100% - 32px, 100%);
                 padding-top: 18px;
-            }
-
-            .nav {
-                border-radius: 26px;
             }
 
             .hero,
             .panel {
                 padding: 22px;
-                border-radius: 26px;
+                border-radius: 20px;
             }
 
             .hero-grid,
-            .tab-row {
+            .tab-row,
+            .button-row {
                 grid-template-columns: 1fr;
             }
 
             .button-row {
-                flex-direction: column;
+                display: grid;
             }
 
             .button {
@@ -476,59 +504,65 @@
 
 <body>
     <main class="page">
-        <header class="nav">
-            <a class="brand" href="/auth">
-                <span class="brand-mark">P</span>
-                <span class="brand-copy">
+        <header class="app-nav">
+            <a class="nav-brand" href="/auth">
+                <span class="nav-brand-mark">P</span>
+                <span class="nav-brand-copy">
                     <strong>Ascend Outreach Engine</strong>
                     <span>Shared queue, run board, and records</span>
                 </span>
             </a>
-            <span class="nav-note">Access limited to @ascendanalytics.co</span>
         </header>
+
+        <div class="page-lead">
+            <span class="eyebrow">Access</span>
+            <span class="redirect-chip">Redirect target: <span id="nextPathLabel">/</span></span>
+        </div>
 
         <section class="layout">
             <section class="hero">
-                <span class="eyebrow">Authentication boundary</span>
-                <h1>Inside access for the Ascend pipeline.</h1>
-                <p class="hero-copy">
-                    Every queue action, dashboard inspection, record export, and rewrite request now sits behind an
-                    authenticated session. Sign up once with your Ascend Analytics email, then use the same credentials
-                    to sign back in.
-                </p>
+                <div class="hero-copy-block">
+                    <span class="hero-kicker">Shared workspace</span>
+                    <h1>Sign in to continue.</h1>
+                    <p class="hero-copy">
+                        Create an account once, then return with the same credentials whenever you need the queue,
+                        dashboard, or records workspace.
+                    </p>
+                </div>
 
                 <div class="hero-grid">
                     <article class="feature">
-                        <strong>Domain-locked</strong>
-                        <p>Only `@ascendanalytics.co` accounts can register or authenticate.</p>
+                        <strong>Fast entry</strong>
+                        <p>Create the account and continue immediately. There is no extra confirmation step.</p>
                     </article>
                     <article class="feature">
-                        <strong>JWT-backed</strong>
-                        <p>The app issues a persistent JWT and stores it in an `HttpOnly` browser cookie.</p>
+                        <strong>Protected routes</strong>
+                        <p>Protected pages send you here first and then return you to the same destination.</p>
                     </article>
                     <article class="feature">
-                        <strong>Protected surfaces</strong>
-                        <p>Queue run, shared dashboard, records workspace, and APIs all require authentication.</p>
+                        <strong>Persistent session</strong>
+                        <p>Your browser keeps the session so you can move between the queue, board, and records view.</p>
                     </article>
                     <article class="feature">
-                        <strong>No email confirmation</strong>
-                        <p>Registration is immediate. There is no verification or inbox checkpoint in this flow.</p>
+                        <strong>Shared context</strong>
+                        <p>Runs and reviews stay tied to the account you are currently signed in with.</p>
                     </article>
                 </div>
 
                 <p class="hero-note">
-                    If you were redirected here from a protected page, the app will return you there after a successful
-                    sign-in or sign-up.
+                    If you were redirected from a protected page, a successful sign-in or account creation sends you
+                    back there automatically.
                 </p>
             </section>
 
             <section class="panel">
-                <span class="hero-kicker">Session gate</span>
-                <h2>Authenticate</h2>
-                <p class="panel-copy">
-                    Use your Ascend Analytics email. Sign up creates the account immediately; sign in reuses the same
-                    credentials.
-                </p>
+                <div class="panel-header">
+                    <span class="hero-kicker">Account</span>
+                    <h2>Authenticate</h2>
+                    <p class="panel-copy">
+                        Create a new account or sign in with an existing one.
+                    </p>
+                </div>
 
                 <div class="tab-row" role="tablist" aria-label="Authentication mode">
                     <button class="tab is-active" id="signupTab" type="button" data-mode="signup" role="tab"
@@ -547,12 +581,12 @@
                     <div class="field">
                         <label for="signupName">Full name</label>
                         <input id="signupName" name="signupName" type="text" autocomplete="name"
-                            placeholder="Zeeshan Hamid" required />
+                            placeholder="Your name" required />
                     </div>
                     <div class="field">
-                        <label for="signupEmail">Ascend email</label>
+                        <label for="signupEmail">Email</label>
                         <input id="signupEmail" name="signupEmail" type="email" autocomplete="email"
-                            placeholder="you@ascendanalytics.co" required />
+                            placeholder="name@company.com" required />
                     </div>
                     <div class="field">
                         <label for="signupPassword">Password</label>
@@ -565,7 +599,7 @@
                             autocomplete="new-password" placeholder="Repeat the same password" required />
                     </div>
                     <div class="inline-note">
-                        <strong>Registration rule:</strong> the email must end exactly with `@ascendanalytics.co`.
+                        Account creation completes immediately and signs you in on success.
                     </div>
                     <div class="button-row">
                         <button class="button button-primary" id="signupButton" type="submit">Create account</button>
@@ -577,17 +611,17 @@
 
                 <form class="form-shell" id="signinForm" novalidate>
                     <div class="field">
-                        <label for="signinEmail">Ascend email</label>
+                        <label for="signinEmail">Email</label>
                         <input id="signinEmail" name="signinEmail" type="email" autocomplete="email"
-                            placeholder="you@ascendanalytics.co" required />
+                            placeholder="name@company.com" required />
                     </div>
                     <div class="field">
                         <label for="signinPassword">Password</label>
                         <input id="signinPassword" name="signinPassword" type="password"
-                            autocomplete="current-password" placeholder="Your existing password" required />
+                            autocomplete="current-password" placeholder="Your password" required />
                     </div>
                     <div class="inline-note">
-                        Existing accounts sign in directly. There is no email confirmation checkpoint in this flow.
+                        Use the same credentials you created earlier to continue.
                     </div>
                     <div class="button-row">
                         <button class="button button-primary" id="signinButton" type="submit">Sign in</button>
@@ -596,16 +630,11 @@
                         </button>
                     </div>
                 </form>
-
-                <p class="next-note">
-                    <strong>Redirect target:</strong> <span id="nextPathLabel">/</span>
-                </p>
             </section>
         </section>
     </main>
 
     <script>
-        const ALLOWED_DOMAIN = "ascendanalytics.co";
         const signupTab = document.getElementById("signupTab");
         const signinTab = document.getElementById("signinTab");
         const signupForm = document.getElementById("signupForm");
@@ -651,10 +680,6 @@
 
         function normalizeEmail(value) {
             return value.trim().toLowerCase();
-        }
-
-        function validateAllowedDomain(email) {
-            return normalizeEmail(email).endsWith(`@${ALLOWED_DOMAIN}`);
         }
 
         function parseApiError(payload) {
@@ -709,11 +734,7 @@
                 return;
             }
             if (!payload.email) {
-                showError("Enter your Ascend email address.");
-                return;
-            }
-            if (!validateAllowedDomain(payload.email)) {
-                showError("Use an email address ending with @ascendanalytics.co.");
+                showError("Enter your email address.");
                 return;
             }
             if (payload.password.length < 8) {
@@ -737,11 +758,7 @@
             };
 
             if (!payload.email) {
-                showError("Enter your Ascend email address.");
-                return;
-            }
-            if (!validateAllowedDomain(payload.email)) {
-                showError("Use an email address ending with @ascendanalytics.co.");
+                showError("Enter your email address.");
                 return;
             }
             if (!payload.password) {

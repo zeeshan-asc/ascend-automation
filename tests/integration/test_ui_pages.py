@@ -10,7 +10,7 @@ async def test_auth_page_serves_signup_and_signin_flow(client: AsyncClient) -> N
     assert "Ascend Outreach Engine" in response.text
     assert "Create account" in response.text
     assert "Sign in" in response.text
-    assert "@ascendanalytics.co" in response.text
+    assert "Redirect target" in response.text
     assert "/api/auth/signup" in response.text
     assert "/api/auth/signin" in response.text
     assert "hook.eu1.make.com" not in response.text
@@ -45,8 +45,8 @@ async def test_landing_page_serves_fastapi_submission_flow(
     assert 'id="rssFieldError"' in response.text
     assert 'id="sessionNameValue"' in response.text
     assert 'id="sessionEmailValue"' in response.text
-    assert "Authenticated operator" in response.text
-    assert "@ascendanalytics.co only" in response.text
+    assert "Signed in" in response.text
+    assert "session-strip" in response.text
     assert "hook.eu1.make.com" not in response.text
     assert "Make.com" not in response.text
 

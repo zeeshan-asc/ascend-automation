@@ -39,7 +39,7 @@ async def test_signup_rejects_non_ascend_domain(client: AsyncClient) -> None:
     )
 
     assert response.status_code == 403
-    assert response.json()["detail"] == "Only @ascendanalytics.co email addresses are allowed."
+    assert response.json()["detail"] == "This email address is not allowed."
 
 
 @pytest.mark.asyncio

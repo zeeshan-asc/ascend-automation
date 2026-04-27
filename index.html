@@ -815,6 +815,67 @@
             color: #b8fff0;
         }
 
+        .session-strip {
+            margin-bottom: 20px;
+            padding: 14px 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(143, 162, 186, 0.14);
+            background: rgba(7, 11, 17, 0.58);
+        }
+
+        .session-strip-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .session-strip-title {
+            margin: 0 0 4px;
+            font-family: var(--font-display);
+            font-size: 18px;
+            line-height: 1;
+            letter-spacing: -0.03em;
+        }
+
+        .session-strip-copy {
+            margin: 0;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        .session-strip-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .session-chip {
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(143, 162, 186, 0.12);
+            background: rgba(10, 16, 24, 0.72);
+        }
+
+        .session-chip small {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .session-chip strong {
+            display: block;
+            font-size: 12px;
+            line-height: 1.6;
+            word-break: break-word;
+        }
+
         @media (max-width: 980px) {
             .app-nav {
                 align-items: flex-start;
@@ -849,7 +910,8 @@
             .hero-header,
             .hero-grid,
             .hero-stats,
-            .status-grid {
+            .status-grid,
+            .session-strip-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -898,9 +960,9 @@
                         <span class="hero-kicker">Workflow posture</span>
                         <h1>Turn podcast feeds into a <span class="headline-accent">reviewable lead board.</span></h1>
                         <p class="hero-copy">
-                            Queue a feed from your authenticated Ascend account. The worker fans out episode discovery,
+                            Queue a feed from your active session. The worker fans out episode discovery,
                             AssemblyAI transcription, OpenAI lead extraction, and email drafting without blocking the
-                            next teammate. Every run lands in a shared dashboard so your team can inspect status,
+                            next teammate. Every run lands in a shared dashboard so the team can inspect status,
                             transcripts, and outreach.
                         </p>
                     </div>
@@ -939,35 +1001,31 @@
                     <span class="panel-kicker">Feed intake</span>
                     <h2>Queue a new run</h2>
                     <p>
-                        Your authenticated Ascend profile is attached automatically. Submit the feed and optional tone
-                        guidance, then jump straight into the dashboard view for that run.
+                        Your current session is attached automatically. Submit the feed and optional tone guidance,
+                        then jump straight into the dashboard view for that run.
                     </p>
                 </div>
 
                 <form id="submissionForm" novalidate>
-                    <section class="status-shell visible" aria-live="polite">
-                        <div class="status-top">
+                    <section class="session-strip" aria-live="polite">
+                        <div class="session-strip-top">
                             <div>
-                                <p class="status-title">Authenticated operator</p>
-                                <p class="status-copy">
-                                    This run will be attributed to your signed-in Ascend Analytics account.
+                                <p class="session-strip-title">Signed in</p>
+                                <p class="session-strip-copy">
+                                    New runs are attributed to your current session.
                                 </p>
                             </div>
                             <span class="pill">session active</span>
                         </div>
 
-                        <div class="status-grid">
-                            <div class="status-card">
+                        <div class="session-strip-grid">
+                            <div class="session-chip">
                                 <small>Name</small>
                                 <strong id="sessionNameValue">Loading profile...</strong>
                             </div>
-                            <div class="status-card">
+                            <div class="session-chip">
                                 <small>Email</small>
                                 <strong id="sessionEmailValue">Loading profile...</strong>
-                            </div>
-                            <div class="status-card">
-                                <small>Policy</small>
-                                <strong>@ascendanalytics.co only</strong>
                             </div>
                         </div>
                     </section>

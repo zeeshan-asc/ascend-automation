@@ -123,7 +123,7 @@ class AuthService:
         _, _, domain = email.rpartition("@")
         if domain.lower() != self._allowed_email_domain:
             raise AuthorizationError(
-                f"Only @{self._allowed_email_domain} email addresses are allowed.",
+                "This email address is not allowed.",
             )
 
     def _build_auth_success(self, user: User) -> AuthSuccessResponse:
