@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rss-automation"
+version = "0.1.0"
+description = "FastAPI RSS-to-leads pipeline with MongoDB, AssemblyAI, and OpenAI"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "pydantic>=2.11.0",
+    "pydantic-settings>=2.6.1",
+    "email-validator>=2.2.0",
+    "pymongo>=4.11.0",
+    "httpx>=0.28.0",
+    "feedparser>=6.0.11",
+    "openai>=1.79.0",
+    "jinja2>=3.1.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.26.0",
+    "pytest-mock>=3.14.0",
+    "respx>=0.22.0",
+    "ruff>=0.11.0",
+    "mypy>=1.15.0",
+    "asgi-lifespan>=2.1.0",
+    "mongomock>=4.3.0",
+]
+
+[tool.setuptools]
+packages = [
+    "app",
+    "app.api",
+    "app.application",
+    "app.domain",
+    "app.infrastructure",
+    "app.infrastructure.mongo",
+    "app.infrastructure.providers",
+    "app.worker",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM", "ASYNC"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+strict_equality = true
+exclude = ["venv", "tests"]

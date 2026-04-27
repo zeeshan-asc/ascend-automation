@@ -1,786 +1,1073 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Podcast Outreach Engine</title>
     <link
-        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap"
-        rel="stylesheet" />
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap"
+        rel="stylesheet"
+    />
     <style>
         *,
         *::before,
         *::after {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
         }
 
         :root {
-            --bg: #0a0a0f;
-            --surface: #111118;
-            --border: #1e1e2e;
+            --bg: #070b11;
+            --bg-soft: #0d131d;
+            --surface: rgba(15, 22, 32, 0.9);
+            --surface-strong: rgba(18, 27, 39, 0.96);
+            --border: rgba(132, 156, 191, 0.18);
+            --border-bright: rgba(110, 231, 183, 0.25);
             --accent: #6ee7b7;
-            --accent2: #38bdf8;
-            --warn: #f59e0b;
-            --text: #e2e8f0;
-            --muted: #64748b;
-            --error: #f87171;
-            --radius: 12px;
-            --font-head: 'Syne', sans-serif;
-            --font-mono: 'DM Mono', monospace;
+            --accent-cold: #38bdf8;
+            --accent-warm: #f5b965;
+            --text: #ecf4ff;
+            --muted: #8fa2ba;
+            --danger: #ff8d8d;
+            --shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+            --radius-xl: 28px;
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --font-display: "Syne", sans-serif;
+            --font-body: "DM Mono", monospace;
         }
 
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: var(--font-mono);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            padding: 48px 16px 80px;
-            overflow-x: hidden;
-        }
-
-        /* ── grid background ── */
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background-image:
-                linear-gradient(rgba(110, 231, 183, .03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(110, 231, 183, .03) 1px, transparent 1px);
-            background-size: 40px 40px;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .container {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-            max-width: 640px;
-        }
-
-        /* ── header ── */
-        .header {
-            margin-bottom: 40px;
-            animation: fadeDown .6s ease both;
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            font-weight: 500;
-            letter-spacing: .12em;
-            text-transform: uppercase;
-            color: var(--accent);
-            border: 1px solid rgba(110, 231, 183, .25);
-            border-radius: 100px;
-            padding: 4px 12px;
-            margin-bottom: 16px;
-        }
-
-        .badge-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--accent);
-            animation: pulse 1.8s ease-in-out infinite;
-        }
-
-        h1 {
-            font-family: var(--font-head);
-            font-size: clamp(28px, 5vw, 42px);
-            font-weight: 800;
-            line-height: 1.1;
-            letter-spacing: -.02em;
-            color: #fff;
-            margin-bottom: 10px;
-        }
-
-        h1 span {
-            color: var(--accent);
-        }
-
-        .sub {
-            font-size: 13px;
-            color: var(--muted);
-            line-height: 1.6;
-        }
-
-        /* ── card ── */
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 32px;
-            animation: fadeUp .6s .1s ease both;
-        }
-
-        /* ── form fields ── */
-        .field {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            font-size: 11px;
-            font-weight: 500;
-            letter-spacing: .1em;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 8px;
-        }
-
-        label .req {
-            color: var(--accent);
-            margin-left: 2px;
-        }
-
-        input,
-        textarea {
-            width: 100%;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 12px 14px;
-            font-family: var(--font-mono);
-            font-size: 13px;
-            color: var(--text);
-            outline: none;
-            transition: border-color .2s, box-shadow .2s;
-            resize: none;
-        }
-
-        input::placeholder,
-        textarea::placeholder {
-            color: var(--muted);
-        }
-
-        input:focus,
-        textarea:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(110, 231, 183, .08);
-        }
-
-        textarea {
-            height: 90px;
-            line-height: 1.6;
-        }
-
-        /* ── submit button ── */
-        .btn {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            background: var(--accent);
-            color: #0a0a0f;
-            font-family: var(--font-head);
-            font-size: 15px;
-            font-weight: 700;
-            letter-spacing: .02em;
-            cursor: pointer;
-            transition: opacity .2s, transform .15s;
-            margin-top: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn:hover {
-            opacity: .88;
-            transform: translateY(-1px);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        .btn:disabled {
-            opacity: .4;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* ── progress panel ── */
-        .progress-panel {
-            display: none;
-            margin-top: 28px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            overflow: hidden;
-        }
-
-        .progress-panel.visible {
-            display: block;
-            animation: fadeUp .4s ease both;
-        }
-
-        .progress-header {
-            background: #0d0d16;
-            padding: 14px 20px;
-            font-size: 11px;
-            letter-spacing: .1em;
-            text-transform: uppercase;
-            color: var(--accent2);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .spinner {
-            width: 12px;
-            height: 12px;
-            border: 2px solid rgba(56, 189, 248, .3);
-            border-top-color: var(--accent2);
-            border-radius: 50%;
-            animation: spin .7s linear infinite;
-            flex-shrink: 0;
-        }
-
-        .spinner.done {
-            border-color: var(--accent);
-            border-top-color: var(--accent);
-            animation: none;
-        }
-
-        .steps {
-            padding: 16px 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .step {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            font-size: 12px;
-            color: var(--muted);
-            transition: color .3s;
-        }
-
-        .step.active {
-            color: var(--text);
-        }
-
-        .step.done {
-            color: var(--accent);
-        }
-
-        .step-icon {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            border: 1.5px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 9px;
-            flex-shrink: 0;
-            margin-top: 1px;
-            transition: all .3s;
-        }
-
-        .step.active .step-icon {
-            border-color: var(--accent2);
-            color: var(--accent2);
-            box-shadow: 0 0 0 3px rgba(56, 189, 248, .08);
-        }
-
-        .step.done .step-icon {
-            border-color: var(--accent);
-            background: rgba(110, 231, 183, .1);
-            color: var(--accent);
-        }
-
-        .step-body {
-            flex: 1;
-        }
-
-        .step-label {
-            font-weight: 500;
-            margin-bottom: 2px;
-        }
-
-        .step-detail {
-            font-size: 11px;
-            color: var(--muted);
-            line-height: 1.5;
-        }
-
-        /* ── log console ── */
-        .log-wrap {
-            background: var(--bg);
-            border-top: 1px solid var(--border);
-            padding: 14px 20px;
-        }
-
-        .log-title {
-            font-size: 10px;
-            letter-spacing: .1em;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 8px;
-        }
-
-        .log-lines {
-            font-size: 11px;
-            line-height: 1.8;
-            color: var(--muted);
-            max-height: 120px;
-            overflow-y: auto;
-        }
-
-        .log-lines span {
-            display: block;
-        }
-
-        .log-lines .l-ok {
-            color: var(--accent);
-        }
-
-        .log-lines .l-info {
-            color: var(--accent2);
-        }
-
-        .log-lines .l-warn {
-            color: var(--warn);
-        }
-
-        /* ── success banner ── */
-        .success-banner {
-            display: none;
-            margin-top: 24px;
-            padding: 20px 24px;
-            background: rgba(110, 231, 183, .06);
-            border: 1px solid rgba(110, 231, 183, .2);
-            border-radius: var(--radius);
-            animation: fadeUp .4s ease both;
-        }
-
-        .success-banner.visible {
-            display: flex;
-            gap: 14px;
-            align-items: flex-start;
-        }
-
-        .success-icon {
-            font-size: 22px;
-            flex-shrink: 0;
-        }
-
-        .success-text h3 {
-            font-family: var(--font-head);
-            font-size: 16px;
-            color: var(--accent);
-            margin-bottom: 4px;
-        }
-
-        .success-text p {
-            font-size: 12px;
-            color: var(--muted);
-            line-height: 1.6;
-        }
-
-        /* ── error banner ── */
-        .error-banner {
-            display: none;
-            margin-top: 16px;
-            padding: 14px 18px;
-            background: rgba(248, 113, 113, .06);
-            border: 1px solid rgba(248, 113, 113, .2);
-            border-radius: 8px;
-            font-size: 12px;
-            color: var(--error);
-            line-height: 1.6;
-        }
-
-        .error-banner.visible {
-            display: block;
-        }
-
-        /* ── reset link ── */
-        .reset-wrap {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .reset-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-family: var(--font-mono);
-            font-size: 12px;
-            color: var(--muted);
-            text-decoration: underline;
-            display: none;
-        }
-
-        .reset-btn.visible {
-            display: inline;
-        }
-
-        .reset-btn:hover {
-            color: var(--text);
-        }
-
-        /* ── animations ── */
-        @keyframes fadeDown {
-            from {
-                opacity: 0;
-                transform: translateY(-12px);
+        @keyframes ribbonPulse {
+            0% {
+                transform: translateX(-100%);
             }
-
-            to {
-                opacity: 1;
-                transform: none;
+            100% {
+                transform: translateX(320%);
             }
         }
 
-        @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(12px);
-            }
-
-            to {
-                opacity: 1;
-                transform: none;
-            }
-        }
-
-        @keyframes spin {
+        @keyframes orbitSpin {
             to {
                 transform: rotate(360deg);
             }
         }
 
-        @keyframes pulse {
-
+        @keyframes glowPulse {
             0%,
             100% {
+                opacity: 0.38;
+            }
+            50% {
                 opacity: 1;
             }
+        }
 
-            50% {
-                opacity: .3;
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: var(--text);
+            font-family: var(--font-body);
+            background:
+                radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 28%),
+                radial-gradient(circle at 85% 10%, rgba(110, 231, 183, 0.12), transparent 24%),
+                linear-gradient(180deg, #05070b 0%, #08111b 55%, #05070b 100%);
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(143, 162, 186, 0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(143, 162, 186, 0.06) 1px, transparent 1px);
+            background-size: 44px 44px;
+            mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page {
+            position: relative;
+            z-index: 1;
+            width: min(1280px, calc(100% - 48px));
+            margin: 0 auto;
+            padding: 56px 0 100px;
+        }
+
+        .masthead {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border-bright);
+            background: rgba(12, 18, 27, 0.82);
+            color: var(--accent);
+            font-size: 11px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .eyebrow::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 18px rgba(110, 231, 183, 0.65);
+        }
+
+        .layout {
+            margin-top: 40px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            align-items: stretch;
+        }
+
+        .hero,
+        .panel {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            background: linear-gradient(180deg, rgba(14, 22, 33, 0.92), rgba(9, 14, 22, 0.92));
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(16px);
+        }
+
+        .hero {
+            display: grid;
+            gap: 32px;
+            padding: 40px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: -40px -80px auto auto;
+            width: 220px;
+            height: 220px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.16), transparent 70%);
+            pointer-events: none;
+        }
+
+        h1 {
+            margin: 0;
+            font-family: var(--font-display);
+            font-size: clamp(32px, 4.5vw, 56px);
+            line-height: 1.05;
+            letter-spacing: -0.04em;
+            text-wrap: balance;
+        }
+
+        .headline-accent {
+            color: var(--accent);
+        }
+
+        .hero-kicker,
+        .panel-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: fit-content;
+            color: var(--accent-cold);
+            font-size: 10px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .hero-kicker::before,
+        .panel-kicker::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 14px rgba(110, 231, 183, 0.45);
+        }
+
+        .hero-header {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 32px;
+            align-items: start;
+        }
+
+        .hero-copy-block {
+            display: grid;
+            gap: 16px;
+        }
+
+        .hero-copy {
+            max-width: 52ch;
+            color: var(--muted);
+            font-size: 15px;
+            line-height: 1.7;
+            text-wrap: pretty;
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .hero-stat {
+            min-width: 0;
+            padding: 14px 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(143, 162, 186, 0.14);
+            background: rgba(7, 11, 17, 0.52);
+        }
+
+        .hero-stat small {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .hero-stat strong {
+            display: block;
+            margin-bottom: 6px;
+            font-family: var(--font-display);
+            font-size: 18px;
+            color: var(--accent);
+            letter-spacing: -0.03em;
+        }
+
+        .hero-stat span {
+            display: block;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.7;
+            overflow-wrap: anywhere;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .hero-card {
+            display: grid;
+            align-content: start;
+            min-width: 0;
+            padding: 18px;
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(143, 162, 186, 0.14);
+            background: rgba(7, 11, 17, 0.66);
+            height: 100%;
+        }
+
+        .hero-card label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--accent-cold);
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .hero-card p {
+            margin: 0;
+            color: var(--text);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .guardrail-list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            display: grid;
+            gap: 12px;
+        }
+
+        .guardrail-list li {
+            padding-top: 12px;
+            border-top: 1px solid rgba(143, 162, 186, 0.1);
+        }
+
+        .guardrail-list li:first-child {
+            padding-top: 0;
+            border-top: 0;
+        }
+
+        .guardrail-list strong {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--text);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .guardrail-list span {
+            display: block;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.7;
+            overflow-wrap: anywhere;
+        }
+
+        .process-list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            display: grid;
+            gap: 12px;
+        }
+
+        .process-list li {
+            display: grid;
+            grid-template-columns: 34px 1fr;
+            gap: 12px;
+            align-items: start;
+        }
+
+        .process-list strong {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 12px;
+            border: 1px solid rgba(110, 231, 183, 0.18);
+            background: rgba(110, 231, 183, 0.08);
+            color: var(--accent);
+            font-size: 12px;
+        }
+
+        .process-list span {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.7;
+            padding-top: 4px;
+            overflow-wrap: anywhere;
+        }
+
+        .panel {
+            position: relative;
+            padding: 40px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+
+        .panel-header h2 {
+            margin: 0;
+            font-family: var(--font-display);
+            font-size: 32px;
+            line-height: 0.98;
+            letter-spacing: -0.04em;
+        }
+
+        .panel-header p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .required {
+            color: var(--accent);
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            border: 1px solid rgba(143, 162, 186, 0.16);
+            border-radius: var(--radius-md);
+            background: rgba(6, 11, 18, 0.92);
+            color: var(--text);
+            padding: 14px 14px;
+            font: inherit;
+            outline: none;
+            transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: #72849b;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: rgba(56, 189, 248, 0.46);
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.08);
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+            line-height: 1.7;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-top: 24px;
+        }
+
+        .btn {
+            appearance: none;
+            border: 0;
+            border-radius: 12px;
+            padding: 16px 20px;
+            cursor: pointer;
+            font-family: var(--font-display);
+            font-size: 15px;
+            font-weight: 700;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            flex: 1;
+            background: linear-gradient(135deg, var(--accent), #99f6e4);
+            color: #052114;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--muted);
+            border: 1px solid rgba(143, 162, 186, 0.18);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            cursor: wait;
+            opacity: 0.6;
+            transform: none;
+        }
+
+        .btn-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .loading-ribbon {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(480px, calc(100% - 32px));
+            padding: 12px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(56, 189, 248, 0.22);
+            background: rgba(8, 14, 22, 0.9);
+            box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+            overflow: hidden;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            z-index: 20;
+            backdrop-filter: blur(14px);
+        }
+
+        .loading-ribbon.visible {
+            display: flex;
+        }
+
+        .loading-ribbon::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.32), transparent);
+            animation: ribbonPulse 1.2s linear infinite;
+        }
+
+        .loading-ribbon strong,
+        .loading-ribbon span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .loading-ribbon strong {
+            font-family: var(--font-display);
+            font-size: 14px;
+            color: var(--accent-cold);
+        }
+
+        .loading-ribbon span {
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.6;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        .panel-loader {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 24px;
+            border-radius: inherit;
+            background: rgba(7, 11, 17, 0.72);
+            backdrop-filter: blur(10px);
+            z-index: 5;
+        }
+
+        .panel-loader.visible {
+            display: flex;
+        }
+
+        .panel-loader-copy strong {
+            display: block;
+            margin-bottom: 6px;
+            font-family: var(--font-display);
+            font-size: 18px;
+            color: var(--accent);
+        }
+
+        .panel-loader-copy span {
+            display: block;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.8;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .loader-orbit {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 2px solid rgba(56, 189, 248, 0.18);
+            border-top-color: var(--accent);
+            border-right-color: var(--accent-cold);
+            animation: orbitSpin 0.8s linear infinite;
+            box-shadow: 0 0 24px rgba(56, 189, 248, 0.18);
+        }
+
+        .loader-orbit::after {
+            content: "";
+            display: block;
+            width: 8px;
+            height: 8px;
+            margin: 13px auto 0;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: glowPulse 1.1s ease-in-out infinite;
+        }
+
+        .error-banner,
+        .status-shell {
+            margin-top: 18px;
+            border-radius: var(--radius-lg);
+            padding: 16px 18px;
+            display: none;
+        }
+
+        .error-banner {
+            border: 1px solid rgba(255, 141, 141, 0.22);
+            background: rgba(255, 141, 141, 0.08);
+            color: var(--danger);
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        .error-banner.visible,
+        .status-shell.visible {
+            display: block;
+        }
+
+        .status-shell {
+            border: 1px solid rgba(110, 231, 183, 0.18);
+            background: rgba(110, 231, 183, 0.06);
+        }
+
+        .status-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: start;
+            margin-bottom: 14px;
+        }
+
+        .status-title {
+            font-family: var(--font-display);
+            font-size: 20px;
+            margin: 0 0 6px;
+            color: var(--accent);
+        }
+
+        .status-copy {
+            margin: 0;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 12px;
+            border-radius: 999px;
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--accent-cold);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            background: rgba(56, 189, 248, 0.08);
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .status-card {
+            padding: 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(143, 162, 186, 0.12);
+            background: rgba(7, 11, 17, 0.62);
+        }
+
+        .status-card small {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .status-card strong {
+            display: block;
+            word-break: break-word;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .status-actions {
+            margin-top: 14px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .status-link {
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 12px;
+        }
+
+        .status-link:hover {
+            color: #b8fff0;
+        }
+
+        @media (max-width: 980px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-header,
+            .hero-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .page {
+                width: min(100% - 32px, 100%);
+                padding-top: 24px;
+            }
+
+            .hero,
+            .panel {
+                padding: 24px;
+                border-radius: 20px;
+            }
+
+            .hero-header,
+            .hero-grid,
+            .hero-stats,
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-row {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
             }
         }
     </style>
 </head>
-
 <body>
-    <div class="container">
-
-        <!-- Header -->
-        <div class="header">
-            <div class="badge"><span class="badge-dot"></span> Podcast Outreach Engine</div>
-            <h1>Turn podcasts into<br /><span>pipeline.</span></h1>
-            <p class="sub">Paste an RSS feed → we transcribe every episode → extract pain points → draft a personalised
-                outreach email for each guest.</p>
-        </div>
-
-        <!-- Form Card -->
-        <div class="card" id="formCard">
-            <div class="field">
-                <label>Your Name <span class="req">*</span></label>
-                <input type="text" id="userName" placeholder="e.g. Zeeshan Hamid" autocomplete="name" />
-            </div>
-
-            <div class="field">
-                <label>Your Email <span class="req">*</span></label>
-                <input type="email" id="userEmail" placeholder="you@company.com" autocomplete="email" />
-            </div>
-
-            <div class="field">
-                <label>RSS Feed URL <span class="req">*</span></label>
-                <input type="url" id="rssUrl" placeholder="https://feeds.buzzsprout.com/podcast.rss" />
-            </div>
-
-            <div class="field">
-                <label>Email Tone Instructions</label>
-                <textarea id="toneInstructions"
-                    placeholder="e.g. Keep it concise and consultative. Don't pitch hard — lead with empathy around their problem. Sign off as a peer, not a vendor."></textarea>
-            </div>
-
-            <div class="error-banner" id="errorBanner"></div>
-
-            <button class="btn" id="submitBtn" onclick="handleSubmit()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-                Run Outreach Automation
-            </button>
-        </div>
-
-        <!-- Progress Panel -->
-        <div class="progress-panel" id="progressPanel">
-            <div class="progress-header">
-                <div class="spinner" id="mainSpinner"></div>
-                <span id="progressTitle">Automation running…</span>
-            </div>
-
-            <div class="steps" id="stepsContainer">
-                <div class="step" id="step1" data-label="Submitting to Make.com"
-                    data-detail="Sending your RSS URL and settings via webhook…">
-                    <div class="step-icon">1</div>
-                    <div class="step-body">
-                        <div class="step-label">Submitting to Make.com</div>
-                        <div class="step-detail">Sending your RSS URL and settings via webhook…</div>
-                    </div>
-                </div>
-                <div class="step" id="step2" data-label="Parsing RSS Feed"
-                    data-detail="Fetching and iterating over podcast episodes…">
-                    <div class="step-icon">2</div>
-                    <div class="step-body">
-                        <div class="step-label">Parsing RSS Feed</div>
-                        <div class="step-detail">Fetching and iterating over podcast episodes…</div>
-                    </div>
-                </div>
-                <div class="step" id="step3" data-label="Transcribing Audio"
-                    data-detail="Running Whisper on episode audio files — this takes a few minutes…">
-                    <div class="step-icon">3</div>
-                    <div class="step-body">
-                        <div class="step-label">Transcribing Audio</div>
-                        <div class="step-detail">Running Whisper on episode audio files — this can take a few minutes…
-                        </div>
-                    </div>
-                </div>
-                <div class="step" id="step4" data-label="Extracting Pain Points"
-                    data-detail="GPT-4o reading transcripts and identifying business problems discussed…">
-                    <div class="step-icon">4</div>
-                    <div class="step-body">
-                        <div class="step-label">Extracting Pain Points</div>
-                        <div class="step-detail">GPT-4o reading transcripts and identifying business problems discussed…
-                        </div>
-                    </div>
-                </div>
-                <div class="step" id="step5" data-label="Drafting Outreach Email"
-                    data-detail="Writing a personalised email for each guest using your tone instructions…">
-                    <div class="step-icon">5</div>
-                    <div class="step-body">
-                        <div class="step-label">Drafting Outreach Email</div>
-                        <div class="step-detail">Writing a personalised email for each guest using your tone
-                            instructions…</div>
-                    </div>
-                </div>
-                <div class="step" id="step6" data-label="Delivering Results"
-                    data-detail="Saving drafts and notifying you at your email…">
-                    <div class="step-icon">6</div>
-                    <div class="step-body">
-                        <div class="step-label">Delivering Results</div>
-                        <div class="step-detail">Saving drafts and notifying you at your email…</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="log-wrap">
-                <div class="log-title">// Live Log</div>
-                <div class="log-lines" id="logLines"></div>
-            </div>
-        </div>
-
-        <!-- Success Banner -->
-        <div class="success-banner" id="successBanner">
-            <div class="success-icon">✦</div>
-            <div class="success-text">
-                <h3>Automation triggered successfully</h3>
-                <p id="successMsg">Make.com has received your request. Transcription and email drafting is now running
-                    in the background — check your inbox shortly.</p>
-            </div>
-        </div>
-
-        <!-- Reset -->
-        <div class="reset-wrap">
-            <button class="reset-btn" id="resetBtn" onclick="resetForm()">← Submit another RSS feed</button>
-        </div>
-
+    <div class="loading-ribbon" id="globalLoadingBar" aria-live="polite">
+        <strong id="globalLoadingTitle">Talking to the queue</strong>
+        <span id="globalLoadingText">Waiting for the API response</span>
     </div>
+    <main class="page">
+        <div class="masthead">
+            <span class="eyebrow">Shared RSS queue + lead drafting</span>
+            <a class="btn btn-secondary btn-link" href="/dashboard" id="homeDashboardButton">
+                Open shared dashboard
+            </a>
+        </div>
+        <div class="layout">
+            <section class="hero">
+                <div class="hero-header">
+                    <div class="hero-copy-block">
+                        <span class="hero-kicker">Workflow posture</span>
+                        <h1>Turn podcast feeds into a <span class="headline-accent">reviewable lead board.</span></h1>
+                        <p class="hero-copy">
+                            Submit an RSS feed once. The worker queue fans out episode discovery, AssemblyAI
+                            transcription, OpenAI lead extraction, and email drafting without blocking the next teammate.
+                            Every run lands in a shared dashboard so your team can inspect status, transcripts, and outreach.
+                        </p>
+                    </div>
+
+                    <div class="hero-stats">
+                        <article class="hero-stat">
+                            <small>Episode cap</small>
+                            <strong>5 latest only</strong>
+                            <span>Large historical feeds never flood the queue in a single submission.</span>
+                        </article>
+                        <article class="hero-stat">
+                            <small>Reuse policy</small>
+                            <strong>Canonical episodes</strong>
+                            <span>Previously seen episodes are reused instead of retranscribed and regenerated.</span>
+                        </article>
+                        <article class="hero-stat">
+                            <small>Board model</small>
+                            <strong>Shared review flow</strong>
+                            <span>Runs, transcripts, lead identity, and email drafts stay visible to the team.</span>
+                        </article>
+                    </div>
+                </div>
+
+                <div class="hero-grid">
+                    <article class="hero-card">
+                        <label>Queue flow</label>
+                        <ul class="process-list">
+                            <li>
+                                <strong>01</strong>
+                                <span>Feed enters a Mongo-backed queue and becomes visible in the shared dashboard immediately.</span>
+                            </li>
+                            <li>
+                                <strong>02</strong>
+                                <span>Canonical episodes are deduped across users so repeats are reused, not reprocessed.</span>
+                            </li>
+                            <li>
+                                <strong>03</strong>
+                                <span>Each valid episode stores transcript text, lead identity, and a draft email for review.</span>
+                            </li>
+                        </ul>
+                    </article>
+                    <article class="hero-card">
+                        <label>Why this stays balanced</label>
+                        <ul class="guardrail-list">
+                            <li>
+                                <strong>Fast intake, slow work in background</strong>
+                                <span>The API accepts quickly while the worker owns RSS fetch, transcription, and drafting.</span>
+                            </li>
+                            <li>
+                                <strong>Concurrent teammates without collisions</strong>
+                                <span>Multiple users can queue feeds while canonical episode records prevent duplicate work.</span>
+                            </li>
+                            <li>
+                                <strong>Failures stay local</strong>
+                                <span>A bad episode surfaces clearly without poisoning the rest of the run.</span>
+                            </li>
+                        </ul>
+                    </article>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="panel-loader" id="panelLoader" aria-hidden="true">
+                    <div class="loader-orbit"></div>
+                    <div class="panel-loader-copy">
+                        <strong>Submitting run</strong>
+                        <span>Validating input, creating the run, and waiting for queue confirmation.</span>
+                    </div>
+                </div>
+                <div class="panel-header">
+                    <span class="panel-kicker">Feed intake</span>
+                    <h2>Queue a new run</h2>
+                    <p>
+                        Submit the feed and optional tone guidance. Once the run is accepted you will be
+                        redirected to the dashboard view for that run.
+                    </p>
+                </div>
+
+                <form id="submissionForm" novalidate>
+                    <div class="field">
+                        <label for="userName">Your name <span class="required">*</span></label>
+                        <input
+                            type="text"
+                            id="userName"
+                            name="userName"
+                            placeholder="Zeeshan Hamid"
+                            autocomplete="name"
+                            required
+                        />
+                    </div>
+
+                    <div class="field">
+                        <label for="userEmail">Your email <span class="required">*</span></label>
+                        <input
+                            type="email"
+                            id="userEmail"
+                            name="userEmail"
+                            placeholder="you@company.com"
+                            autocomplete="email"
+                            required
+                        />
+                    </div>
+
+                    <div class="field">
+                        <label for="rssUrl">RSS feed URL <span class="required">*</span></label>
+                        <input
+                            type="url"
+                            id="rssUrl"
+                            name="rssUrl"
+                            placeholder="https://feeds.buzzsprout.com/podcast.rss"
+                            required
+                        />
+                    </div>
+
+                    <div class="field">
+                        <label for="toneInstructions">Email tone instructions</label>
+                        <textarea
+                            id="toneInstructions"
+                            name="toneInstructions"
+                            placeholder="Keep it concise. Lead with empathy and operational pain. Sound like a peer, not a vendor."
+                        ></textarea>
+                    </div>
+
+                    <div class="error-banner" id="errorBanner" role="alert"></div>
+
+                    <div class="button-row">
+                        <button class="btn btn-primary" id="submitButton" type="submit">
+                            Queue outreach run
+                        </button>
+                        <button class="btn btn-secondary" id="resetButton" type="button">
+                            Clear form
+                        </button>
+                    </div>
+                </form>
+
+                <section class="status-shell" id="statusShell" aria-live="polite">
+                    <div class="status-top">
+                        <div>
+                            <p class="status-title">Run accepted</p>
+                            <p class="status-copy">
+                                The submission is now queued. Redirecting you to the shared dashboard so you can
+                                watch status, items, transcripts, and generated emails in context.
+                            </p>
+                        </div>
+                        <span class="pill">202 accepted</span>
+                    </div>
+
+                    <div class="status-grid">
+                        <div class="status-card">
+                            <small>Run ID</small>
+                            <strong id="runIdValue">-</strong>
+                        </div>
+                        <div class="status-card">
+                            <small>Queue state</small>
+                            <strong id="runStatusValue">queued</strong>
+                        </div>
+                        <div class="status-card">
+                            <small>Redirect target</small>
+                            <strong id="dashboardValue">/dashboard</strong>
+                        </div>
+                    </div>
+
+                    <div class="status-actions">
+                        <a class="status-link" id="dashboardLink" href="/dashboard">Open dashboard now</a>
+                    </div>
+                </section>
+            </section>
+        </div>
+    </main>
 
     <script>
-        // ─────────────────────────────────────────────
-        // !! PASTE YOUR MAKE.COM WEBHOOK URL HERE !!
-        // ─────────────────────────────────────────────
-        const WEBHOOK_URL = 'https://hook.eu1.make.com/rjz09xsqc2w7l8zouw8uw57phutksi1q';
+        const REDIRECT_DELAY_MS = 1200;
 
-        // Step timing (ms) — simulates realistic pipeline progress
-        // These are fake timers; your real Make scenario runs async.
-        // Adjust durations to match your actual scenario speed.
-        const STEP_TIMINGS = [
-            { id: 'step1', delay: 0, duration: 1500 },
-            { id: 'step2', delay: 1500, duration: 3000 },
-            { id: 'step3', delay: 4500, duration: 18000 }, // Whisper is slow
-            { id: 'step4', delay: 22500, duration: 5000 },
-            { id: 'step5', delay: 27500, duration: 4000 },
-            { id: 'step6', delay: 31500, duration: 2000 },
-        ];
+        const form = document.getElementById("submissionForm");
+        const submitButton = document.getElementById("submitButton");
+        const resetButton = document.getElementById("resetButton");
+        const errorBanner = document.getElementById("errorBanner");
+        const statusShell = document.getElementById("statusShell");
+        const runIdValue = document.getElementById("runIdValue");
+        const runStatusValue = document.getElementById("runStatusValue");
+        const dashboardValue = document.getElementById("dashboardValue");
+        const dashboardLink = document.getElementById("dashboardLink");
+        const globalLoadingBar = document.getElementById("globalLoadingBar");
+        const globalLoadingTitle = document.getElementById("globalLoadingTitle");
+        const globalLoadingText = document.getElementById("globalLoadingText");
+        const panelLoader = document.getElementById("panelLoader");
 
-        let stepTimers = [];
-
-        function log(msg, type = '') {
-            const el = document.getElementById('logLines');
-            const span = document.createElement('span');
-            const ts = new Date().toLocaleTimeString('en-GB', { hour12: false });
-            span.textContent = `[${ts}] ${msg}`;
-            if (type) span.classList.add(`l-${type}`);
-            el.appendChild(span);
-            el.scrollTop = el.scrollHeight;
+        function showError(message) {
+            errorBanner.textContent = message;
+            errorBanner.classList.add("visible");
         }
 
-        function setStep(id, state) {
-            const el = document.getElementById(id);
-            if (!el) return;
-            el.classList.remove('active', 'done');
-            if (state) el.classList.add(state);
-            if (state === 'active') {
-                el.querySelector('.step-icon').textContent = '▶';
-            } else if (state === 'done') {
-                el.querySelector('.step-icon').textContent = '✓';
+        function clearError() {
+            errorBanner.textContent = "";
+            errorBanner.classList.remove("visible");
+        }
+
+        function validateForm(payload) {
+            if (!payload.user_name.trim()) {
+                return "Please enter your name.";
             }
-        }
+            if (!payload.user_email.trim()) {
+                return "Please enter your email address.";
+            }
+            if (!payload.rss_url.trim()) {
+                return "Please enter an RSS feed URL.";
+            }
 
-        function validate() {
-            const name = document.getElementById('userName').value.trim();
-            const email = document.getElementById('userEmail').value.trim();
-            const rss = document.getElementById('rssUrl').value.trim();
-            const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            const urlRe = /^https?:\/\/.+/i;
+            const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.user_email);
+            if (!emailOk) {
+                return "Please enter a valid email address.";
+            }
 
-            if (!name) return 'Please enter your name.';
-            if (!emailRe.test(email)) return 'Please enter a valid email address.';
-            if (!urlRe.test(rss)) return 'Please enter a valid RSS feed URL (must start with http/https).';
+            try {
+                const parsed = new URL(payload.rss_url);
+                if (!["http:", "https:"].includes(parsed.protocol)) {
+                    return "RSS URL must start with http:// or https://.";
+                }
+            } catch (error) {
+                return "Please enter a valid RSS feed URL.";
+            }
+
             return null;
         }
 
-        function showError(msg) {
-            const b = document.getElementById('errorBanner');
-            b.textContent = msg;
-            b.classList.add('visible');
-        }
-        function clearError() {
-            document.getElementById('errorBanner').classList.remove('visible');
+        function setLoadingMessage(title, detail) {
+            globalLoadingTitle.textContent = title;
+            globalLoadingText.textContent = detail;
         }
 
-        async function handleSubmit() {
+        function setSubmitting(isSubmitting) {
+            submitButton.disabled = isSubmitting;
+            submitButton.textContent = isSubmitting ? "Queueing run..." : "Queue outreach run";
+            form.setAttribute("aria-busy", String(isSubmitting));
+            panelLoader.classList.toggle("visible", isSubmitting);
+            globalLoadingBar.classList.toggle("visible", isSubmitting);
+            if (isSubmitting) {
+                setLoadingMessage("Talking to the queue", "Waiting for the API response");
+            }
+        }
+
+        function showAcceptedState(payload) {
+            statusShell.classList.add("visible");
+            runIdValue.textContent = payload.run_id;
+            runStatusValue.textContent = payload.status;
+            dashboardValue.textContent = payload.dashboard_url;
+            dashboardLink.href = payload.dashboard_url;
+
+            window.setTimeout(() => {
+                window.location.href = payload.dashboard_url;
+            }, REDIRECT_DELAY_MS);
+        }
+
+        async function submitRun(event) {
+            event.preventDefault();
             clearError();
-
-            const err = validate();
-            if (err) { showError(err); return; }
+            statusShell.classList.remove("visible");
 
             const payload = {
-                user_name: document.getElementById('userName').value.trim(),
-                user_email: document.getElementById('userEmail').value.trim(),
-                rss_url: document.getElementById('rssUrl').value.trim(),
-                tone_instructions: document.getElementById('toneInstructions').value.trim(),
+                user_name: document.getElementById("userName").value.trim(),
+                user_email: document.getElementById("userEmail").value.trim(),
+                rss_url: document.getElementById("rssUrl").value.trim(),
+                tone_instructions: document.getElementById("toneInstructions").value.trim() || null,
                 submitted_at: new Date().toISOString(),
             };
 
-            // Lock form
-            document.getElementById('submitBtn').disabled = true;
-            document.getElementById('progressPanel').classList.add('visible');
+            const validationError = validateForm(payload);
+            if (validationError) {
+                showError(validationError);
+                return;
+            }
 
-            // Start step animations
-            startSteps();
+            setSubmitting(true);
 
-            // Fire the webhook (fire-and-forget — Make runs async)
             try {
-                log('Sending payload to Make.com webhook…', 'info');
-                const res = await fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                const response = await fetch("/api/submissions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
                     body: JSON.stringify(payload),
                 });
 
-                if (res.ok || res.status === 200) {
-                    log(`Webhook accepted (HTTP ${res.status})`, 'ok');
-                } else {
-                    log(`Webhook responded with HTTP ${res.status} — check Make.com logs`, 'warn');
+                if (!response.ok) {
+                    const errorPayload = await response.json().catch(() => ({}));
+                    const detail = errorPayload.detail || "The submission could not be queued.";
+                    throw new Error(typeof detail === "string" ? detail : "The submission could not be queued.");
                 }
-            } catch (e) {
-                log(`Network error: ${e.message}`, 'warn');
-                log('Automation may still be running — check Make.com dashboard', 'warn');
+
+                const accepted = await response.json();
+                showAcceptedState(accepted);
+            } catch (error) {
+                showError(error instanceof Error ? error.message : "Unexpected submission failure.");
+            } finally {
+                setSubmitting(false);
             }
-
-            // After all steps done, show success
-            const totalDuration = STEP_TIMINGS[STEP_TIMINGS.length - 1].delay
-                + STEP_TIMINGS[STEP_TIMINGS.length - 1].duration;
-
-            setTimeout(() => {
-                document.getElementById('mainSpinner').classList.add('done');
-                document.getElementById('progressTitle').textContent = 'Automation complete ✓';
-                document.getElementById('successBanner').classList.add('visible');
-                document.getElementById('successMsg').textContent =
-                    `Make.com received your request for ${payload.user_name}. Drafts will be sent to ${payload.user_email} once transcription and email generation completes.`;
-                document.getElementById('resetBtn').classList.add('visible');
-                log('All steps dispatched. Check your inbox!', 'ok');
-            }, totalDuration + 500);
-        }
-
-        function startSteps() {
-            const logMessages = [
-                ['RSS URL validated and queued', 'ok'],
-                ['Fetching RSS feed items…', 'info'],
-                ['Downloading audio files, sending to Whisper API…', 'info'],
-                ['Transcripts received, running GPT-4o extraction…', 'info'],
-                ['Email drafts being written with tone instructions…', 'info'],
-                ['Saving to Google Sheets and sending notification…', 'ok'],
-            ];
-
-            STEP_TIMINGS.forEach((s, i) => {
-                // Mark active
-                const t1 = setTimeout(() => {
-                    setStep(s.id, 'active');
-                    log(...logMessages[i]);
-                }, s.delay);
-
-                // Mark done
-                const t2 = setTimeout(() => {
-                    setStep(s.id, 'done');
-                }, s.delay + s.duration);
-
-                stepTimers.push(t1, t2);
-            });
         }
 
         function resetForm() {
-            // Clear timers
-            stepTimers.forEach(clearTimeout);
-            stepTimers = [];
-
-            // Reset steps
-            STEP_TIMINGS.forEach(s => {
-                const el = document.getElementById(s.id);
-                el.classList.remove('active', 'done');
-                el.querySelector('.step-icon').textContent = s.id.replace('step', '');
-            });
-
-            // Reset UI
-            document.getElementById('progressPanel').classList.remove('visible');
-            document.getElementById('successBanner').classList.remove('visible');
-            document.getElementById('resetBtn').classList.remove('visible');
-            document.getElementById('mainSpinner').classList.remove('done');
-            document.getElementById('progressTitle').textContent = 'Automation running…';
-            document.getElementById('logLines').innerHTML = '';
-            document.getElementById('submitBtn').disabled = false;
-
-            // Reset fields
-            ['userName', 'userEmail', 'rssUrl', 'toneInstructions'].forEach(id => {
-                document.getElementById(id).value = '';
-            });
+            form.reset();
             clearError();
+            statusShell.classList.remove("visible");
         }
+
+        form.addEventListener("submit", submitRun);
+        resetButton.addEventListener("click", resetForm);
     </script>
 </body>
-
 </html>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>RSS Automation Smoke Test</title>
+    <link>http://127.0.0.1:8000/static/smoke-feed.xml</link>
+    <description>Single-item feed for local end-to-end verification.</description>
+    <item>
+      <title>Smoke Test Episode</title>
+      <guid>smoke-test-episode-001</guid>
+      <link>http://127.0.0.1:8000/static/smoke-feed.xml#episode-1</link>
+      <pubDate>Mon, 27 Apr 2026 12:00:00 GMT</pubDate>
+      <enclosure url="https://assembly.ai/wildfires.mp3" type="audio/mpeg" length="0" />
+    </item>
+  </channel>
+</rss>

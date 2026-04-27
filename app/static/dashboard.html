@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RSS Automation Dashboard</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap"
+        rel="stylesheet"
+    />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #070b11;
+            --panel: rgba(13, 19, 29, 0.92);
+            --panel-strong: rgba(10, 16, 24, 0.96);
+            --border: rgba(140, 160, 188, 0.14);
+            --border-strong: rgba(110, 231, 183, 0.22);
+            --text: #ecf4ff;
+            --muted: #8fa2ba;
+            --accent: #6ee7b7;
+            --accent-cold: #38bdf8;
+            --accent-warm: #f5b965;
+            --danger: #ff9494;
+            --success: #6ee7b7;
+            --shadow: 0 22px 70px rgba(0, 0, 0, 0.34);
+            --radius-xl: 24px;
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --font-display: "Syne", sans-serif;
+            --font-body: "DM Mono", monospace;
+        }
+
+        @keyframes ribbonPulse {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(320%);
+            }
+        }
+
+        @keyframes orbitSpin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes glowPulse {
+            0%,
+            100% {
+                opacity: 0.32;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: var(--text);
+            font-family: var(--font-body);
+            background:
+                radial-gradient(circle at 12% 8%, rgba(56, 189, 248, 0.11), transparent 22%),
+                radial-gradient(circle at 88% 0%, rgba(110, 231, 183, 0.11), transparent 24%),
+                linear-gradient(180deg, #05070b 0%, #09121d 48%, #05070b 100%);
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(143, 162, 186, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(143, 162, 186, 0.05) 1px, transparent 1px);
+            background-size: 36px 36px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .shell {
+            position: relative;
+            z-index: 1;
+            width: min(1360px, calc(100% - 28px));
+            margin: 0 auto;
+            padding: 24px 0 40px;
+        }
+
+        .loading-ribbon {
+            position: sticky;
+            top: 14px;
+            z-index: 10;
+            margin-bottom: 14px;
+            padding: 12px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(56, 189, 248, 0.22);
+            background: rgba(8, 14, 22, 0.9);
+            box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+            overflow: hidden;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            backdrop-filter: blur(14px);
+        }
+
+        .loading-ribbon.visible {
+            display: flex;
+        }
+
+        .loading-ribbon::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.32), transparent);
+            animation: ribbonPulse 1.2s linear infinite;
+        }
+
+        .loading-ribbon strong,
+        .loading-ribbon span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .loading-ribbon strong {
+            font-family: var(--font-display);
+            font-size: 14px;
+            color: var(--accent-cold);
+        }
+
+        .loading-ribbon span {
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.6;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .brand {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .brand-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--border-strong);
+            background: rgba(11, 18, 27, 0.88);
+            color: var(--accent);
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            width: fit-content;
+        }
+
+        .brand-chip::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 18px rgba(110, 231, 183, 0.5);
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-family: var(--font-display);
+            font-size: clamp(28px, 3.2vw, 46px);
+            line-height: 0.94;
+            letter-spacing: -0.05em;
+        }
+
+        .brand p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        .topbar-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .muted-inline {
+            color: var(--muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        .button {
+            appearance: none;
+            border: 0;
+            cursor: pointer;
+            font: inherit;
+            border-radius: 12px;
+            padding: 12px 14px;
+            transition: transform 0.2s ease, opacity 0.2s ease, border-color 0.2s ease;
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+        }
+
+        .button-primary {
+            background: linear-gradient(135deg, var(--accent), #99f6e4);
+            color: #062316;
+            font-weight: 700;
+        }
+
+        .button-ghost {
+            border: 1px solid rgba(143, 162, 186, 0.18);
+            background: rgba(10, 16, 24, 0.88);
+            color: var(--muted);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .stat-card,
+        .rail,
+        .main-panel,
+        .detail-panel {
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border);
+            background: linear-gradient(180deg, rgba(13, 19, 29, 0.94), rgba(8, 13, 20, 0.96));
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(16px);
+        }
+
+        .stat-card {
+            padding: 18px;
+        }
+
+        .stat-card small {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 10px;
+            color: var(--muted);
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .stat-card strong {
+            display: block;
+            font-size: 28px;
+            font-family: var(--font-display);
+            letter-spacing: -0.04em;
+        }
+
+        .stat-card span {
+            display: block;
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: 340px minmax(0, 1fr) 390px;
+            gap: 18px;
+            align-items: start;
+        }
+
+        .rail,
+        .main-panel,
+        .detail-panel {
+            padding: 20px;
+        }
+
+        .loading-host {
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 24px;
+            background: rgba(7, 11, 17, 0.74);
+            backdrop-filter: blur(10px);
+            z-index: 3;
+        }
+
+        .loading-host.is-loading .loading-overlay {
+            display: flex;
+        }
+
+        .loading-host.is-loading > :not(.loading-overlay) {
+            opacity: 0.38;
+            filter: saturate(0.82);
+            pointer-events: none;
+        }
+
+        .loading-overlay-copy strong {
+            display: block;
+            margin-bottom: 6px;
+            font-family: var(--font-display);
+            font-size: 18px;
+            color: var(--accent);
+        }
+
+        .loading-overlay-copy span {
+            display: block;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.8;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .loader-orbit {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 2px solid rgba(56, 189, 248, 0.18);
+            border-top-color: var(--accent);
+            border-right-color: var(--accent-cold);
+            animation: orbitSpin 0.8s linear infinite;
+            box-shadow: 0 0 24px rgba(56, 189, 248, 0.18);
+            flex: 0 0 auto;
+        }
+
+        .loader-orbit::after {
+            content: "";
+            display: block;
+            width: 8px;
+            height: 8px;
+            margin: 13px auto 0;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: glowPulse 1.1s ease-in-out infinite;
+        }
+
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .section-title > div {
+            min-width: 0;
+        }
+
+        .section-title h2,
+        .section-title h3 {
+            margin: 0;
+            font-family: var(--font-display);
+            letter-spacing: -0.04em;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .section-title p {
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.7;
+            overflow-wrap: anywhere;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        select,
+        input[type="search"] {
+            width: 100%;
+            border: 1px solid rgba(143, 162, 186, 0.16);
+            border-radius: 12px;
+            background: rgba(7, 11, 18, 0.92);
+            color: var(--text);
+            padding: 12px 12px;
+            font: inherit;
+            outline: none;
+        }
+
+        .run-list,
+        .item-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .run-row,
+        .item-row {
+            width: 100%;
+            text-align: left;
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(143, 162, 186, 0.12);
+            background: rgba(7, 11, 17, 0.66);
+            color: inherit;
+            cursor: pointer;
+            transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+        }
+
+        .run-row:hover,
+        .item-row:hover {
+            transform: translateY(-1px);
+            border-color: rgba(56, 189, 248, 0.24);
+        }
+
+        .run-row.active,
+        .item-row.active {
+            border-color: rgba(110, 231, 183, 0.34);
+            background: rgba(110, 231, 183, 0.08);
+        }
+
+        .run-row-top,
+        .item-row-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: start;
+            margin-bottom: 8px;
+        }
+
+        .run-row strong,
+        .item-row strong {
+            display: block;
+            font-size: 13px;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .run-row small,
+        .item-row small,
+        .meta-copy,
+        .detail-copy {
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.7;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .status-tag {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            padding: 7px 10px;
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            border: 1px solid rgba(143, 162, 186, 0.16);
+            background: rgba(143, 162, 186, 0.08);
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        .status-tag[data-status="queued"],
+        .status-tag[data-status="claimed"],
+        .status-tag[data-status="running"] {
+            border-color: rgba(56, 189, 248, 0.2);
+            color: var(--accent-cold);
+            background: rgba(56, 189, 248, 0.08);
+        }
+
+        .status-tag[data-status="completed"],
+        .status-tag[data-status="done"],
+        .status-tag[data-status="reused"],
+        .status-tag[data-status="generated"] {
+            border-color: rgba(110, 231, 183, 0.2);
+            color: var(--success);
+            background: rgba(110, 231, 183, 0.08);
+        }
+
+        .status-tag[data-status="partial_failed"],
+        .status-tag[data-status="review_needed"] {
+            border-color: rgba(245, 185, 101, 0.22);
+            color: var(--accent-warm);
+            background: rgba(245, 185, 101, 0.08);
+        }
+
+        .status-tag[data-status="failed"] {
+            border-color: rgba(255, 148, 148, 0.22);
+            color: var(--danger);
+            background: rgba(255, 148, 148, 0.08);
+        }
+
+        .status-tag[data-status="transcribing"],
+        .status-tag[data-status="transcribed"],
+        .status-tag[data-status="generating"] {
+            border-color: rgba(56, 189, 248, 0.2);
+            color: var(--accent-cold);
+            background: rgba(56, 189, 248, 0.08);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .summary-card {
+            min-width: 0;
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(143, 162, 186, 0.12);
+            background: rgba(7, 11, 17, 0.62);
+            overflow: hidden;
+        }
+
+        .summary-card small {
+            display: block;
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .summary-card strong {
+            display: block;
+            font-size: clamp(16px, 1.5vw, 18px);
+            font-family: var(--font-display);
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .summary-card span {
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.6;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .detail-stack {
+            display: grid;
+            gap: 14px;
+        }
+
+        .detail-card {
+            padding: 16px;
+            border-radius: 18px;
+            border: 1px solid rgba(143, 162, 186, 0.12);
+            background: rgba(7, 11, 17, 0.68);
+        }
+
+        .detail-card small {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--muted);
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .detail-card strong,
+        .detail-card p,
+        .detail-card blockquote,
+        .detail-card pre {
+            margin: 0;
+        }
+
+        .detail-card p,
+        .detail-card blockquote,
+        .detail-card pre,
+        .detail-card strong {
+            font-size: 12px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .transcript-shell {
+            margin-top: 6px;
+            border-radius: 16px;
+            border: 1px solid rgba(143, 162, 186, 0.12);
+            background: rgba(8, 13, 20, 0.72);
+            overflow: hidden;
+        }
+
+        .transcript-shell summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            list-style: none;
+            padding: 14px 16px;
+            color: var(--accent-cold);
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .transcript-shell summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .transcript-shell summary::after {
+            content: "Expand";
+            color: var(--accent);
+            letter-spacing: 0.14em;
+        }
+
+        .transcript-shell[open] summary::after {
+            content: "Collapse";
+        }
+
+        .transcript-frame {
+            position: relative;
+            padding: 0 16px 16px;
+        }
+
+        .transcript-frame::after {
+            content: "";
+            position: absolute;
+            left: 16px;
+            right: 16px;
+            bottom: 16px;
+            height: 48px;
+            background: linear-gradient(180deg, rgba(8, 13, 20, 0), rgba(8, 13, 20, 1));
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .transcript-shell[open] .transcript-frame::after {
+            opacity: 0;
+        }
+
+        .transcript-pre {
+            max-height: 220px;
+            overflow: hidden;
+        }
+
+        .transcript-shell[open] .transcript-pre {
+            max-height: none;
+        }
+
+        blockquote {
+            padding-left: 12px;
+            border-left: 2px solid rgba(110, 231, 183, 0.22);
+            color: var(--accent);
+        }
+
+        .empty-state,
+        .inline-error {
+            padding: 18px;
+            border-radius: 16px;
+            border: 1px dashed rgba(143, 162, 186, 0.2);
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.8;
+            text-align: left;
+        }
+
+        .inline-error {
+            color: var(--danger);
+            border-style: solid;
+            background: rgba(255, 148, 148, 0.08);
+        }
+
+        .mini-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .mini-link {
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 11px;
+        }
+
+        .mini-link:hover {
+            color: #b6fff0;
+        }
+
+        @media (max-width: 1180px) {
+            .workspace {
+                grid-template-columns: 320px minmax(0, 1fr);
+            }
+
+            .detail-panel {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 840px) {
+            .stats-grid,
+            .summary-grid,
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="shell">
+        <header class="topbar">
+            <div class="brand">
+                <span class="brand-chip">Shared run board</span>
+                <h1>Queue, transcript, lead, draft.</h1>
+                <p>
+                    This board reflects the Mongo-backed queue in real time. Select a run to inspect canonical
+                    episodes, transcript readiness, extracted lead identity, and the email draft stored for review.
+                </p>
+            </div>
+            <div class="topbar-actions">
+                <span class="muted-inline" id="pollState">Polling only while a run is active</span>
+                <button class="button button-ghost" id="refreshButton" type="button">Refresh board</button>
+                <a class="button button-primary" href="/">Queue another run</a>
+            </div>
+        </header>
+
+        <section class="stats-grid" id="statsGrid">
+            <article class="stat-card">
+                <small>Total runs</small>
+                <strong id="totalRuns">0</strong>
+                <span id="runsBreakdown">Awaiting data</span>
+            </article>
+            <article class="stat-card">
+                <small>Total episodes</small>
+                <strong id="totalEpisodes">0</strong>
+                <span>Canonical episodes deduped across users</span>
+            </article>
+            <article class="stat-card">
+                <small>Total leads</small>
+                <strong id="totalLeads">0</strong>
+                <span id="leadsBreakdown">Awaiting data</span>
+            </article>
+            <article class="stat-card">
+                <small>Board posture</small>
+                <strong id="boardPosture">Idle</strong>
+                <span id="boardPostureCopy">No run selected yet</span>
+            </article>
+        </section>
+
+        <section class="workspace">
+            <aside class="rail">
+                <div class="section-title">
+                    <div>
+                        <h2>Runs</h2>
+                        <p>Newest submissions first. Select one to open its items and draft output.</p>
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <select id="statusFilter">
+                        <option value="">All statuses</option>
+                        <option value="queued">Queued</option>
+                        <option value="claimed">Claimed</option>
+                        <option value="running">Running</option>
+                        <option value="completed">Completed</option>
+                        <option value="partial_failed">Partial failed</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                </div>
+                <div class="run-list" id="runsList"></div>
+            </aside>
+
+            <section class="main-panel">
+                <div class="section-title">
+                    <div>
+                        <h2 id="runTitle">Select a run</h2>
+                        <p id="runSubtitle">Run details, progress, and episode status will appear here.</p>
+                    </div>
+                    <span class="status-tag" id="runStatusBadge" data-status="idle">idle</span>
+                </div>
+
+                <div class="summary-grid" id="runSummary">
+                    <article class="summary-card">
+                        <small>RSS feed</small>
+                        <strong>-</strong>
+                        <span>Waiting for selection</span>
+                    </article>
+                    <article class="summary-card">
+                        <small>Submitted by</small>
+                        <strong>-</strong>
+                        <span>Waiting for selection</span>
+                    </article>
+                    <article class="summary-card">
+                        <small>Progress</small>
+                        <strong>-</strong>
+                        <span>Waiting for selection</span>
+                    </article>
+                    <article class="summary-card">
+                        <small>Completed at</small>
+                        <strong>-</strong>
+                        <span>Waiting for selection</span>
+                    </article>
+                </div>
+
+                <div class="section-title">
+                    <div>
+                        <h3>Episodes in run</h3>
+                        <p>Each item inherits canonical episode state. Reused means the transcript and lead already existed.</p>
+                    </div>
+                </div>
+                <div class="item-list" id="itemsList">
+                    <div class="empty-state">No run selected yet.</div>
+                </div>
+            </section>
+
+            <aside class="detail-panel loading-host" id="detailPanel">
+                <div class="loading-overlay" id="detailLoader" aria-hidden="true">
+                    <div class="loader-orbit"></div>
+                    <div class="loading-overlay-copy">
+                        <strong id="detailLoaderTitle">Loading episode</strong>
+                        <span id="detailLoaderText">Fetching transcript, lead identity, and draft email from the backend.</span>
+                    </div>
+                </div>
+                <div class="section-title">
+                    <div>
+                        <h2>Lead inspector</h2>
+                        <p>Open a run item to inspect the lead, expand the transcript preview, and review the stored email draft.</p>
+                    </div>
+                </div>
+                <div class="detail-stack" id="leadInspector">
+                    <div class="empty-state">
+                        Choose a run item on the board. If a lead exists, the guest identity, expandable transcript preview,
+                        and draft email will render here. If the item failed, the transcript or provider error will surface instead.
+                    </div>
+                </div>
+            </aside>
+        </section>
+    </main>
+
+    <script>
+        const ACTIVE_RUN_STATUSES = new Set(["queued", "claimed", "running"]);
+        const POLL_INTERVAL_MS = 3000;
+
+        const state = {
+            runs: [],
+            selectedRunId: new URLSearchParams(window.location.search).get("run_id"),
+            selectedEpisodeId: null,
+            selectedLeadId: null,
+            pollHandle: null,
+        };
+
+        const runsList = document.getElementById("runsList");
+        const itemsList = document.getElementById("itemsList");
+        const leadInspector = document.getElementById("leadInspector");
+        const refreshButton = document.getElementById("refreshButton");
+        const statusFilter = document.getElementById("statusFilter");
+        const pollState = document.getElementById("pollState");
+        const runTitle = document.getElementById("runTitle");
+        const runSubtitle = document.getElementById("runSubtitle");
+        const runStatusBadge = document.getElementById("runStatusBadge");
+        const runSummary = document.getElementById("runSummary");
+        const detailPanel = document.getElementById("detailPanel");
+        const detailLoaderTitle = document.getElementById("detailLoaderTitle");
+        const detailLoaderText = document.getElementById("detailLoaderText");
+
+        function formatDate(value) {
+            if (!value) {
+                return "Not yet";
+            }
+            const parsed = new Date(value);
+            if (Number.isNaN(parsed.getTime())) {
+                return value;
+            }
+            return parsed.toLocaleString();
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;");
+        }
+
+        async function fetchJson(url) {
+            const response = await fetch(url);
+            if (!response.ok) {
+                const payload = await response.json().catch(() => ({}));
+                const detail = payload.detail || payload.error || "Request failed";
+                throw new Error(typeof detail === "string" ? detail : "Request failed");
+            }
+            return response.json();
+        }
+
+        function setBoardPosture(label, copy) {
+            document.getElementById("boardPosture").textContent = label;
+            document.getElementById("boardPostureCopy").textContent = copy;
+        }
+
+        function setPollIndicator(enabled) {
+            pollState.textContent = enabled
+                ? "Polling while the selected run remains active"
+                : "Polling only while a run is active";
+        }
+
+        function setInspectorLoading(isLoading, title, detail) {
+            if (title) {
+                detailLoaderTitle.textContent = title;
+            }
+            if (detail) {
+                detailLoaderText.textContent = detail;
+            }
+            detailPanel.classList.toggle("is-loading", isLoading);
+            detailPanel.setAttribute("aria-busy", String(isLoading));
+        }
+
+        function setPolling(enabled) {
+            if (state.pollHandle) {
+                window.clearInterval(state.pollHandle);
+                state.pollHandle = null;
+            }
+
+            setPollIndicator(enabled);
+            if (!enabled) {
+                return;
+            }
+
+            state.pollHandle = window.setInterval(async () => {
+                await Promise.all([loadStats(), loadRuns(false), loadSelectedRun(false)]);
+            }, POLL_INTERVAL_MS);
+        }
+
+        function renderStats(stats) {
+            document.getElementById("totalRuns").textContent = String(stats.total_runs);
+            document.getElementById("totalEpisodes").textContent = String(stats.total_episodes);
+            document.getElementById("totalLeads").textContent = String(stats.total_leads);
+            document.getElementById("runsBreakdown").textContent =
+                `${stats.runs_by_status.completed} completed, ${stats.runs_by_status.running} running, ${stats.runs_by_status.failed} failed`;
+            document.getElementById("leadsBreakdown").textContent =
+                `${stats.leads_by_status.generated} generated, ${stats.leads_by_status.review_needed} review needed`;
+        }
+
+        function renderRuns() {
+            if (!state.runs.length) {
+                runsList.innerHTML = '<div class="empty-state">No runs found for the current filter.</div>';
+                return;
+            }
+
+            runsList.innerHTML = state.runs.map((run) => `
+                <button class="run-row ${run.run_id === state.selectedRunId ? "active" : ""}" data-run-id="${run.run_id}" type="button">
+                    <div class="run-row-top">
+                        <div>
+                            <strong>${escapeHtml(run.submitted_by)}</strong>
+                            <small>${escapeHtml(run.submitted_by_email)}</small>
+                        </div>
+                        <span class="status-tag" data-status="${run.status}">${run.status.replaceAll("_", " ")}</span>
+                    </div>
+                    <small>${escapeHtml(run.rss_url)}</small>
+                    <div class="mini-actions">
+                        <span class="mini-link">${run.completed_items}/${run.total_items} completed</span>
+                        <span class="mini-link">${formatDate(run.submitted_at)}</span>
+                    </div>
+                </button>
+            `).join("");
+
+            runsList.querySelectorAll("[data-run-id]").forEach((element) => {
+                element.addEventListener("click", () => {
+                    const nextRunId = element.getAttribute("data-run-id");
+                    if (nextRunId) {
+                        void selectRun(nextRunId, true);
+                    }
+                });
+            });
+        }
+
+        function renderRunSummary(run) {
+            runTitle.textContent = `Run ${run.run_id.slice(0, 8)}`;
+            runSubtitle.textContent = `${run.submitted_by} submitted ${run.rss_url}`;
+            runStatusBadge.textContent = run.status.replaceAll("_", " ");
+            runStatusBadge.dataset.status = run.status;
+
+            runSummary.innerHTML = `
+                <article class="summary-card">
+                    <small>RSS feed</small>
+                    <strong>${escapeHtml(run.rss_url)}</strong>
+                    <span>Submitted ${formatDate(run.submitted_at)}</span>
+                </article>
+                <article class="summary-card">
+                    <small>Submitted by</small>
+                    <strong>${escapeHtml(run.submitted_by)}</strong>
+                    <span>${escapeHtml(run.submitted_by_email)}</span>
+                </article>
+                <article class="summary-card">
+                    <small>Progress</small>
+                    <strong>${run.completed_items}/${run.total_items}</strong>
+                    <span>${run.failed_items} failed item(s)</span>
+                </article>
+                <article class="summary-card">
+                    <small>Completed at</small>
+                    <strong>${formatDate(run.completed_at)}</strong>
+                    <span>${run.error ? escapeHtml(run.error) : "No run-level error recorded"}</span>
+                </article>
+            `;
+        }
+
+        function renderItems(run) {
+            if (!run.items.length) {
+                itemsList.innerHTML = '<div class="empty-state">This run has no items yet.</div>';
+                return;
+            }
+
+            itemsList.innerHTML = run.items.map((item) => `
+                <button
+                    class="item-row ${item.episode_id === state.selectedEpisodeId ? "active" : ""}"
+                    data-episode-id="${item.episode_id}"
+                    data-lead-id="${item.lead ? item.lead.lead_id : ""}"
+                    type="button"
+                >
+                    <div class="item-row-top">
+                        <div>
+                            <strong>${escapeHtml(item.title)}</strong>
+                            <small>${item.published_at ? escapeHtml(item.published_at) : "No publish date"}</small>
+                        </div>
+                        <span class="status-tag" data-status="${item.status}">${item.status.replaceAll("_", " ")}</span>
+                    </div>
+                    <div class="detail-copy">${escapeHtml(item.audio_url || "Audio URL unavailable")}</div>
+                    <div class="mini-actions">
+                        <span class="mini-link">${item.transcript_ready ? "Transcript ready" : "Transcript pending"}</span>
+                        <span class="mini-link">${item.lead ? escapeHtml(item.lead.guest_name) : "Lead not available"}</span>
+                    </div>
+                </button>
+            `).join("");
+
+            itemsList.querySelectorAll("[data-episode-id]").forEach((element) => {
+                element.addEventListener("click", () => {
+                    const episodeId = element.getAttribute("data-episode-id");
+                    const leadId = element.getAttribute("data-lead-id") || null;
+                    if (episodeId) {
+                        void selectItem(episodeId, leadId);
+                    }
+                });
+            });
+        }
+
+        function renderInspector(payload) {
+            const quoteBlock = payload.lead
+                ? `<div class="detail-card"><small>Memorable quote</small><blockquote>${escapeHtml(payload.lead.memorable_quote)}</blockquote></div>`
+                : "";
+            const emailBlocks = payload.lead
+                ? `
+                    <div class="detail-card">
+                        <small>Email subject</small>
+                        <strong>${escapeHtml(payload.lead.email_subject)}</strong>
+                    </div>
+                    <div class="detail-card">
+                        <small>Email body</small>
+                        <pre>${escapeHtml(payload.lead.email_body)}</pre>
+                    </div>
+                `
+                : "";
+
+            const transcriptText = payload.episode.transcript_text || "Transcript not available yet.";
+            const transcriptBlock = payload.episode.transcript_text
+                ? `
+                    <details class="transcript-shell">
+                        <summary class="transcript-toggle">Transcript preview</summary>
+                        <div class="transcript-frame">
+                            <pre class="transcript-pre">${escapeHtml(transcriptText)}</pre>
+                        </div>
+                    </details>
+                `
+                : `<p>${escapeHtml(transcriptText)}</p>`;
+            const leadIdentity = payload.lead
+                ? `
+                    <div class="detail-card">
+                        <small>Lead identity</small>
+                        <strong>${escapeHtml(payload.lead.guest_name)}</strong>
+                        <p>${escapeHtml(payload.lead.role)} at ${escapeHtml(payload.lead.guest_company)}</p>
+                    </div>
+                    <div class="detail-card">
+                        <small>Pain point</small>
+                        <p>${escapeHtml(payload.lead.pain_point)}</p>
+                    </div>
+                `
+                : `
+                    <div class="inline-error">
+                        No lead record exists for this episode yet. Either the item is still processing or it failed before lead generation.
+                    </div>
+                `;
+
+            leadInspector.innerHTML = `
+                <div class="detail-card">
+                    <small>Episode</small>
+                    <strong>${escapeHtml(payload.episode.title)}</strong>
+                    <p>${escapeHtml(payload.episode.audio_url)}</p>
+                </div>
+                ${leadIdentity}
+                ${quoteBlock}
+                <div class="detail-card">
+                    <small>Transcript preview</small>
+                    ${transcriptBlock}
+                </div>
+                ${emailBlocks}
+            `;
+        }
+
+        function renderInspectorError(message) {
+            leadInspector.innerHTML = `<div class="inline-error">${escapeHtml(message)}</div>`;
+        }
+
+        async function loadStats() {
+            const stats = await fetchJson("/api/dashboard/stats");
+            renderStats(stats);
+            setBoardPosture(
+                stats.runs_by_status.running > 0 ? "Active" : "Stable",
+                stats.runs_by_status.running > 0
+                    ? "At least one run is still processing."
+                    : "No active run processing right now.",
+            );
+        }
+
+        async function loadRuns(selectDefault = true) {
+            const status = statusFilter.value;
+            const params = new URLSearchParams({ page: "1", limit: "20" });
+            if (status) {
+                params.set("status", status);
+            }
+            const payload = await fetchJson(`/api/runs?${params.toString()}`);
+            state.runs = payload.data;
+            renderRuns();
+
+            if (!state.selectedRunId && selectDefault && state.runs.length) {
+                await selectRun(state.runs[0].run_id, true);
+                return;
+            }
+
+            if (state.selectedRunId && !state.runs.some((run) => run.run_id === state.selectedRunId) && state.runs.length) {
+                await selectRun(state.runs[0].run_id, true);
+            }
+        }
+
+        async function loadSelectedRun(forceItemSelection = true) {
+            if (!state.selectedRunId) {
+                return;
+            }
+            const run = await fetchJson(`/api/runs/${state.selectedRunId}`);
+            renderRunSummary(run);
+            renderItems(run);
+            const shouldPoll = ACTIVE_RUN_STATUSES.has(run.status);
+            setPolling(shouldPoll);
+
+            if (!run.items.length) {
+                leadInspector.innerHTML = '<div class="empty-state">This run has not produced any run items yet.</div>';
+                state.selectedEpisodeId = null;
+                state.selectedLeadId = null;
+                return;
+            }
+
+            const selectedStillExists = run.items.some((item) => item.episode_id === state.selectedEpisodeId);
+            if (!selectedStillExists && forceItemSelection) {
+                const preferred = run.items.find((item) => item.lead) || run.items[0];
+                await selectItem(preferred.episode_id, preferred.lead ? preferred.lead.lead_id : null);
+            }
+        }
+
+        async function selectRun(runId, pushHistory) {
+            state.selectedRunId = runId;
+            state.selectedEpisodeId = null;
+            state.selectedLeadId = null;
+            renderRuns();
+            if (pushHistory) {
+                const nextUrl = new URL(window.location.href);
+                nextUrl.searchParams.set("run_id", runId);
+                window.history.replaceState({}, "", nextUrl);
+            }
+            await loadSelectedRun(true);
+        }
+
+        async function selectItem(episodeId, leadId) {
+            state.selectedEpisodeId = episodeId;
+            state.selectedLeadId = leadId;
+            document.querySelectorAll(".item-row").forEach((element) => {
+                element.classList.toggle("active", element.getAttribute("data-episode-id") === episodeId);
+            });
+
+            setInspectorLoading(
+                true,
+                "Loading episode",
+                "Fetching transcript, lead identity, and draft email from the backend.",
+            );
+            try {
+                const episode = await fetchJson(`/api/episodes/${episodeId}`);
+                if (leadId) {
+                    const lead = await fetchJson(`/api/leads/${leadId}`);
+                    renderInspector({ episode, lead });
+                } else {
+                    renderInspector({ episode, lead: null });
+                }
+            } catch (error) {
+                renderInspectorError(error instanceof Error ? error.message : "Failed to load item detail.");
+            } finally {
+                setInspectorLoading(false);
+            }
+        }
+
+        async function refreshBoard() {
+            try {
+                await Promise.all([loadStats(), loadRuns(true)]);
+                if (state.selectedRunId) {
+                    await loadSelectedRun(false);
+                }
+            } catch (error) {
+                const message = error instanceof Error ? error.message : "Failed to refresh board.";
+                renderInspectorError(message);
+            }
+        }
+
+        refreshButton.addEventListener("click", () => {
+            void refreshBoard();
+        });
+
+        statusFilter.addEventListener("change", () => {
+            state.selectedRunId = null;
+            state.selectedEpisodeId = null;
+            state.selectedLeadId = null;
+            void refreshBoard();
+        });
+
+        void refreshBoard();
+    </script>
+</body>
+</html>

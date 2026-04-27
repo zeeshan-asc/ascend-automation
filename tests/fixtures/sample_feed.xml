@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+  <channel>
+    <title>Sample Podcast</title>
+    <link>https://example.com/podcast</link>
+    <description>Sample feed for tests</description>
+    <item>
+      <title>Episode 6</title>
+      <guid>guid-6</guid>
+      <link>https://example.com/episodes/6</link>
+      <pubDate>Mon, 21 Apr 2026 10:00:00 GMT</pubDate>
+      <enclosure url="https://cdn.example.com/audio-6.mp3" type="audio/mpeg" />
+    </item>
+    <item>
+      <title>Episode 5</title>
+      <guid>guid-5</guid>
+      <link>https://example.com/episodes/5</link>
+      <pubDate>Sun, 20 Apr 2026 10:00:00 GMT</pubDate>
+      <enclosure url="https://cdn.example.com/audio-5.mp3" type="audio/mpeg" />
+    </item>
+    <item>
+      <title>Episode 4</title>
+      <guid>guid-4</guid>
+      <link>https://example.com/episodes/4</link>
+      <pubDate>Sat, 19 Apr 2026 10:00:00 GMT</pubDate>
+      <enclosure url="https://cdn.example.com/audio-4.mp3" type="audio/mpeg" />
+    </item>
+    <item>
+      <title>Episode 3</title>
+      <guid>guid-3</guid>
+      <link>https://example.com/episodes/3</link>
+      <pubDate>Fri, 18 Apr 2026 10:00:00 GMT</pubDate>
+      <enclosure url="https://cdn.example.com/audio-3.mp3" type="audio/mpeg" />
+    </item>
+    <item>
+      <title>Episode 2</title>
+      <guid>guid-2</guid>
+      <link>https://example.com/episodes/2</link>
+      <pubDate>Thu, 17 Apr 2026 10:00:00 GMT</pubDate>
+      <enclosure url="https://cdn.example.com/audio-2.mp3" type="audio/mpeg" />
+    </item>
+    <item>
+      <title>Episode 1</title>
+      <guid>guid-1</guid>
+      <link>https://example.com/episodes/1</link>
+      <pubDate>Wed, 16 Apr 2026 10:00:00 GMT</pubDate>
+      <enclosure url="https://cdn.example.com/audio-1.mp3" type="audio/mpeg" />
+    </item>
+  </channel>
+</rss>

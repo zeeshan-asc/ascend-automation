@@ -1,0 +1,1 @@
+"""RSS automation application package."""
