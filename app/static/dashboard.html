@@ -399,6 +399,11 @@
             flex-wrap: wrap;
         }
 
+        .filter-row > * {
+            flex: 1 1 150px;
+            min-width: 0;
+        }
+
         select,
         input[type="search"] {
             width: 100%;
@@ -780,7 +785,7 @@
                 <div class="section-title">
                     <div>
                         <h2>Runs</h2>
-                        <p>Newest submissions first. Select one to open its items and draft output.</p>
+                        <p id="runRailSubtitle">Newest submissions first. Select one to open its items and draft output.</p>
                     </div>
                 </div>
                 <div class="filter-row">
@@ -792,6 +797,9 @@
                         <option value="completed">Completed</option>
                         <option value="partial_failed">Partial failed</option>
                         <option value="failed">Failed</option>
+                    </select>
+                    <select id="submitterFilter">
+                        <option value="">All teammates</option>
                     </select>
                 </div>
                 <div class="run-list" id="runsList"></div>
@@ -868,11 +876,14 @@
         const ACTIVE_RUN_STATUSES = new Set(["queued", "claimed", "running"]);
         const POLL_INTERVAL_MS = 3000;
 
+        const initialQuery = new URLSearchParams(window.location.search);
         const state = {
             runs: [],
-            selectedRunId: new URLSearchParams(window.location.search).get("run_id"),
+            submitters: [],
+            selectedRunId: initialQuery.get("run_id"),
             selectedEpisodeId: null,
             selectedLeadId: null,
+            selectedSubmitterEmail: initialQuery.get("submitted_by_email") || "",
             pollHandle: null,
         };
 
@@ -881,7 +892,9 @@
         const leadInspector = document.getElementById("leadInspector");
         const refreshButton = document.getElementById("refreshButton");
         const statusFilter = document.getElementById("statusFilter");
+        const submitterFilter = document.getElementById("submitterFilter");
         const pollState = document.getElementById("pollState");
+        const runRailSubtitle = document.getElementById("runRailSubtitle");
         const runTitle = document.getElementById("runTitle");
         const runSubtitle = document.getElementById("runSubtitle");
         const runStatusBadge = document.getElementById("runStatusBadge");
@@ -889,6 +902,10 @@
         const detailPanel = document.getElementById("detailPanel");
         const detailLoaderTitle = document.getElementById("detailLoaderTitle");
         const detailLoaderText = document.getElementById("detailLoaderText");
+
+        if (state.selectedSubmitterEmail) {
+            submitterFilter.value = state.selectedSubmitterEmail;
+        }
 
         function formatDate(value) {
             if (!value) {
@@ -924,6 +941,55 @@
             document.getElementById("boardPostureCopy").textContent = copy;
         }
 
+        function syncDashboardQuery() {
+            const nextUrl = new URL(window.location.href);
+            if (state.selectedRunId) {
+                nextUrl.searchParams.set("run_id", state.selectedRunId);
+            } else {
+                nextUrl.searchParams.delete("run_id");
+            }
+
+            if (state.selectedSubmitterEmail) {
+                nextUrl.searchParams.set("submitted_by_email", state.selectedSubmitterEmail);
+            } else {
+                nextUrl.searchParams.delete("submitted_by_email");
+            }
+
+            window.history.replaceState({}, "", nextUrl);
+        }
+
+        function updateRunRailCopy() {
+            const selectedSubmitter = state.submitters.find(
+                (submitter) => submitter.submitted_by_email === state.selectedSubmitterEmail,
+            );
+            if (!selectedSubmitter) {
+                runRailSubtitle.textContent = "Newest submissions first. Select one to open its items and draft output.";
+                return;
+            }
+
+            const plural = selectedSubmitter.run_count === 1 ? "" : "s";
+            runRailSubtitle.textContent =
+                `Showing ${selectedSubmitter.run_count} RSS feed${plural} entered by ${selectedSubmitter.submitted_by}. Select one to open its items and draft output.`;
+        }
+
+        function renderSubmitterFilters() {
+            const selectedValue = state.selectedSubmitterEmail;
+            const options = [
+                '<option value="">All teammates</option>',
+                ...state.submitters.map((submitter) => `
+                    <option value="${escapeHtml(submitter.submitted_by_email)}">
+                        ${escapeHtml(submitter.submitted_by)} - ${escapeHtml(submitter.submitted_by_email)} (${submitter.run_count})
+                    </option>
+                `),
+            ];
+            submitterFilter.innerHTML = options.join("");
+            submitterFilter.value = selectedValue;
+            if (submitterFilter.value !== selectedValue) {
+                state.selectedSubmitterEmail = "";
+            }
+            updateRunRailCopy();
+        }
+
         function setPollIndicator(enabled) {
             pollState.textContent = enabled
                 ? "Polling while the selected run remains active"
@@ -953,7 +1019,9 @@
             }
 
             state.pollHandle = window.setInterval(async () => {
-                await Promise.all([loadStats(), loadRuns(false), loadSelectedRun(false)]);
+                await Promise.all([loadStats(), loadSubmitterFilters()]);
+                await loadRuns(false);
+                await loadSelectedRun(false);
             }, POLL_INTERVAL_MS);
         }
 
@@ -1135,6 +1203,53 @@
             leadInspector.innerHTML = `<div class="inline-error">${escapeHtml(message)}</div>`;
         }
 
+        function resetRunSelection(message) {
+            state.selectedRunId = null;
+            state.selectedEpisodeId = null;
+            state.selectedLeadId = null;
+            runTitle.textContent = "Select a run";
+            runSubtitle.textContent = message;
+            runStatusBadge.textContent = "idle";
+            runStatusBadge.dataset.status = "idle";
+            runSummary.innerHTML = `
+                <article class="summary-card">
+                    <small>RSS feed</small>
+                    <strong>-</strong>
+                    <span>Adjust filters or queue a new run.</span>
+                </article>
+                <article class="summary-card">
+                    <small>Submitted by</small>
+                    <strong>-</strong>
+                    <span>Waiting for selection</span>
+                </article>
+                <article class="summary-card">
+                    <small>Progress</small>
+                    <strong>-</strong>
+                    <span>Waiting for selection</span>
+                </article>
+                <article class="summary-card">
+                    <small>Completed at</small>
+                    <strong>-</strong>
+                    <span>Waiting for selection</span>
+                </article>
+            `;
+            itemsList.innerHTML = `<div class="empty-state">${escapeHtml(message)}</div>`;
+            leadInspector.innerHTML = `
+                <div class="empty-state">
+                    Choose a run item on the board. If a lead exists, the guest identity, expandable transcript preview,
+                    and draft email will render here. If the item failed, the transcript or provider error will surface instead.
+                </div>
+            `;
+            setPolling(false);
+            syncDashboardQuery();
+        }
+
+        async function loadSubmitterFilters() {
+            const payload = await fetchJson("/api/dashboard/submitters");
+            state.submitters = payload.data;
+            renderSubmitterFilters();
+        }
+
         async function loadStats() {
             const stats = await fetchJson("/api/dashboard/stats");
             renderStats(stats);
@@ -1148,20 +1263,30 @@
 
         async function loadRuns(selectDefault = true) {
             const status = statusFilter.value;
+            state.selectedSubmitterEmail = submitterFilter.value;
             const params = new URLSearchParams({ page: "1", limit: "20" });
             if (status) {
                 params.set("status", status);
             }
+            if (state.selectedSubmitterEmail) {
+                params.set("submitted_by_email", state.selectedSubmitterEmail);
+            }
             const payload = await fetchJson(`/api/runs?${params.toString()}`);
             state.runs = payload.data;
             renderRuns();
+            updateRunRailCopy();
 
-            if (!state.selectedRunId && selectDefault && state.runs.length) {
+            if (!state.runs.length) {
+                resetRunSelection("No runs found for the current filter.");
+                return;
+            }
+
+            if (!state.selectedRunId && selectDefault) {
                 await selectRun(state.runs[0].run_id, true);
                 return;
             }
 
-            if (state.selectedRunId && !state.runs.some((run) => run.run_id === state.selectedRunId) && state.runs.length) {
+            if (state.selectedRunId && !state.runs.some((run) => run.run_id === state.selectedRunId)) {
                 await selectRun(state.runs[0].run_id, true);
             }
         }
@@ -1196,9 +1321,7 @@
             state.selectedLeadId = null;
             renderRuns();
             if (pushHistory) {
-                const nextUrl = new URL(window.location.href);
-                nextUrl.searchParams.set("run_id", runId);
-                window.history.replaceState({}, "", nextUrl);
+                syncDashboardQuery();
             }
             await loadSelectedRun(true);
         }
@@ -1232,7 +1355,8 @@
 
         async function refreshBoard() {
             try {
-                await Promise.all([loadStats(), loadRuns(true)]);
+                await Promise.all([loadStats(), loadSubmitterFilters()]);
+                await loadRuns(true);
                 if (state.selectedRunId) {
                     await loadSelectedRun(false);
                 }
@@ -1250,6 +1374,15 @@
             state.selectedRunId = null;
             state.selectedEpisodeId = null;
             state.selectedLeadId = null;
+            void refreshBoard();
+        });
+
+        submitterFilter.addEventListener("change", () => {
+            state.selectedRunId = null;
+            state.selectedEpisodeId = null;
+            state.selectedLeadId = null;
+            state.selectedSubmitterEmail = submitterFilter.value;
+            syncDashboardQuery();
             void refreshBoard();
         });
 

@@ -186,6 +186,35 @@ async def test_list_runs_supports_pagination_and_filtering(
 
 
 @pytest.mark.asyncio
+async def test_dashboard_submitters_returns_distinct_users_with_run_counts(
+    client: AsyncClient,
+    app_container: AppContainer,
+) -> None:
+    await seed_dashboard_state(app_container)
+
+    duplicate_submitter_run = Run(
+        rss_url="https://example.com/completed-follow-up.xml",
+        submitted_by="Alice",
+        submitted_by_email="alice@example.com",
+        submitted_at=datetime.now(UTC),
+        status=RunStatus.COMPLETED,
+    )
+    await app_container.run_repository.create(duplicate_submitter_run)
+
+    response = await client.get("/api/dashboard/submitters")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["data"][0]["submitted_by_email"] == "alice@example.com"
+    assert payload["data"][0]["run_count"] == 2
+    assert {submitter["submitted_by_email"] for submitter in payload["data"]} == {
+        "alice@example.com",
+        "bob@example.com",
+        "cara@example.com",
+    }
+
+
+@pytest.mark.asyncio
 async def test_get_run_detail_includes_joined_item_state(
     client: AsyncClient,
     app_container: AppContainer,

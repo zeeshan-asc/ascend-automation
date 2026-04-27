@@ -5,7 +5,7 @@ from datetime import datetime
 from pymongo import ReturnDocument
 
 from app.domain.enums import RunStatus
-from app.domain.models import Run
+from app.domain.models import Run, RunSubmitter
 from app.infrastructure.mongo.base import MongoRepository
 
 
@@ -62,6 +62,31 @@ class RunRepository(MongoRepository[Run]):
         results = [self.model.model_validate(document) async for document in cursor]
         total = await self.collection.count_documents(filters)
         return results, total
+
+    async def list_submitters(self) -> list[RunSubmitter]:
+        cursor = self.collection.find(
+            {},
+            {
+                "_id": 0,
+                "submitted_by": 1,
+                "submitted_by_email": 1,
+            },
+        ).sort("submitted_at", -1)
+        submitters_by_email: dict[str, RunSubmitter] = {}
+        async for document in cursor:
+            email = str(document["submitted_by_email"])
+            existing = submitters_by_email.get(email)
+            if existing is None:
+                submitters_by_email[email] = RunSubmitter(
+                    submitted_by=str(document["submitted_by"]),
+                    submitted_by_email=email,
+                    run_count=1,
+                )
+                continue
+            submitters_by_email[email] = existing.model_copy(
+                update={"run_count": existing.run_count + 1},
+            )
+        return list(submitters_by_email.values())
 
     async def claim_next(self, *, worker_id: str, now: datetime) -> Run | None:
         document = await self.collection.find_one_and_update(

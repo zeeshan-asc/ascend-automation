@@ -45,6 +45,12 @@ class Run(DomainModel):
     updated_at: datetime = Field(default_factory=utcnow)
 
 
+class RunSubmitter(DomainModel):
+    submitted_by: str
+    submitted_by_email: EmailStr
+    run_count: int
+
+
 class ParsedEpisode(DomainModel):
     guid: str | None = None
     title: str

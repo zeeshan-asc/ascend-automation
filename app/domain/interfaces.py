@@ -12,6 +12,7 @@ from app.domain.models import (
     ParsedEpisode,
     Run,
     RunItem,
+    RunSubmitter,
     Transcript,
     TranscriptResult,
 )
@@ -31,6 +32,7 @@ class RunRepositoryProtocol(Protocol):
         status: str | None = None,
         submitted_by_email: str | None = None,
     ) -> tuple[list[Run], int]: ...
+    async def list_submitters(self) -> list[RunSubmitter]: ...
     async def claim_next(self, *, worker_id: str, now: datetime) -> Run | None: ...
     async def mark_running(self, run_id: str, now: datetime) -> Run | None: ...
     async def update_heartbeat(

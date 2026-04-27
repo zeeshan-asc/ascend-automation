@@ -23,11 +23,13 @@ async def test_dashboard_page_serves_shared_board_ui(client: AsyncClient) -> Non
     assert response.status_code == 200
     assert "Shared run board" in response.text
     assert "/api/dashboard/stats" in response.text
+    assert "/api/dashboard/submitters" in response.text
     assert "/api/runs/" in response.text
     assert "Lead inspector" in response.text
     assert "expand the transcript preview" in response.text
     assert "transcript-shell" in response.text
     assert 'id="detailLoader"' in response.text
     assert "Loading episode" in response.text
+    assert 'id="submitterFilter"' in response.text
     assert "repeat(auto-fit, minmax(200px, 1fr))" in response.text
     assert "overflow-wrap: anywhere" in response.text

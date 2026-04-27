@@ -112,6 +112,16 @@ class PaginatedLeads(ApiModel):
     data: list[LeadDetail]
 
 
+class SubmitterFilterOption(ApiModel):
+    submitted_by: str
+    submitted_by_email: str
+    run_count: int
+
+
+class DashboardSubmitters(ApiModel):
+    data: list[SubmitterFilterOption]
+
+
 class DashboardStats(ApiModel):
     total_runs: int
     runs_by_status: dict[str, int]
@@ -227,6 +237,19 @@ class DashboardQueryService:
             page=page,
             limit=limit,
             data=[self._build_lead_detail(lead) for lead in leads],
+        )
+
+    async def list_submitters(self) -> DashboardSubmitters:
+        submitters = await self._run_repository.list_submitters()
+        return DashboardSubmitters(
+            data=[
+                SubmitterFilterOption(
+                    submitted_by=submitter.submitted_by,
+                    submitted_by_email=str(submitter.submitted_by_email),
+                    run_count=submitter.run_count,
+                )
+                for submitter in submitters
+            ]
         )
 
     async def get_lead_detail(self, *, lead_id: str) -> LeadDetail:
