@@ -22,7 +22,8 @@ async def test_list_records_returns_joined_rows_and_supports_filters(
 
     first_row = payload["data"][0]
     assert first_row["submitted_by"] == "Bob"
-    assert first_row["rss_url"] == "https://example.com/partial.xml"
+    assert first_row["source_url"] == "https://example.com/partial.xml"
+    assert first_row["source_kind"] == "rss_feed"
 
     outreach_filtered = await authenticated_client.get(
         "/api/records",
@@ -93,7 +94,7 @@ async def test_export_records_returns_csv_for_current_filter(
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/csv")
     assert "attachment; filename=" in response.headers["content-disposition"]
-    assert "submitted_by,submitted_by_email,submitted_at,rss_url" in response.text
+    assert "submitted_by,submitted_by_email,submitted_at,source_url,source_kind" in response.text
     assert "Alice" in response.text
     assert "alice@example.com" in response.text
     assert "https://example.com/completed.xml" in response.text

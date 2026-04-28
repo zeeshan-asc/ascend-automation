@@ -23,7 +23,8 @@ class ApiModel(BaseModel):
 
 class RunSummary(ApiModel):
     run_id: str
-    rss_url: str
+    source_url: str
+    source_kind: str
     submitted_by: str
     submitted_by_email: str
     submitted_at: datetime
@@ -68,7 +69,8 @@ class EpisodeDetail(ApiModel):
     episode_url: str | None
     audio_url: str
     published_at: str | None
-    feed_url: str
+    source_url: str
+    source_kind: str
     transcript_status: str | None
     lead: LeadSummary | None
 
@@ -219,7 +221,8 @@ class DashboardQueryService:
             episode_url=episode.episode_url,
             audio_url=episode.audio_url,
             published_at=episode.published_at,
-            feed_url=episode.feed_url,
+            source_url=episode.source_url,
+            source_kind=str(episode.source_kind),
             transcript_status=transcript_status,
             lead=self._build_lead_summary(lead) if lead else None,
         )
@@ -301,7 +304,8 @@ class DashboardQueryService:
     def _build_run_summary(self, run: Run) -> RunSummary:
         return RunSummary(
             run_id=run.run_id,
-            rss_url=run.rss_url,
+            source_url=run.source_url,
+            source_kind=str(run.source_kind),
             submitted_by=run.submitted_by,
             submitted_by_email=run.submitted_by_email,
             submitted_at=run.submitted_at,

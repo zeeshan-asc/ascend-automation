@@ -54,7 +54,7 @@ async def test_root_page_requires_authentication(client) -> None:
 async def test_auth_page_serves_auth_shell(client) -> None:
     response = await client.get("/auth")
     assert response.status_code == 200
-    assert "Ascend Outreach Engine" in response.text
+    assert "RSS Automation" in response.text
     assert "Create account" in response.text
     assert "Sign in" in response.text
 

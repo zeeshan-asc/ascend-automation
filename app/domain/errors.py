@@ -26,7 +26,15 @@ class AuthorizationError(DomainError):
     """Raised when an authenticated action is not permitted."""
 
 
-class FeedFetchError(DomainError):
+class SourceFetchError(DomainError):
+    """Raised when a source URL cannot be fetched or resolved."""
+
+    def __init__(self, message: str, *, reason_code: str = "source_invalid") -> None:
+        super().__init__(message)
+        self.reason_code = reason_code
+
+
+class FeedFetchError(SourceFetchError):
     """Raised when an RSS feed cannot be fetched or parsed."""
 
     def __init__(self, message: str, *, reason_code: str = "feed_invalid") -> None:

@@ -4,13 +4,14 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
-from pydantic import AnyHttpUrl, BaseModel, ConfigDict, EmailStr, Field
+from pydantic import AnyHttpUrl, BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 from app.domain.enums import (
     LeadStatus,
     OutreachStatus,
     RunItemStatus,
     RunStatus,
+    SourceKind,
     TranscriptStatus,
 )
 
@@ -24,9 +25,24 @@ class DomainModel(BaseModel):
 
 
 class SubmissionRequest(DomainModel):
-    rss_url: AnyHttpUrl
+    source_url: AnyHttpUrl
+    source_kind: SourceKind = SourceKind.AUTO
     tone_instructions: str | None = Field(default=None, max_length=5000)
     submitted_at: datetime
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_legacy_rss_url(cls, values: Any) -> Any:
+        if not isinstance(values, dict):
+            return values
+        normalized = dict(values)
+        if not normalized.get("source_url") and normalized.get("rss_url"):
+            normalized["source_url"] = normalized["rss_url"]
+        return normalized
+
+    @property
+    def rss_url(self) -> AnyHttpUrl:
+        return self.source_url
 
 
 class User(DomainModel):
@@ -67,7 +83,8 @@ class TokenClaims(DomainModel):
 
 class Run(DomainModel):
     run_id: str = Field(default_factory=lambda: str(uuid4()))
-    rss_url: str
+    source_url: str
+    source_kind: SourceKind = SourceKind.RSS_FEED
     submitted_by: str
     submitted_by_email: EmailStr
     tone_instructions: str | None = None
@@ -85,6 +102,21 @@ class Run(DomainModel):
     created_at: datetime = Field(default_factory=utcnow)
     updated_at: datetime = Field(default_factory=utcnow)
 
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_legacy_source_fields(cls, values: Any) -> Any:
+        if not isinstance(values, dict):
+            return values
+        normalized = dict(values)
+        if not normalized.get("source_url") and normalized.get("rss_url"):
+            normalized["source_url"] = normalized["rss_url"]
+        normalized.setdefault("source_kind", SourceKind.RSS_FEED.value)
+        return normalized
+
+    @property
+    def rss_url(self) -> str:
+        return self.source_url
+
 
 class RunSubmitter(DomainModel):
     submitted_by: str
@@ -98,8 +130,26 @@ class ParsedEpisode(DomainModel):
     episode_url: str | None = None
     audio_url: str
     published_at: str | None = None
-    feed_url: str
+    source_url: str
+    source_kind: SourceKind = SourceKind.RSS_FEED
     dedupe_key: str
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_legacy_feed_url(cls, values: Any) -> Any:
+        if not isinstance(values, dict):
+            return values
+        normalized = dict(values)
+        if not normalized.get("source_url") and normalized.get("feed_url"):
+            normalized["source_url"] = normalized["feed_url"]
+        normalized.setdefault("source_kind", SourceKind.RSS_FEED.value)
+        return normalized
+
+    @property
+    def feed_url(self) -> str | None:
+        if self.source_kind == SourceKind.RSS_FEED:
+            return self.source_url
+        return None
 
 
 class Episode(DomainModel):
@@ -109,11 +159,29 @@ class Episode(DomainModel):
     episode_url: str | None = None
     audio_url: str
     published_at: str | None = None
-    feed_url: str
+    source_url: str
+    source_kind: SourceKind = SourceKind.RSS_FEED
     processing_owner: str | None = None
     processing_started_at: datetime | None = None
     created_at: datetime = Field(default_factory=utcnow)
     updated_at: datetime = Field(default_factory=utcnow)
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_legacy_feed_url(cls, values: Any) -> Any:
+        if not isinstance(values, dict):
+            return values
+        normalized = dict(values)
+        if not normalized.get("source_url") and normalized.get("feed_url"):
+            normalized["source_url"] = normalized["feed_url"]
+        normalized.setdefault("source_kind", SourceKind.RSS_FEED.value)
+        return normalized
+
+    @property
+    def feed_url(self) -> str | None:
+        if self.source_kind == SourceKind.RSS_FEED:
+            return self.source_url
+        return None
 
 
 class RunItem(DomainModel):

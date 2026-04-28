@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lead Records Workspace</title>
+    <title>Contact List | RSS Automation</title>
     <link
-        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@600;700;800&display=swap"
         rel="stylesheet" />
     <style>
         *,
@@ -915,6 +915,249 @@
                 padding-right: 18px;
             }
         }
+        /* Basic UI override for clearer non-technical navigation */
+        :root {
+            --bg: #f0f6ff;
+            --panel: rgba(255, 255, 255, 0.97);
+            --panel-strong: #ffffff;
+            --border: #d6e1ee;
+            --border-strong: #99b7df;
+            --text: #001126;
+            --muted: #596472;
+            --accent: #0060d3;
+            --accent-cold: #073356;
+            --accent-warm: #fcca31;
+            --danger: #b42318;
+            --success: #0060d3;
+            --shadow: 0 12px 30px rgba(0, 17, 38, 0.08);
+            --radius-xl: 20px;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --font-display: "Inter Tight", sans-serif;
+            --font-body: "Inter", sans-serif;
+        }
+
+        body {
+            color: var(--text);
+            background: linear-gradient(180deg, #f9fbff 0%, #f0f6ff 55%, #e4ebf3 100%);
+        }
+
+        body::before,
+        .loading-ribbon::before {
+            display: none;
+        }
+
+        .shell {
+            width: min(1240px, calc(100% - 28px));
+            padding: 20px 0 32px;
+        }
+
+        .app-nav,
+        .loading-ribbon,
+        .stat-card,
+        .filters-panel,
+        .records-panel,
+        .record-modal,
+        .record-modal-card,
+        .record-modal-wide,
+        .loading-overlay {
+            background: var(--panel);
+            border-color: var(--border);
+            box-shadow: var(--shadow);
+            backdrop-filter: none;
+        }
+
+        .empty-state,
+        .record-modal-note {
+            background: #ffffff;
+            border-color: var(--border);
+        }
+
+        .record-row,
+        .record-row td {
+            background: #ffffff;
+        }
+
+        .nav-brand-mark {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: none;
+        }
+
+        .nav-link {
+            background: #ffffff;
+            border-color: var(--border);
+            color: var(--text);
+            font-size: 14px;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .nav-link[aria-current="page"] {
+            background: #e6f2fb;
+            border-color: #99b7df;
+            color: var(--accent);
+        }
+
+        .brand-chip,
+        .footer-meta,
+        .loading-ribbon span {
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .brand-chip {
+            background: #f0f6ff;
+            border-color: var(--border);
+            color: var(--muted);
+        }
+
+        .brand-chip::before {
+            background: var(--accent);
+            box-shadow: none;
+        }
+
+        .button {
+            min-height: 44px;
+            border-radius: 12px;
+            font-weight: 700;
+        }
+
+        .button-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .button-ghost {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .field input,
+        .field select,
+        .status-select {
+            background: #fff;
+            border-color: var(--border);
+            color: var(--text);
+            font-family: var(--font-body);
+        }
+
+        .loading-overlay {
+            background: rgba(240, 246, 255, 0.92);
+        }
+
+        .loader-orbit {
+            border-color: #d6e1ee;
+            border-top-color: var(--accent);
+        }
+
+        .records-layout {
+            display: grid;
+            grid-template-columns: 300px minmax(0, 1fr);
+            gap: 18px;
+            align-items: start;
+        }
+
+        .records-main {
+            min-width: 0;
+            display: grid;
+            gap: 18px;
+        }
+
+        .filters-panel {
+            position: sticky;
+            top: 20px;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 0;
+        }
+
+        .stat-card {
+            padding: 14px;
+        }
+
+        .stat-card small {
+            margin-bottom: 6px;
+            font-size: 9px;
+        }
+
+        .stat-card strong {
+            font-size: 22px;
+        }
+
+        .stat-card span {
+            margin-top: 6px;
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
+        .filters-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .filters-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filters-actions .button,
+        .topbar-actions .button {
+            min-height: 40px;
+        }
+
+        .records-panel {
+            padding: 18px;
+        }
+
+        .table-shell {
+            border-radius: 14px;
+            background: #fff;
+        }
+
+        thead th {
+            background: #f7faff;
+            color: var(--muted);
+        }
+
+        .records-footer {
+            margin-top: 12px;
+        }
+
+        .record-row:hover,
+        .record-row:focus-visible {
+            background: #eaf3ff;
+        }
+
+        .record-row:hover td,
+        .record-row:focus-visible td {
+            background: #eaf3ff;
+        }
+
+        @media (max-width: 1100px) {
+            .records-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .filters-panel {
+                position: static;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 760px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 
@@ -929,135 +1172,139 @@
             <a class="nav-brand" href="/">
                 <span class="nav-brand-mark">P</span>
                 <span class="nav-brand-copy">
-                    <strong>Ascend Outreach Engine</strong>
-                    <span>Shared queue, run board, and records</span>
+                    <strong>RSS Automation</strong>
+                    <span>Simple feed review tool</span>
                 </span>
             </a>
             <nav class="nav-links" aria-label="Primary navigation">
-                <a class="nav-link" href="/">Queue run</a>
-                <a class="nav-link" href="/dashboard">Shared dashboard</a>
-                <a class="nav-link" aria-current="page" href="/records">Records workspace</a>
+                <a class="nav-link" href="/">Start</a>
+                <a class="nav-link" href="/dashboard">Review runs</a>
+                <a class="nav-link" aria-current="page" href="/records">Contact list</a>
             </nav>
         </header>
         <header class="topbar">
             <div class="brand">
-                <span class="brand-chip">Operational records + outreach control</span>
-                <h1>Lead records workspace</h1>
+                <span class="brand-chip">Contact list</span>
+                <h1>See the people found from your podcast feeds.</h1>
                 <p>
-                    Review every submitted RSS run in one place. This table joins users, RSS feeds, episode URLs,
-                    canonical lead data, and an editable outreach flag so the team can track who has been contacted.
+                    Search, filter, and update contact status in one simple table. Each row keeps the episode, lead,
+                    email draft, and outreach status together.
                 </p>
             </div>
             <div class="topbar-actions">
                 <span class="button button-ghost" id="sessionBadge" style="cursor: default;">Loading session</span>
                 <button class="button button-ghost" id="signOutButton" type="button">Sign out</button>
-                <button class="button button-primary" id="exportButton" type="button">Export CSV</button>
+                <button class="button button-primary" id="exportButton" type="button">Download CSV</button>
             </div>
         </header>
 
-        <section class="stats-grid">
-            <article class="stat-card">
-                <small>Matching rows</small>
-                <strong id="matchingRows">0</strong>
-                <span id="rowsBreakdown">Waiting for records</span>
-            </article>
-            <article class="stat-card">
-                <small>Rows with lead</small>
-                <strong id="rowsWithLead">0</strong>
-                <span>Only rows with a canonical lead can be updated</span>
-            </article>
-            <article class="stat-card">
-                <small>Contacted</small>
-                <strong id="contactedRows">0</strong>
-                <span>Outreach completed on the currently filtered set</span>
-            </article>
-            <article class="stat-card">
-                <small>Awaiting outreach</small>
-                <strong id="pendingRows">0</strong>
-                <span>Rows whose linked lead still shows <code>not_contacted</code></span>
-            </article>
-        </section>
+        <section class="records-layout">
+            <aside class="filters-panel">
+                <div class="section-title">
+                    <div>
+                        <h2>Filters</h2>
+                        <p>Search or narrow the list by submitter and contact status.</p>
+                    </div>
+                </div>
+                <div class="filters-grid">
+                    <div class="field">
+                        <label for="searchFilter">Search</label>
+                        <input id="searchFilter" type="search"
+                            placeholder="Guest, company, user, source, or episode title" />
+                    </div>
+                    <div class="field">
+                        <label for="submitterFilter">Submitted by</label>
+                        <select id="submitterFilter">
+                            <option value="">All teammates</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="outreachFilter">Outreach state</label>
+                        <select id="outreachFilter">
+                            <option value="">All outreach states</option>
+                            <option value="not_contacted">Not contacted</option>
+                            <option value="contacted">Contacted</option>
+                        </select>
+                    </div>
+                    <div class="filters-actions">
+                        <button class="button button-ghost" id="refreshButton" type="button">Refresh list</button>
+                        <button class="button button-ghost" id="resetButton" type="button">Clear filters</button>
+                    </div>
+                </div>
+            </aside>
 
-        <section class="filters-panel">
-            <div class="section-title">
-                <div>
-                    <h2>Filters</h2>
-                    <p>Filter by user, outreach state, or text search. Export always respects the current filter set.
-                    </p>
-                </div>
-            </div>
-            <div class="filters-grid">
-                <div class="field">
-                    <label for="searchFilter">Search</label>
-                    <input id="searchFilter" type="search"
-                        placeholder="Guest, company, user, RSS URL, episode title..." />
-                </div>
-                <div class="field">
-                    <label for="submitterFilter">Submitted by</label>
-                    <select id="submitterFilter">
-                        <option value="">All teammates</option>
-                    </select>
-                </div>
-                <div class="field">
-                    <label for="outreachFilter">Outreach state</label>
-                    <select id="outreachFilter">
-                        <option value="">All outreach states</option>
-                        <option value="not_contacted">Not contacted</option>
-                        <option value="contacted">Contacted</option>
-                    </select>
-                </div>
-                <button class="button button-ghost" id="refreshButton" type="button">Refresh</button>
-                <button class="button button-ghost" id="resetButton" type="button">Reset</button>
-            </div>
-        </section>
+            <div class="records-main">
+                <section class="stats-grid">
+                    <article class="stat-card">
+                        <small>Visible rows</small>
+                        <strong id="matchingRows">0</strong>
+                        <span id="rowsBreakdown">Waiting for records</span>
+                    </article>
+                    <article class="stat-card">
+                        <small>Rows with contact</small>
+                        <strong id="rowsWithLead">0</strong>
+                        <span>Only rows with a saved contact can be updated</span>
+                    </article>
+                    <article class="stat-card">
+                        <small>Marked contacted</small>
+                        <strong id="contactedRows">0</strong>
+                        <span>Contacts already marked as reached out</span>
+                    </article>
+                    <article class="stat-card">
+                        <small>Still to contact</small>
+                        <strong id="pendingRows">0</strong>
+                        <span>Contacts that still show <code>not_contacted</code></span>
+                    </article>
+                </section>
 
-        <section class="records-panel" id="recordsPanel">
-            <div class="loading-overlay" id="recordsLoader" aria-hidden="true">
-                <div class="loader-orbit"></div>
-                <div class="loading-overlay-copy">
-                    <strong id="recordsLoaderTitle">Loading records</strong>
-                    <span id="recordsLoaderText">Joining runs, episodes, and leads into the workspace table.</span>
-                </div>
-            </div>
+                <section class="records-panel" id="recordsPanel">
+                    <div class="loading-overlay" id="recordsLoader" aria-hidden="true">
+                        <div class="loader-orbit"></div>
+                        <div class="loading-overlay-copy">
+                            <strong id="recordsLoaderTitle">Loading records</strong>
+                            <span id="recordsLoaderText">Preparing the table.</span>
+                        </div>
+                    </div>
 
-            <div class="section-title">
-                <div>
-                    <h2>All submitted records</h2>
-                    <p>Rows are keyed by run item, so repeated submissions by different users remain visible even when
-                        they reuse the same canonical lead.</p>
-                </div>
-            </div>
+                    <div class="section-title">
+                        <div>
+                            <h2>Saved contacts and episodes</h2>
+                            <p>Each row keeps the submitter, episode, lead, email draft, and outreach status together.</p>
+                        </div>
+                    </div>
 
-            <div class="table-shell">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Submitter</th>
-                            <th>RSS feed</th>
-                            <th>Episode</th>
-                            <th>URLs</th>
-                            <th>Lead</th>
-                            <th>Draft</th>
-                            <th>Outreach</th>
-                        </tr>
-                    </thead>
-                    <tbody id="recordsTableBody">
-                        <tr>
-                            <td colspan="7">
-                                <div class="empty-state">No records loaded yet.</div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+                    <div class="table-shell">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Submitter</th>
+                                    <th>Source URL</th>
+                                    <th>Episode</th>
+                                    <th>URLs</th>
+                                    <th>Lead</th>
+                                    <th>Draft</th>
+                                    <th>Outreach</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recordsTableBody">
+                                <tr>
+                                    <td colspan="7">
+                                        <div class="empty-state">No records loaded yet.</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
 
-            <div class="records-footer">
-                <div class="footer-meta" id="recordsMeta">Waiting for first response.</div>
-                <div class="pagination">
-                    <button class="button button-ghost" id="previousPageButton" type="button">Previous</button>
-                    <span class="footer-meta" id="pageLabel">Page 1</span>
-                    <button class="button button-ghost" id="nextPageButton" type="button">Next</button>
-                </div>
+                    <div class="records-footer">
+                        <div class="footer-meta" id="recordsMeta">Waiting for data.</div>
+                        <div class="pagination">
+                            <button class="button button-ghost" id="previousPageButton" type="button">Previous</button>
+                            <span class="footer-meta" id="pageLabel">Page 1</span>
+                            <button class="button button-ghost" id="nextPageButton" type="button">Next</button>
+                        </div>
+                    </div>
+                </section>
             </div>
         </section>
 
@@ -1065,9 +1312,9 @@
             <div class="record-modal" role="dialog" aria-modal="true" aria-labelledby="recordDetailTitle">
                 <div class="record-modal-header">
                     <div class="record-modal-header-copy">
-                        <span class="record-modal-kicker">Complete record view</span>
+                        <span class="record-modal-kicker">Full details</span>
                         <h2 id="recordDetailTitle">Record details</h2>
-                        <p id="recordDetailSubtitle">Full lead and email details for the selected record.</p>
+                        <p id="recordDetailSubtitle">Lead and email details for the selected row.</p>
                     </div>
                     <button class="button button-ghost record-modal-close" id="recordDetailCloseButton"
                         type="button" aria-label="Close record detail view">×</button>
@@ -1189,8 +1436,8 @@
                                 <span>${escapeHtml(formatDate(row.submitted_at))}</span>
                             </div>
                             <div class="record-modal-row">
-                                <label>RSS feed</label>
-                                <a href="${escapeHtml(row.rss_url)}" target="_blank" rel="noreferrer noopener">${escapeHtml(row.rss_url)}</a>
+                                <label>Source URL</label>
+                                <a href="${escapeHtml(row.source_url)}" target="_blank" rel="noreferrer noopener">${escapeHtml(row.source_url)}</a>
                             </div>
                         </div>
                     </section>
@@ -1296,7 +1543,7 @@
                         </div>
                     </section>
                 </div>
-                <p class="record-modal-note">Transcript is intentionally omitted from this record detail view. Use the dashboard if you need transcript-level inspection.</p>
+                <p class="record-modal-note">Transcript is not shown here. Open Review runs if you need the transcript.</p>
             `;
 
             recordDetailModal.classList.add("visible");
@@ -1451,7 +1698,7 @@
             }
 
             recordsTableBody.innerHTML = state.rows.map((row) => `
-                <tr class="record-row" data-run-item-id="${escapeHtml(row.run_item_id)}" tabindex="0" role="button" aria-label="Open complete record for ${escapeHtml(row.episode_title)}">
+                    <tr class="record-row" data-run-item-id="${escapeHtml(row.run_item_id)}" tabindex="0" role="button" aria-label="Open details for ${escapeHtml(row.episode_title)}">
                     <td>
                         <div class="cell-stack">
                             <strong>${escapeHtml(row.submitted_by)}</strong>
@@ -1461,11 +1708,11 @@
                     </td>
                     <td>
                         <div class="cell-stack">
-                            <a class="link-cluster" href="${escapeHtml(row.rss_url)}" target="_blank" rel="noreferrer noopener">
-                                ${escapeHtml(row.rss_url)}
+                            <a class="link-cluster" href="${escapeHtml(row.source_url)}" target="_blank" rel="noreferrer noopener">
+                                ${escapeHtml(row.source_url)}
                             </a>
                             <span class="status-tag" data-status="${row.run_status}">${escapeHtml(row.run_status.replaceAll("_", " "))}</span>
-                            <small>Run ${escapeHtml(row.run_id.slice(0, 8))}</small>
+                            <small>${escapeHtml(row.source_kind.replaceAll("_", " "))} · Run ${escapeHtml(row.run_id.slice(0, 8))}</small>
                         </div>
                     </td>
                     <td>
@@ -1531,7 +1778,7 @@
             });
 
             const totalPages = Math.max(1, Math.ceil(state.total / state.limit));
-            recordsMeta.textContent = `${state.total} matching row(s). Showing page ${state.page} of ${totalPages}.`;
+                recordsMeta.textContent = `${state.total} matching record(s). Showing page ${state.page} of ${totalPages}.`;
             pageLabel.textContent = `Page ${state.page} of ${totalPages}`;
             previousPageButton.disabled = state.page <= 1;
             nextPageButton.disabled = state.page >= totalPages;
@@ -1546,8 +1793,8 @@
 
         async function loadRecords() {
             syncQuery();
-            setRibbonLoading(true, "Loading records", "Fetching joined rows and applying current filters.");
-            setPanelLoading(true, "Loading records", "Joining users, RSS feeds, leads, and URLs into the table.");
+            setRibbonLoading(true, "Loading records", "Applying your current filters.");
+            setPanelLoading(true, "Loading records", "Building the table with the latest rows.");
             try {
                 const payload = await fetchJson(`/api/records?${buildQueryString(true)}`);
                 state.rows = payload.data;
@@ -1561,7 +1808,7 @@
         }
 
         async function updateOutreachStatus(leadId, outreachStatus) {
-            setRibbonLoading(true, "Saving outreach state", "Updating the linked lead so every reused row stays consistent.");
+            setRibbonLoading(true, "Saving contact status", "Updating the saved contact status for matching rows.");
             try {
                 await fetchJson(`/api/leads/${leadId}/outreach`, {
                     method: "PATCH",

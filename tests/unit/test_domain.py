@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 import pytest
 from pydantic import ValidationError
 
-from app.domain.enums import LeadStatus, RunItemStatus, RunStatus, TranscriptStatus
+from app.domain.enums import LeadStatus, RunItemStatus, RunStatus, SourceKind, TranscriptStatus
 from app.domain.models import LeadDraft, Run, SubmissionRequest, User
 
 
@@ -14,14 +14,25 @@ def test_status_enum_values_are_stable() -> None:
     assert LeadStatus.GENERATED.value == "generated"
 
 
-def test_submission_request_validates_feed_payload() -> None:
+def test_submission_request_validates_source_payload() -> None:
     submission = SubmissionRequest(
-        rss_url="https://example.com/feed.xml",
+        source_url="https://example.com/feed.xml",
         tone_instructions="Keep it crisp",
         submitted_at=datetime.now(UTC),
     )
-    assert str(submission.rss_url) == "https://example.com/feed.xml"
+    assert str(submission.source_url) == "https://example.com/feed.xml"
     assert submission.tone_instructions == "Keep it crisp"
+    assert submission.source_kind == SourceKind.AUTO
+
+
+def test_submission_request_accepts_legacy_rss_url() -> None:
+    submission = SubmissionRequest(
+        rss_url="https://example.com/feed.xml",
+        submitted_at=datetime.now(UTC),
+    )
+
+    assert str(submission.source_url) == "https://example.com/feed.xml"
+    assert str(submission.rss_url) == "https://example.com/feed.xml"
 
 
 def test_user_exposes_authenticated_view() -> None:
@@ -40,13 +51,14 @@ def test_user_exposes_authenticated_view() -> None:
 
 def test_run_defaults_to_queued_status() -> None:
     run = Run(
-        rss_url="https://example.com/feed.xml",
+        source_url="https://example.com/feed.xml",
         submitted_by="User",
         submitted_by_email="user@example.com",
         submitted_at=datetime.now(UTC),
     )
     assert run.status == RunStatus.QUEUED
     assert run.total_items == 0
+    assert run.source_kind == SourceKind.RSS_FEED
 
 
 def test_lead_draft_requires_all_fields() -> None:

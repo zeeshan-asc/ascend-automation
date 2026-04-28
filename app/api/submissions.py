@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.api.dependencies import get_container, get_current_user
 from app.application.container import AppContainer
 from app.application.submissions import SubmissionService
-from app.domain.errors import FeedFetchError
+from app.domain.errors import SourceFetchError
 from app.domain.models import AuthenticatedUser, SubmissionRequest
 
 router = APIRouter(
@@ -26,11 +26,11 @@ async def create_submission(
     service = SubmissionService(
         container.settings,
         container.run_repository,
-        container.rss_provider,
+        container.source_resolver,
     )
     try:
         run = await service.create_submission(payload, current_user=current_user)
-    except FeedFetchError as exc:
+    except SourceFetchError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail={

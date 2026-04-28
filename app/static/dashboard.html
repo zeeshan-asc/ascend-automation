@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RSS Automation Dashboard</title>
+    <title>Review Runs | RSS Automation</title>
     <link
-        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@600;700;800&display=swap"
         rel="stylesheet" />
     <style>
         *,
@@ -159,6 +159,14 @@
             gap: 8px;
             flex-wrap: wrap;
             align-items: center;
+        }
+
+        .nav-tray {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
 
         .nav-link {
@@ -548,21 +556,28 @@
         .run-pagination {
             margin-top: 14px;
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             gap: 10px;
             align-items: center;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
         }
 
         .run-pagination .button {
-            min-height: 42px;
+            min-height: 34px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            flex: 0 0 auto;
         }
 
         .pagination-label {
             color: var(--muted);
-            font-size: 11px;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0;
+            text-transform: none;
+            min-width: 82px;
+            text-align: center;
         }
 
         .run-row,
@@ -710,7 +725,7 @@
 
         .summary-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 12px;
             margin-bottom: 18px;
         }
@@ -954,6 +969,278 @@
                 width: 100%;
             }
         }
+        /* Basic UI override for clearer non-technical navigation */
+        :root {
+            --bg: #f0f6ff;
+            --panel: rgba(255, 255, 255, 0.97);
+            --panel-strong: #ffffff;
+            --border: #d6e1ee;
+            --border-strong: #99b7df;
+            --text: #001126;
+            --muted: #596472;
+            --accent: #0060d3;
+            --accent-cold: #073356;
+            --accent-warm: #fcca31;
+            --danger: #b42318;
+            --success: #0060d3;
+            --shadow: 0 12px 30px rgba(0, 17, 38, 0.08);
+            --radius-xl: 20px;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --font-display: "Inter Tight", sans-serif;
+            --font-body: "Inter", sans-serif;
+        }
+
+        body {
+            color: var(--text);
+            background: linear-gradient(180deg, #f9fbff 0%, #f0f6ff 55%, #e4ebf3 100%);
+        }
+
+        body::before,
+        .loading-ribbon::before {
+            display: none;
+        }
+
+        .shell {
+            width: min(1160px, calc(100% - 28px));
+            padding: 20px 0 32px;
+        }
+
+        .app-nav,
+        .loading-ribbon,
+        .stat-card,
+        .rail,
+        .main-panel,
+        .detail-panel,
+        .summary-card,
+        .detail-card,
+        .loading-overlay {
+            background: var(--panel);
+            border-color: var(--border);
+            box-shadow: var(--shadow);
+            backdrop-filter: none;
+        }
+
+        .run-row,
+        .item-shell,
+        .empty-state,
+        .inline-error {
+            background: #ffffff;
+            border-color: var(--border);
+            box-shadow: none;
+        }
+
+        .item-row {
+            background: #ffffff;
+            border-color: var(--border);
+            box-shadow: none;
+        }
+
+        .nav-brand-mark {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: none;
+        }
+
+        .nav-link {
+            background: #ffffff;
+            border-color: var(--border);
+            color: var(--text);
+            font-size: 14px;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .nav-link[aria-current="page"] {
+            background: #e6f2fb;
+            border-color: #99b7df;
+            color: var(--accent);
+        }
+
+        .brand-chip,
+        .status-tag,
+        .muted-inline {
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .brand-chip {
+            background: #f0f6ff;
+            border-color: var(--border);
+            color: var(--muted);
+        }
+
+        .brand-chip::before {
+            background: var(--accent);
+            box-shadow: none;
+        }
+
+        .button {
+            min-height: 44px;
+            border-radius: 12px;
+            font-weight: 700;
+        }
+
+        .button-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .button-ghost {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .guide-strip {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .guide-card {
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: #fff;
+            box-shadow: var(--shadow);
+        }
+
+        .guide-card small {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            margin-bottom: 8px;
+            border-radius: 999px;
+            background: #e6f2fb;
+            color: var(--accent);
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .guide-card strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .guide-card span {
+            display: block;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .workspace {
+            grid-template-columns: 300px minmax(0, 1fr);
+            align-items: start;
+        }
+
+        .content-stack {
+            min-width: 0;
+        }
+
+        .episode-detail-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(320px, .95fr);
+            gap: 18px;
+            align-items: start;
+        }
+
+        .rail,
+        .main-panel,
+        .detail-panel {
+            padding: 18px;
+        }
+
+        .stat-card {
+            padding: 14px;
+        }
+
+        .stat-card small {
+            margin-bottom: 6px;
+            font-size: 9px;
+        }
+
+        .stat-card strong {
+            font-size: 22px;
+        }
+
+        .stat-card span {
+            margin-top: 6px;
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
+        .rail {
+            position: sticky;
+            top: 20px;
+        }
+
+        .section-title p,
+        .stat-card span,
+        .summary-card span,
+        .detail-copy,
+        .mini-link,
+        .retry-note,
+        .loading-ribbon span,
+        .loading-overlay-copy span {
+            color: var(--muted);
+        }
+
+        .run-row,
+        .item-row,
+        .summary-card,
+        .detail-card,
+        .empty-state {
+            border-radius: 14px;
+        }
+
+        .item-row.active,
+        .run-row.active {
+            border-color: #99b7df;
+            background: #eaf3ff;
+        }
+
+        .filter-row select,
+        #rewriteInstruction {
+            background: #fff;
+            border-color: var(--border);
+            color: var(--text);
+            font-family: var(--font-body);
+        }
+
+        .loading-overlay {
+            background: rgba(240, 246, 255, 0.92);
+        }
+
+        .loader-orbit {
+            border-color: #d6e1ee;
+            border-top-color: var(--accent);
+        }
+
+        @media (max-width: 900px) {
+            .stats-grid,
+            .guide-strip,
+            .workspace,
+            .episode-detail-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .rail {
+                position: static;
+            }
+        }
     </style>
 </head>
 
@@ -963,53 +1250,73 @@
             <a class="nav-brand" href="/">
                 <span class="nav-brand-mark">P</span>
                 <span class="nav-brand-copy">
-                    <strong>Ascend Outreach Engine</strong>
-                    <span>Shared queue, run board, and records</span>
+                    <strong>RSS Automation</strong>
+                    <span>Simple feed review tool</span>
                 </span>
             </a>
             <nav class="nav-links" aria-label="Primary navigation">
-                <a class="nav-link" href="/">Queue run</a>
-                <a class="nav-link" aria-current="page" href="/dashboard">Shared dashboard</a>
-                <a class="nav-link" href="/records">Records workspace</a>
+                <a class="nav-link" href="/">Start</a>
+                <a class="nav-link" aria-current="page" href="/dashboard">Review runs</a>
+                <a class="nav-link" href="/records">Contact list</a>
             </nav>
+            <div class="nav-tray">
+                <button class="button button-ghost" id="refreshButton" type="button">Refresh</button>
+                <button class="button button-ghost" id="signOutButton" type="button">Sign out</button>
+            </div>
         </header>
         <header class="topbar">
             <div class="brand">
-                <span class="brand-chip">Shared run board</span>
-                <h1>Queue, transcript, lead, draft.</h1>
+                <span class="brand-chip">Review runs</span>
+                <h1>Pick a run to see progress and results.</h1>
                 <p>
-                    This board reflects the Mongo-backed queue in real time. Select a run to inspect canonical
-                    episodes, transcript readiness, extracted lead identity, and the email draft stored for review.
+                    Use the list below to open a run. Each episode shows whether the transcript, lead, and email are
+                    ready, and the details panel explains what was found.
                 </p>
             </div>
             <div class="topbar-actions">
                 <span class="muted-inline" id="sessionBadge">Loading session</span>
-                <span class="muted-inline" id="pollState">Polling only while a run is active</span>
-                <button class="button button-ghost" id="signOutButton" type="button">Sign out</button>
-                <button class="button button-ghost" id="refreshButton" type="button">Refresh board</button>
+                <span class="muted-inline" id="pollState">Updates while work is running</span>
             </div>
         </header>
 
         <section class="stats-grid" id="statsGrid">
             <article class="stat-card">
-                <small>Total runs</small>
+                <small>Runs</small>
                 <strong id="totalRuns">0</strong>
                 <span id="runsBreakdown">Awaiting data</span>
             </article>
             <article class="stat-card">
-                <small>Total episodes</small>
+                <small>Episodes</small>
                 <strong id="totalEpisodes">0</strong>
-                <span>Canonical episodes deduped across users</span>
+                <span>Saved episodes across all runs</span>
             </article>
             <article class="stat-card">
-                <small>Total leads</small>
+                <small>Leads found</small>
                 <strong id="totalLeads">0</strong>
                 <span id="leadsBreakdown">Awaiting data</span>
             </article>
             <article class="stat-card">
-                <small>Board posture</small>
+                <small>Current activity</small>
                 <strong id="boardPosture">Idle</strong>
                 <span id="boardPostureCopy">No run selected yet</span>
+            </article>
+        </section>
+
+        <section class="guide-strip" aria-label="How to use the dashboard">
+            <article class="guide-card">
+                <small>1</small>
+                <strong>Choose a run</strong>
+                <span>Use the left column to open the run you want to review.</span>
+            </article>
+            <article class="guide-card">
+                <small>2</small>
+                <strong>Open an episode</strong>
+                <span>The episode list shows what is ready and what is still processing.</span>
+            </article>
+            <article class="guide-card">
+                <small>3</small>
+                <strong>Review the details</strong>
+                <span>The details area shows the lead, transcript, and saved email draft.</span>
             </article>
         </section>
 
@@ -1018,7 +1325,7 @@
                 <div class="section-title">
                     <div>
                         <h2>Runs</h2>
-                        <p id="runRailSubtitle">Newest submissions first. Select one to open its items and draft output.
+                        <p id="runRailSubtitle">Newest first. Choose a run to open its episodes and email draft.
                         </p>
                     </div>
                 </div>
@@ -1044,75 +1351,76 @@
                 </div>
             </aside>
 
-            <section class="main-panel">
-                <div class="section-title">
-                    <div>
-                        <h2 id="runTitle">Select a run</h2>
-                        <p id="runSubtitle">Run details, progress, and episode status will appear here.</p>
+            <div class="content-stack">
+                <section class="main-panel">
+                    <div class="section-title">
+                        <div>
+                            <h2 id="runTitle">Choose a run</h2>
+                            <p id="runSubtitle">Run details and episode progress will appear here.</p>
+                        </div>
+                        <span class="status-tag" id="runStatusBadge" data-status="idle">idle</span>
                     </div>
-                    <span class="status-tag" id="runStatusBadge" data-status="idle">idle</span>
-                </div>
 
-                <div class="summary-grid" id="runSummary">
-                    <article class="summary-card">
-                        <small>RSS feed</small>
-                        <strong>-</strong>
-                        <span>Waiting for selection</span>
-                    </article>
-                    <article class="summary-card">
-                        <small>Submitted by</small>
-                        <strong>-</strong>
-                        <span>Waiting for selection</span>
-                    </article>
-                    <article class="summary-card">
-                        <small>Progress</small>
-                        <strong>-</strong>
-                        <span>Waiting for selection</span>
-                    </article>
-                    <article class="summary-card">
-                        <small>Completed at</small>
-                        <strong>-</strong>
-                        <span>Waiting for selection</span>
-                    </article>
-                </div>
+                    <div class="summary-grid" id="runSummary">
+                        <article class="summary-card">
+                            <small>Source URL</small>
+                            <strong>-</strong>
+                            <span>Waiting for selection</span>
+                        </article>
+                        <article class="summary-card">
+                            <small>Submitted by</small>
+                            <strong>-</strong>
+                            <span>Waiting for selection</span>
+                        </article>
+                        <article class="summary-card">
+                            <small>Progress</small>
+                            <strong>-</strong>
+                            <span>Waiting for selection</span>
+                        </article>
+                        <article class="summary-card">
+                            <small>Completed at</small>
+                            <strong>-</strong>
+                            <span>Waiting for selection</span>
+                        </article>
+                    </div>
 
-                <div class="section-title">
-                    <div>
-                        <h3>Episodes in run</h3>
-                        <p>Each item inherits canonical episode state. Reused means the transcript and lead already
-                            existed.</p>
-                    </div>
-                </div>
-                <div class="item-list" id="itemsList">
-                    <div class="empty-state">No run selected yet.</div>
-                </div>
-            </section>
+                    <div class="episode-detail-layout">
+                        <section>
+                            <div class="section-title">
+                                <div>
+                                    <h3>Episodes</h3>
+                                    <p>Open an episode to see the transcript, lead details, and draft email.</p>
+                                </div>
+                            </div>
+                            <div class="item-list" id="itemsList">
+                                <div class="empty-state">No run selected yet.</div>
+                            </div>
+                        </section>
 
-            <aside class="detail-panel loading-host" id="detailPanel">
-                <div class="loading-overlay" id="detailLoader" aria-hidden="true">
-                    <div class="loader-orbit"></div>
-                    <div class="loading-overlay-copy">
-                        <strong id="detailLoaderTitle">Loading episode</strong>
-                        <span id="detailLoaderText">Fetching transcript, lead identity, and draft email from the
-                            backend.</span>
+                        <aside class="detail-panel loading-host" id="detailPanel">
+                            <div class="loading-overlay" id="detailLoader" aria-hidden="true">
+                                <div class="loader-orbit"></div>
+                                <div class="loading-overlay-copy">
+                                    <strong id="detailLoaderTitle">Loading episode</strong>
+                                    <span id="detailLoaderText">Getting the transcript, lead details, and draft email.</span>
+                                </div>
+                            </div>
+                            <div class="section-title">
+                                <div>
+                                    <h2>Details</h2>
+                                    <p>Open an episode to see the person found, the transcript, and the saved email draft.</p>
+                                </div>
+                            </div>
+                            <div class="detail-stack" id="leadInspector">
+                                <div class="empty-state">
+                                    Choose an episode to see details here. If processing is still running, the information will
+                                    appear when it is ready.
+                                </div>
+                            </div>
+                        </aside>
                     </div>
-                </div>
-                <div class="section-title">
-                    <div>
-                        <h2>Lead inspector</h2>
-                        <p>Open a run item to inspect the lead, expand the transcript preview, and review the stored
-                            email draft.</p>
-                    </div>
-                </div>
-                <div class="detail-stack" id="leadInspector">
-                    <div class="empty-state">
-                        Choose a run item on the board. If a lead exists, the guest identity, expandable transcript
-                        preview,
-                        and draft email will render here. If the item failed, the transcript or provider error will
-                        surface instead.
-                    </div>
-                </div>
-            </aside>
+                </section>
+            </div>
         </section>
     </main>
 
@@ -1191,6 +1499,13 @@
                 .replaceAll("<", "&lt;")
                 .replaceAll(">", "&gt;")
                 .replaceAll('"', "&quot;");
+        }
+
+        function formatInlineLabel(value, fallback = "Not available") {
+            if (typeof value !== "string" || !value.trim()) {
+                return fallback;
+            }
+            return value.replaceAll("_", " ");
         }
 
         function buildAuthRedirectPath() {
@@ -1276,7 +1591,7 @@
 
             const plural = selectedSubmitter.run_count === 1 ? "" : "s";
             runRailSubtitle.textContent =
-                `Showing ${selectedSubmitter.run_count} RSS feed${plural} entered by ${selectedSubmitter.submitted_by}. Select one to open its items and draft output.`;
+                `Showing ${selectedSubmitter.run_count} source submission${plural} entered by ${selectedSubmitter.submitted_by}. Select one to open its items and draft output.`;
         }
 
         function renderSubmitterFilters() {
@@ -1374,9 +1689,9 @@
                             <strong>${escapeHtml(run.submitted_by)}</strong>
                             <small>${escapeHtml(run.submitted_by_email)}</small>
                         </div>
-                        <span class="status-tag" data-status="${run.status}">${run.status.replaceAll("_", " ")}</span>
+                        <span class="status-tag" data-status="${run.status || "unknown"}">${escapeHtml(formatInlineLabel(run.status, "unknown"))}</span>
                     </div>
-                    <small>${escapeHtml(run.rss_url)}</small>
+                    <small>${escapeHtml(run.source_url)}</small>
                     <div class="mini-actions">
                         <span class="mini-link">${run.completed_items}/${run.total_items} completed</span>
                         <span class="mini-link">${formatDate(run.submitted_at)}</span>
@@ -1404,15 +1719,15 @@
 
         function renderRunSummary(run) {
             runTitle.textContent = `Run ${run.run_id.slice(0, 8)}`;
-            runSubtitle.textContent = `${run.submitted_by} submitted ${run.rss_url}`;
-            runStatusBadge.textContent = run.status.replaceAll("_", " ");
-            runStatusBadge.dataset.status = run.status;
+            runSubtitle.textContent = `${run.submitted_by} submitted ${run.source_url}`;
+            runStatusBadge.textContent = formatInlineLabel(run.status, "unknown");
+            runStatusBadge.dataset.status = run.status || "unknown";
 
             runSummary.innerHTML = `
                 <article class="summary-card">
-                    <small>RSS feed</small>
-                    <strong>${escapeHtml(run.rss_url)}</strong>
-                    <span>Submitted ${formatDate(run.submitted_at)}</span>
+                    <small>Source URL</small>
+                    <strong>${escapeHtml(run.source_url)}</strong>
+                    <span>${escapeHtml(formatInlineLabel(run.source_kind))} · Submitted ${formatDate(run.submitted_at)}</span>
                 </article>
                 <article class="summary-card">
                     <small>Submitted by</small>
@@ -1442,10 +1757,10 @@
                 const retryDisabled = state.hasActiveQueueWork || state.retryingRunItemId === item.run_item_id;
                 const retryLabel = state.retryingRunItemId === item.run_item_id ? "Retrying..." : "Retry";
                 const retryNote = state.hasActiveQueueWork
-                    ? "Queue must be idle before retrying this episode."
+                    ? "Wait until the current processing finishes before retrying this episode."
                     : item.error
                         ? `Last error: ${escapeHtml(item.error)}`
-                        : "Retry the complete episode workflow manually.";
+                        : "Run this episode again from the start.";
                 const retryBlock = item.status === "failed"
                     ? `
                         <div class="item-retry-row">
@@ -1477,12 +1792,12 @@
                                     <strong>${escapeHtml(item.title)}</strong>
                                     <small>${item.published_at ? escapeHtml(item.published_at) : "No publish date"}</small>
                                 </div>
-                                <span class="status-tag" data-status="${item.status}">${item.status.replaceAll("_", " ")}</span>
+                                <span class="status-tag" data-status="${item.status || "unknown"}">${escapeHtml(formatInlineLabel(item.status, "unknown"))}</span>
                             </div>
                             <div class="detail-copy">${escapeHtml(item.audio_url || "Audio URL unavailable")}</div>
                             <div class="mini-actions">
-                                <span class="mini-link">${item.transcript_ready ? "Transcript ready" : "Transcript pending"}</span>
-                                <span class="mini-link">${item.lead ? escapeHtml(item.lead.guest_name) : "Lead not available"}</span>
+                                <span class="mini-link">${item.transcript_ready ? "Transcript ready" : "Transcript in progress"}</span>
+                                <span class="mini-link">${item.lead ? escapeHtml(item.lead.guest_name) : "Lead not ready"}</span>
                             </div>
                         </button>
                         ${retryBlock}
@@ -1514,7 +1829,7 @@
 
         function renderInspector(payload) {
             const quoteBlock = payload.lead
-                ? `<div class="detail-card"><small>Memorable quote</small><blockquote>${escapeHtml(payload.lead.memorable_quote)}</blockquote></div>`
+                ? `<div class="detail-card"><small>Quote</small><blockquote>${escapeHtml(payload.lead.memorable_quote)}</blockquote></div>`
                 : "";
             const emailBlocks = payload.lead
                 ? `
@@ -1527,16 +1842,16 @@
                         <pre>${escapeHtml(payload.lead.email_body)}</pre>
                     </div>
                     <div class="detail-card">
-                        <small>Rewrite email</small>
+                        <small>Improve email</small>
                         <div class="rewrite-stack">
                             
                             ${state.rewriteFeedback && state.rewriteFeedback.leadId === payload.lead.lead_id
                     ? `<div class="rewrite-feedback" data-tone="${escapeHtml(state.rewriteFeedback.tone)}">${escapeHtml(state.rewriteFeedback.message)}</div>`
                     : ""}
-                            <textarea id="rewriteInstruction" data-rewrite-instruction placeholder="Example: tighten the opening, keep the same transcript hook, and sound more executive.">${escapeHtml(state.rewriteInstructionText)}</textarea>
+                            <textarea id="rewriteInstruction" data-rewrite-instruction placeholder="Example: make it shorter, warmer, and easier to read.">${escapeHtml(state.rewriteInstructionText)}</textarea>
                             <div class="rewrite-actions">
                                 <button class="button button-primary" type="button" data-rewrite-trigger="${payload.lead.lead_id}">
-                                    Rewrite draft
+                                    Update draft
                                 </button>
                             </div>
                         </div>
@@ -1547,9 +1862,9 @@
             const transcriptBlock = payload.episode.transcript_status
                 ? `
                     <details class="transcript-shell" data-transcript-episode="${escapeHtml(payload.episode.episode_id)}" data-transcript-loaded="false">
-                        <summary class="transcript-toggle">Transcript preview</summary>
+                        <summary class="transcript-toggle">Show transcript</summary>
                         <div class="transcript-frame">
-                            <pre class="transcript-pre" data-transcript-pre>Expand to load the stored transcript preview.</pre>
+                            <pre class="transcript-pre" data-transcript-pre>Open this section to load the saved transcript.</pre>
                         </div>
                     </details>
                 `
@@ -1557,18 +1872,18 @@
             const leadIdentity = payload.lead
                 ? `
                     <div class="detail-card">
-                        <small>Lead identity</small>
+                        <small>Person</small>
                         <strong>${escapeHtml(payload.lead.guest_name)}</strong>
                         <p>${escapeHtml(payload.lead.role)} at ${escapeHtml(payload.lead.guest_company)}</p>
                     </div>
                     <div class="detail-card">
-                        <small>Pain point</small>
+                        <small>Main need</small>
                         <p>${escapeHtml(payload.lead.pain_point)}</p>
                     </div>
                 `
                 : `
                     <div class="inline-error">
-                        No lead record exists for this episode yet. Either the item is still processing or it failed before lead generation.
+                        A lead was not created for this episode yet. It may still be processing, or it may have failed before that step.
                     </div>
                 `;
 
@@ -1581,7 +1896,7 @@
                 ${leadIdentity}
                 ${quoteBlock}
                 <div class="detail-card">
-                    <small>Transcript preview</small>
+                    <small>Transcript</small>
                     ${transcriptBlock}
                 </div>
                 ${emailBlocks}
@@ -1609,11 +1924,11 @@
                     return;
                 }
 
-                transcriptPre.textContent = "Loading transcript preview...";
+                transcriptPre.textContent = "Loading transcript...";
                 setInspectorLoading(
                     true,
                     "Loading transcript",
-                    "Fetching the stored transcript text from the backend.",
+                    "Getting the saved transcript text.",
                 );
                 try {
                     let payload = state.transcriptCache[episodeId];
@@ -1648,11 +1963,11 @@
                 const instruction = instructionInput.value.trim();
                 state.rewriteInstructionText = instructionInput.value;
                 if (!instruction) {
-                    state.rewriteFeedback = {
-                        leadId,
-                        tone: "error",
-                        message: "Add a rewrite instruction before sending it to OpenAI.",
-                    };
+                        state.rewriteFeedback = {
+                            leadId,
+                            tone: "error",
+                            message: "Add an instruction before updating the draft.",
+                        };
                     renderInspector({
                         episode: state.currentEpisode,
                         lead: state.currentLead,
@@ -1663,7 +1978,7 @@
                 setInspectorLoading(
                     true,
                     "Rewriting email",
-                    "Sending your remarks, current draft, and transcript to OpenAI.",
+                    "Sending your note, the current draft, and the transcript to OpenAI.",
                 );
                 try {
                     const rewritten = await fetchJson(`/api/leads/${leadId}/rewrite`, {
@@ -1683,7 +1998,7 @@
                     state.rewriteFeedback = {
                         leadId,
                         tone: "success",
-                        message: "Draft rewritten and saved to the database.",
+                        message: "Draft updated and saved.",
                     };
                     renderInspector({
                         episode: state.currentEpisode,
@@ -1695,7 +2010,7 @@
                         tone: "error",
                         message: error instanceof Error
                             ? error.message
-                            : "Failed to rewrite the draft.",
+                            : "Failed to update the draft.",
                     };
                     renderInspector({
                         episode: state.currentEpisode,
@@ -1717,15 +2032,15 @@
             state.retryingRunItemId = null;
             state.rewriteFeedback = null;
             state.rewriteInstructionText = "";
-            runTitle.textContent = "Select a run";
+            runTitle.textContent = "Choose a run";
             runSubtitle.textContent = message;
             runStatusBadge.textContent = "idle";
             runStatusBadge.dataset.status = "idle";
             runSummary.innerHTML = `
                 <article class="summary-card">
-                    <small>RSS feed</small>
+                    <small>Source URL</small>
                     <strong>-</strong>
-                    <span>Adjust filters or queue a new run.</span>
+                    <span>Adjust the filters or start a new run.</span>
                 </article>
                 <article class="summary-card">
                     <small>Submitted by</small>
@@ -1746,8 +2061,7 @@
             itemsList.innerHTML = `<div class="empty-state">${escapeHtml(message)}</div>`;
             leadInspector.innerHTML = `
                 <div class="empty-state">
-                    Choose a run item on the board. If a lead exists, the guest identity, expandable transcript preview,
-                    and draft email will render here. If the item failed, the transcript or provider error will surface instead.
+                    Choose an episode to see details here. If a lead exists, you will see the person, transcript, and draft email in one place.
                 </div>
             `;
             setPolling(false);
@@ -1764,10 +2078,10 @@
             const stats = await fetchJson("/api/dashboard/stats");
             renderStats(stats);
             setBoardPosture(
-                stats.runs_by_status.running > 0 ? "Active" : "Stable",
+                stats.runs_by_status.running > 0 ? "Working" : "Idle",
                 stats.runs_by_status.running > 0
-                    ? "At least one run is still processing."
-                    : "No active run processing right now.",
+                    ? "A run is still processing."
+                    : "Nothing is processing right now.",
             );
         }
 

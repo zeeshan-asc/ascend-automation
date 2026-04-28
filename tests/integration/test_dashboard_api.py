@@ -182,6 +182,8 @@ async def test_list_runs_supports_pagination_and_filtering(
     assert payload["page"] == 1
     assert len(payload["data"]) == 2
     assert payload["data"][0]["run_id"] == seeded["runs"]["queued"].run_id
+    assert payload["data"][0]["source_url"] == "https://example.com/queued.xml"
+    assert payload["data"][0]["source_kind"] == "rss_feed"
 
     filtered = await authenticated_client.get(
         "/api/runs",
@@ -234,6 +236,8 @@ async def test_get_run_detail_includes_joined_item_state(
     assert response.status_code == 200
     payload = response.json()
     assert payload["status"] == RunStatus.PARTIAL_FAILED.value
+    assert payload["source_url"] == "https://example.com/partial.xml"
+    assert payload["source_kind"] == "rss_feed"
     assert len(payload["items"]) == 2
     reused_item = next(
         item for item in payload["items"] if item["status"] == RunItemStatus.REUSED.value
@@ -327,11 +331,15 @@ async def test_get_episode_detail_returns_transcript_and_lead_summary(
 ) -> None:
     seeded = await seed_dashboard_state(app_container)
 
-    response = await authenticated_client.get(f"/api/episodes/{seeded['episodes']['one'].episode_id}")
+    response = await authenticated_client.get(
+        f"/api/episodes/{seeded['episodes']['one'].episode_id}"
+    )
 
     assert response.status_code == 200
     payload = response.json()
     assert payload["title"] == "Fixing Patient Flow"
+    assert payload["source_url"] == seeded["runs"]["completed"].source_url
+    assert payload["source_kind"] == "rss_feed"
     assert payload["transcript_status"] == TranscriptStatus.COMPLETED.value
     assert payload["lead"]["guest_company"] == "St. Mary's Health System"
 

@@ -4,7 +4,7 @@ from collections.abc import Sequence
 from datetime import datetime
 from typing import Protocol
 
-from app.domain.enums import OutreachStatus, RunItemStatus, RunStatus
+from app.domain.enums import OutreachStatus, RunItemStatus, RunStatus, SourceKind
 from app.domain.models import (
     Episode,
     Lead,
@@ -82,9 +82,10 @@ class EpisodeRepositoryProtocol(Protocol):
     async def ensure_indexes(self) -> None: ...
     async def upsert(self, episode: Episode) -> Episode: ...
     async def get_by_dedupe_key(self, dedupe_key: str) -> Episode | None: ...
+    async def get_by_audio_url(self, audio_url: str) -> Episode | None: ...
     async def get_by_episode_id(self, episode_id: str) -> Episode | None: ...
     async def list_by_episode_ids(self, episode_ids: Sequence[str]) -> list[Episode]: ...
-    async def count_all(self, *, feed_url: str | None = None) -> int: ...
+    async def count_all(self, *, source_url: str | None = None) -> int: ...
     async def claim_processing(
         self,
         *,
@@ -99,7 +100,7 @@ class EpisodeRepositoryProtocol(Protocol):
         *,
         page: int,
         limit: int,
-        feed_url: str | None = None,
+        source_url: str | None = None,
     ) -> tuple[list[Episode], int]: ...
 
 
@@ -172,6 +173,16 @@ class LeadRepositoryProtocol(Protocol):
 
 class RSSProviderProtocol(Protocol):
     async def fetch_episodes(self, rss_url: str, max_results: int) -> list[ParsedEpisode]: ...
+
+
+class SourceResolverProtocol(Protocol):
+    async def resolve_source(
+        self,
+        *,
+        source_url: str,
+        source_kind: SourceKind,
+        max_results: int,
+    ) -> list[ParsedEpisode]: ...
 
 
 class UserRepositoryProtocol(Protocol):

@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sign In | Ascend Outreach Engine</title>
+    <title>Sign In | RSS Automation</title>
     <link
-        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@600;700;800&display=swap"
         rel="stylesheet" />
     <style>
         *,
@@ -499,6 +499,88 @@
                 width: 100%;
             }
         }
+        /* Basic UI override for clearer non-technical navigation */
+        :root {
+            --bg: #f0f6ff;
+            --panel: rgba(255, 255, 255, 0.97);
+            --panel-strong: #ffffff;
+            --border: #d6e1ee;
+            --border-strong: #99b7df;
+            --text: #001126;
+            --muted: #596472;
+            --accent: #0060d3;
+            --accent-cold: #073356;
+            --accent-warm: #fcca31;
+            --danger: #b42318;
+            --shadow: 0 12px 30px rgba(0, 17, 38, 0.08);
+            --radius-xl: 20px;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --font-display: "Inter Tight", sans-serif;
+            --font-body: "Inter", sans-serif;
+        }
+
+        body {
+            color: var(--text);
+            background: linear-gradient(180deg, #f9fbff 0%, #f0f6ff 55%, #e4ebf3 100%);
+        }
+
+        body::before,
+        .hero::after {
+            display: none;
+        }
+
+        .page {
+            width: min(1040px, calc(100% - 32px));
+            padding: 20px 0 36px;
+        }
+
+        .app-nav,
+        .hero,
+        .panel,
+        .feature,
+        .redirect-chip {
+            background: var(--panel);
+            border-color: var(--border);
+            box-shadow: var(--shadow);
+            backdrop-filter: none;
+        }
+
+        .nav-brand-mark {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: none;
+        }
+
+        .eyebrow,
+        .redirect-chip,
+        .tab {
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .eyebrow,
+        .redirect-chip,
+        .tab,
+        .button-secondary {
+            background: #ffffff;
+            border-color: var(--border);
+            color: var(--text);
+        }
+
+        .tab.is-active,
+        .button-primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .field input {
+            background: #fff;
+            border-color: var(--border);
+            color: var(--text);
+            font-family: var(--font-body);
+        }
     </style>
 </head>
 
@@ -508,8 +590,8 @@
             <a class="nav-brand" href="/auth">
                 <span class="nav-brand-mark">P</span>
                 <span class="nav-brand-copy">
-                    <strong>Ascend Outreach Engine</strong>
-                    <span>Shared queue, run board, and records</span>
+                    <strong>RSS Automation</strong>
+                    <span>Simple feed review tool</span>
                 </span>
             </a>
         </header>
@@ -522,11 +604,11 @@
         <section class="layout">
             <section class="hero">
                 <div class="hero-copy-block">
-                    <span class="hero-kicker">Shared workspace</span>
+                    <span class="hero-kicker">Before you start</span>
                     <h1>Sign in to continue.</h1>
                     <p class="hero-copy">
-                        Create an account once, then return with the same credentials whenever you need the queue,
-                        dashboard, or records workspace.
+                        Create an account once, then use the same login whenever you want to start a run, review
+                        results, or update the contact list.
                     </p>
                 </div>
 
@@ -536,16 +618,16 @@
                         <p>Create the account and continue immediately. There is no extra confirmation step.</p>
                     </article>
                     <article class="feature">
-                        <strong>Protected routes</strong>
-                        <p>Protected pages send you here first and then return you to the same destination.</p>
+                        <strong>Easy return</strong>
+                        <p>If you were sent here first, you will go back to the same page after signing in.</p>
                     </article>
                     <article class="feature">
-                        <strong>Persistent session</strong>
-                        <p>Your browser keeps the session so you can move between the queue, board, and records view.</p>
+                        <strong>Stay signed in</strong>
+                        <p>Your browser keeps the session so moving between pages stays simple.</p>
                     </article>
                     <article class="feature">
-                        <strong>Shared context</strong>
-                        <p>Runs and reviews stay tied to the account you are currently signed in with.</p>
+                        <strong>Your account</strong>
+                        <p>Runs and saved work stay connected to the account you are using now.</p>
                     </article>
                 </div>
 
@@ -558,7 +640,7 @@
             <section class="panel">
                 <div class="panel-header">
                     <span class="hero-kicker">Account</span>
-                    <h2>Authenticate</h2>
+                    <h2>Sign in or create an account</h2>
                     <p class="panel-copy">
                         Create a new account or sign in with an existing one.
                     </p>

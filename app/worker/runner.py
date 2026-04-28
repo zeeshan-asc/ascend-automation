@@ -37,7 +37,7 @@ def build_orchestrator(
         run_item_repository=container.run_item_repository,
         transcript_repository=container.transcript_repository,
         lead_repository=container.lead_repository,
-        rss_provider=container.rss_provider,
+        source_resolver=container.source_resolver,
         assemblyai_provider=assemblyai_provider,
         openai_provider=container.openai_provider,
     )

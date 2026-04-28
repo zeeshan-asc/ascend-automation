@@ -8,12 +8,12 @@ from app.database import MongoManager
 from app.domain.interfaces import (
     EpisodeRepositoryProtocol,
     LeadRepositoryProtocol,
-    PasswordHasherProtocol,
     OpenAIProviderProtocol,
-    RSSProviderProtocol,
-    TokenManagerProtocol,
+    PasswordHasherProtocol,
     RunItemRepositoryProtocol,
     RunRepositoryProtocol,
+    SourceResolverProtocol,
+    TokenManagerProtocol,
     TranscriptRepositoryProtocol,
     UserRepositoryProtocol,
 )
@@ -27,6 +27,11 @@ from app.infrastructure.mongo.users import UserRepository
 from app.infrastructure.passwords import PasswordHasher
 from app.infrastructure.providers.openai_client import OpenAIProvider
 from app.infrastructure.providers.rss import RSSProvider
+from app.infrastructure.providers.source_resolver import (
+    DirectAudioResolver,
+    EpisodePageResolver,
+    SourceResolver,
+)
 
 
 @dataclass(slots=True)
@@ -40,9 +45,17 @@ class AppContainer:
     lead_repository: LeadRepositoryProtocol
     user_repository: UserRepositoryProtocol
     openai_provider: OpenAIProviderProtocol
-    rss_provider: RSSProviderProtocol
+    source_resolver: SourceResolverProtocol
     password_hasher: PasswordHasherProtocol
     token_manager: TokenManagerProtocol
+
+    @property
+    def rss_provider(self) -> SourceResolverProtocol:
+        return self.source_resolver
+
+    @rss_provider.setter
+    def rss_provider(self, value: SourceResolverProtocol) -> None:
+        self.source_resolver = value
 
     @classmethod
     async def build(
@@ -52,6 +65,7 @@ class AppContainer:
         mongo_manager: MongoManager | Any,
     ) -> AppContainer:
         database = mongo_manager.database
+        rss_provider = RSSProvider(timeout_seconds=settings.rss_fetch_timeout_seconds)
         container = cls(
             settings=settings,
             mongo_manager=mongo_manager,
@@ -67,7 +81,15 @@ class AppContainer:
                 prompt_version=settings.openai_prompt_version,
                 max_inflight=settings.openai_max_inflight,
             ),
-            rss_provider=RSSProvider(timeout_seconds=settings.rss_fetch_timeout_seconds),
+            source_resolver=SourceResolver(
+                rss_resolver=rss_provider,
+                direct_audio_resolver=DirectAudioResolver(
+                    timeout_seconds=settings.rss_fetch_timeout_seconds,
+                ),
+                episode_page_resolver=EpisodePageResolver(
+                    timeout_seconds=settings.rss_fetch_timeout_seconds,
+                ),
+            ),
             password_hasher=PasswordHasher(iterations=settings.auth_password_hash_iterations),
             token_manager=JWTTokenManager(secret_key=settings.auth_jwt_secret.get_secret_value()),
         )

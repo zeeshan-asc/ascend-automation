@@ -16,6 +16,7 @@ class RunRepository(MongoRepository[Run]):
 
     async def ensure_indexes(self) -> None:
         await self.collection.create_index("run_id", unique=True)
+        await self.collection.create_index("source_url")
         await self.collection.create_index("submitted_at")
         await self.collection.create_index([("submitted_by_email", 1), ("submitted_at", -1)])
         await self.collection.create_index(

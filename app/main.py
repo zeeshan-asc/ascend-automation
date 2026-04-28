@@ -13,8 +13,8 @@ from fastapi.responses import FileResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from app.api.auth import router as auth_router
-from app.api.dependencies import authenticate_request_user
 from app.api.dashboard import router as dashboard_router
+from app.api.dependencies import authenticate_request_user
 from app.api.episodes import router as episodes_router
 from app.api.health import router as health_router
 from app.api.leads import router as leads_router

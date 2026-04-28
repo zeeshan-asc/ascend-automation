@@ -6,7 +6,7 @@ from httpx import AsyncClient
 
 from app.application.container import AppContainer
 from app.config import Settings
-from app.domain.enums import TranscriptStatus
+from app.domain.enums import SourceKind, TranscriptStatus
 from app.domain.models import LeadDraft, ParsedEpisode, TranscriptResult
 from app.worker.orchestrator import PipelineOrchestrator
 from app.worker.service import WorkerService
@@ -18,6 +18,15 @@ class FakeRSSProvider:
 
     async def fetch_episodes(self, rss_url: str, max_results: int) -> list[ParsedEpisode]:
         return self._feeds[rss_url][:max_results]
+
+    async def resolve_source(
+        self,
+        *,
+        source_url: str,
+        source_kind: SourceKind,
+        max_results: int,
+    ) -> list[ParsedEpisode]:
+        return await self.fetch_episodes(source_url, max_results)
 
 
 class CountingAssemblyAIProvider:
@@ -71,7 +80,8 @@ def build_episode(feed_url: str, number: int) -> ParsedEpisode:
         episode_url=f"https://podcasts.example.com/{number}",
         audio_url=f"https://cdn.example.com/{number}.mp3",
         published_at="2026-04-01",
-        feed_url=feed_url,
+        source_url=feed_url,
+        source_kind=SourceKind.RSS_FEED,
         dedupe_key=f"{feed_url}-guid-{number}",
     )
 
@@ -92,7 +102,7 @@ def build_worker(
         run_item_repository=app_container.run_item_repository,
         transcript_repository=app_container.transcript_repository,
         lead_repository=app_container.lead_repository,
-        rss_provider=app_container.rss_provider,
+        source_resolver=app_container.source_resolver,
         assemblyai_provider=assembly_provider,
         openai_provider=openai_provider,
     )
@@ -124,7 +134,7 @@ async def test_submission_to_dashboard_end_to_end(
     submission = await authenticated_client.post(
         "/api/submissions",
         json={
-            "rss_url": feed_url,
+            "source_url": feed_url,
             "tone_instructions": "Keep it direct and peer-like.",
             "submitted_at": datetime.now(UTC).isoformat(),
         },
@@ -187,7 +197,7 @@ async def test_duplicate_submissions_share_canonical_processing(
         response = await authenticated_client.post(
             "/api/submissions",
             json={
-                "rss_url": feed_url,
+                "source_url": feed_url,
                 "tone_instructions": None,
                 "submitted_at": datetime.now(UTC).isoformat(),
             },

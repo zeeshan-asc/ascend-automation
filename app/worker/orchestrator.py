@@ -11,9 +11,9 @@ from app.domain.interfaces import (
     EpisodeRepositoryProtocol,
     LeadRepositoryProtocol,
     OpenAIProviderProtocol,
-    RSSProviderProtocol,
     RunItemRepositoryProtocol,
     RunRepositoryProtocol,
+    SourceResolverProtocol,
     TranscriptRepositoryProtocol,
 )
 from app.domain.models import Episode, Lead, Run, RunItem, Transcript, utcnow
@@ -33,7 +33,7 @@ class PipelineOrchestrator:
         run_item_repository: RunItemRepositoryProtocol,
         transcript_repository: TranscriptRepositoryProtocol,
         lead_repository: LeadRepositoryProtocol,
-        rss_provider: RSSProviderProtocol,
+        source_resolver: SourceResolverProtocol,
         assemblyai_provider: AssemblyAIProviderProtocol,
         openai_provider: OpenAIProviderProtocol,
     ) -> None:
@@ -43,7 +43,7 @@ class PipelineOrchestrator:
         self._run_item_repository = run_item_repository
         self._transcript_repository = transcript_repository
         self._lead_repository = lead_repository
-        self._rss_provider = rss_provider
+        self._source_resolver = source_resolver
         self._assemblyai_provider = assemblyai_provider
         self._openai_provider = openai_provider
 
@@ -52,10 +52,11 @@ class PipelineOrchestrator:
         if run is None:
             return None
         logger.info(
-            "pipeline.run.started run_id=%s worker_id=%s rss_url=%s",
+            "pipeline.run.started run_id=%s worker_id=%s source_url=%s source_kind=%s",
             run_id,
             worker_id,
-            run.rss_url,
+            run.source_url,
+            run.source_kind,
         )
         await self._run_repository.mark_running(run_id, utcnow())
         try:
@@ -177,9 +178,10 @@ class PipelineOrchestrator:
                 raise RuntimeError("Retry targets could not be resolved for this run.")
             return all_items, retry_items
 
-        parsed_episodes = await self._rss_provider.fetch_episodes(
-            run.rss_url,
-            self._settings.max_episodes_per_run,
+        parsed_episodes = await self._source_resolver.resolve_source(
+            source_url=run.source_url,
+            source_kind=run.source_kind,
+            max_results=self._settings.max_episodes_per_run,
         )
         prepared_items: list[tuple[Episode, RunItem]] = []
         new_items: list[RunItem] = []
@@ -191,7 +193,8 @@ class PipelineOrchestrator:
                     episode_url=parsed.episode_url,
                     audio_url=parsed.audio_url,
                     published_at=parsed.published_at,
-                    feed_url=parsed.feed_url,
+                    source_url=parsed.source_url,
+                    source_kind=parsed.source_kind,
                 ),
             )
             existing_item = await self._run_item_repository.get_by_run_and_episode(

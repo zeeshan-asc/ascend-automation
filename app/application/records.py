@@ -29,7 +29,8 @@ class LeadRecordRow(ApiModel):
     submitted_by: str
     submitted_by_email: str
     submitted_at: datetime
-    rss_url: str
+    source_url: str
+    source_kind: str
     episode_id: str
     episode_title: str
     episode_url: str | None
@@ -141,7 +142,8 @@ class RecordsWorkspaceService:
                 "submitted_by",
                 "submitted_by_email",
                 "submitted_at",
-                "rss_url",
+                "source_url",
+                "source_kind",
                 "run_id",
                 "run_status",
                 "run_item_status",
@@ -168,7 +170,8 @@ class RecordsWorkspaceService:
                     row.submitted_by,
                     row.submitted_by_email,
                     row.submitted_at.isoformat(),
-                    row.rss_url,
+                    row.source_url,
+                    row.source_kind,
                     row.run_id,
                     row.run_status,
                     row.run_item_status,
@@ -245,7 +248,8 @@ class RecordsWorkspaceService:
             submitted_by=run.submitted_by,
             submitted_by_email=str(run.submitted_by_email),
             submitted_at=run.submitted_at,
-            rss_url=run.rss_url,
+            source_url=run.source_url,
+            source_kind=str(run.source_kind),
             episode_id=episode.episode_id,
             episode_title=episode.title,
             episode_url=episode.episode_url,
@@ -295,7 +299,7 @@ class RecordsWorkspaceService:
                     for value in (
                         row.submitted_by,
                         row.submitted_by_email,
-                        row.rss_url,
+                        row.source_url,
                         row.episode_title,
                         row.episode_url,
                         row.audio_url,

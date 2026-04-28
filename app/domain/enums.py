@@ -37,3 +37,10 @@ class LeadStatus(StrEnum):
 class OutreachStatus(StrEnum):
     NOT_CONTACTED = "not_contacted"
     CONTACTED = "contacted"
+
+
+class SourceKind(StrEnum):
+    AUTO = "auto"
+    RSS_FEED = "rss_feed"
+    EPISODE_PAGE = "episode_page"
+    AUDIO_FILE = "audio_file"

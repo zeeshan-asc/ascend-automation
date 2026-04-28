@@ -3,8 +3,8 @@ from __future__ import annotations
 import logging
 
 from app.config import Settings
-from app.domain.errors import FeedFetchError
-from app.domain.interfaces import RSSProviderProtocol, RunRepositoryProtocol
+from app.domain.errors import SourceFetchError
+from app.domain.interfaces import RunRepositoryProtocol, SourceResolverProtocol
 from app.domain.models import AuthenticatedUser, Run, SubmissionRequest, utcnow
 
 logger = logging.getLogger(__name__)
@@ -15,11 +15,11 @@ class SubmissionService:
         self,
         settings: Settings,
         run_repository: RunRepositoryProtocol,
-        rss_provider: RSSProviderProtocol,
+        source_resolver: SourceResolverProtocol,
     ) -> None:
         self._settings = settings
         self._run_repository = run_repository
-        self._rss_provider = rss_provider
+        self._source_resolver = source_resolver
 
     async def create_submission(
         self,
@@ -27,15 +27,19 @@ class SubmissionService:
         *,
         current_user: AuthenticatedUser,
     ) -> Run:
+        resolved_source_url = str(request.source_url)
         try:
-            await self._rss_provider.fetch_episodes(
-                str(request.rss_url),
-                self._settings.max_episodes_per_run,
+            resolved_items = await self._source_resolver.resolve_source(
+                source_url=resolved_source_url,
+                source_kind=request.source_kind,
+                max_results=self._settings.max_episodes_per_run,
             )
-        except FeedFetchError as exc:
+        except SourceFetchError as exc:
             logger.warning(
-                "submission.rejected rss_url=%s reason_code=%s detail=%s submitted_by=%s",
-                request.rss_url,
+                "submission.rejected source_url=%s source_kind=%s "
+                "reason_code=%s detail=%s submitted_by=%s",
+                resolved_source_url,
+                request.source_kind,
                 exc.reason_code,
                 str(exc),
                 current_user.email,
@@ -43,8 +47,12 @@ class SubmissionService:
             raise
 
         submitted_at = request.submitted_at
+        resolved_source_kind = (
+            resolved_items[0].source_kind if resolved_items else request.source_kind
+        )
         run = Run(
-            rss_url=str(request.rss_url),
+            source_url=resolved_source_url,
+            source_kind=resolved_source_kind,
             submitted_by=current_user.name,
             submitted_by_email=current_user.email,
             tone_instructions=request.tone_instructions,
@@ -54,9 +62,10 @@ class SubmissionService:
         )
         created = await self._run_repository.create(run)
         logger.info(
-            "submission.created run_id=%s rss_url=%s submitted_by=%s",
+            "submission.created run_id=%s source_url=%s source_kind=%s submitted_by=%s",
             created.run_id,
-            created.rss_url,
+            created.source_url,
+            created.source_kind,
             created.submitted_by_email,
         )
         return created

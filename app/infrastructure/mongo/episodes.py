@@ -16,19 +16,25 @@ class EpisodeRepository(MongoRepository[Episode]):
     async def ensure_indexes(self) -> None:
         await self.collection.create_index("episode_id", unique=True)
         await self.collection.create_index("dedupe_key", unique=True)
-        await self.collection.create_index("feed_url")
+        await self.collection.create_index("audio_url", unique=True)
+        await self.collection.create_index("source_url")
 
     async def upsert(self, episode: Episode) -> Episode:
         await self.collection.update_one(
-            {"dedupe_key": episode.dedupe_key},
+            {"$or": [{"dedupe_key": episode.dedupe_key}, {"audio_url": episode.audio_url}]},
             {"$setOnInsert": self.to_document(episode)},
             upsert=True,
         )
-        stored = await self.collection.find_one({"dedupe_key": episode.dedupe_key})
+        stored = await self.collection.find_one(
+            {"$or": [{"dedupe_key": episode.dedupe_key}, {"audio_url": episode.audio_url}]},
+        )
         return self.model.model_validate(stored)
 
     async def get_by_dedupe_key(self, dedupe_key: str) -> Episode | None:
         return self.from_document(await self.collection.find_one({"dedupe_key": dedupe_key}))
+
+    async def get_by_audio_url(self, audio_url: str) -> Episode | None:
+        return self.from_document(await self.collection.find_one({"audio_url": audio_url}))
 
     async def get_by_episode_id(self, episode_id: str) -> Episode | None:
         return self.from_document(await self.collection.find_one({"episode_id": episode_id}))
@@ -39,10 +45,10 @@ class EpisodeRepository(MongoRepository[Episode]):
         cursor = self.collection.find({"episode_id": {"$in": episode_ids}})
         return [self.model.model_validate(document) async for document in cursor]
 
-    async def count_all(self, *, feed_url: str | None = None) -> int:
+    async def count_all(self, *, source_url: str | None = None) -> int:
         filters: dict[str, object] = {}
-        if feed_url:
-            filters["feed_url"] = feed_url
+        if source_url:
+            filters["source_url"] = source_url
         return int(await self.collection.count_documents(filters))
 
     async def claim_processing(
@@ -91,11 +97,11 @@ class EpisodeRepository(MongoRepository[Episode]):
         *,
         page: int,
         limit: int,
-        feed_url: str | None = None,
+        source_url: str | None = None,
     ) -> tuple[list[Episode], int]:
         filters: dict[str, object] = {}
-        if feed_url:
-            filters["feed_url"] = feed_url
+        if source_url:
+            filters["source_url"] = source_url
         cursor = (
             self.collection.find(filters)
             .sort("created_at", -1)

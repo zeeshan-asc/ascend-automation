@@ -2,8 +2,16 @@ from __future__ import annotations
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
-from app.domain.errors import AuthenticationError, AuthorizationError, DuplicateResourceError
-from app.domain.interfaces import PasswordHasherProtocol, TokenManagerProtocol, UserRepositoryProtocol
+from app.domain.errors import (
+    AuthenticationError,
+    AuthorizationError,
+    DuplicateResourceError,
+)
+from app.domain.interfaces import (
+    PasswordHasherProtocol,
+    TokenManagerProtocol,
+    UserRepositoryProtocol,
+)
 from app.domain.models import AuthenticatedUser, User, utcnow
 
 

@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ascend Outreach Engine</title>
+    <title>RSS Automation</title>
     <link
-        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@600;700;800&display=swap"
         rel="stylesheet" />
     <style>
         *,
@@ -492,6 +492,13 @@
             margin-bottom: 18px;
         }
 
+        .field-hint {
+            margin: 8px 0 0;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
         label {
             display: block;
             margin-bottom: 8px;
@@ -923,6 +930,188 @@
                 width: 100%;
             }
         }
+        /* Basic UI override for clearer non-technical navigation */
+        :root {
+            --bg: #f0f6ff;
+            --bg-soft: #e4ebf3;
+            --surface: rgba(255, 255, 255, 0.97);
+            --surface-strong: #ffffff;
+            --border: #d6e1ee;
+            --border-bright: #99b7df;
+            --accent: #0060d3;
+            --accent-cold: #073356;
+            --accent-warm: #fcca31;
+            --text: #001126;
+            --muted: #596472;
+            --danger: #b42318;
+            --shadow: 0 12px 32px rgba(0, 17, 38, 0.08);
+            --radius-xl: 20px;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --font-display: "Inter Tight", sans-serif;
+            --font-body: "Inter", sans-serif;
+        }
+
+        body {
+            color: var(--text);
+            background:
+                linear-gradient(180deg, #f9fbff 0%, #f0f6ff 55%, #e4ebf3 100%);
+        }
+
+        body::before,
+        .hero::after,
+        .hero::before,
+        .loading-ribbon::before {
+            display: none;
+        }
+
+        .page {
+            width: min(1040px, calc(100% - 32px));
+            padding: 28px 0 48px;
+        }
+
+        .app-nav,
+        .hero,
+        .panel,
+        .session-strip,
+        .status-shell,
+        .hero-stat,
+        .session-chip,
+        .status-card,
+        .loading-ribbon {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            backdrop-filter: none;
+        }
+
+        .app-nav {
+            padding: 14px 16px;
+        }
+
+        .nav-brand-mark {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: none;
+        }
+
+        .nav-brand-copy span,
+        .eyebrow,
+        .hero-kicker,
+        .panel-kicker {
+            color: var(--muted);
+        }
+
+        .nav-link {
+            background: #ffffff;
+            border-color: var(--border);
+            color: var(--text);
+            font-size: 14px;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .nav-link[aria-current="page"] {
+            background: #e6f2fb;
+            border-color: #99b7df;
+            color: var(--accent);
+        }
+
+        .eyebrow,
+        .pill {
+            background: #f9fbff;
+            border-color: var(--border);
+            color: var(--muted);
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .eyebrow::before {
+            background: var(--accent);
+            box-shadow: none;
+        }
+
+        .layout {
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .hero,
+        .panel {
+            padding: 28px;
+        }
+
+        .hero-header {
+            gap: 20px;
+        }
+
+        .hero h1,
+        .panel h2 {
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+        }
+
+        .hero-copy,
+        .panel-header p,
+        .status-copy,
+        .session-strip-copy,
+        .hero-stat span,
+        .status-card span,
+        .session-chip small,
+        .field label {
+            color: var(--muted);
+        }
+
+        .btn,
+        .status-link {
+            min-height: 46px;
+            border-radius: 12px;
+            font-weight: 700;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: none;
+        }
+
+        .btn-secondary,
+        .status-link {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .field input,
+        .field textarea {
+            background: #fff;
+            border-color: var(--border);
+            color: var(--text);
+            font-family: var(--font-body);
+        }
+
+        .field input::placeholder,
+        .field textarea::placeholder {
+            color: #908476;
+        }
+
+        .headline-accent {
+            color: var(--accent);
+        }
+
+        @media (max-width: 900px) {
+            .page {
+                width: min(100%, calc(100% - 24px));
+            }
+
+            .hero,
+            .panel {
+                padding: 22px;
+            }
+        }
     </style>
 </head>
 
@@ -936,18 +1125,18 @@
             <a class="nav-brand" href="/">
                 <span class="nav-brand-mark">P</span>
                 <span class="nav-brand-copy">
-                    <strong>Ascend Outreach Engine</strong>
-                    <span>Shared queue, run board, and records</span>
+                    <strong>RSS Automation</strong>
+                    <span>Simple feed review tool</span>
                 </span>
             </a>
             <nav class="nav-links" aria-label="Primary navigation">
-                <a class="nav-link" aria-current="page" href="/">Queue run</a>
-                <a class="nav-link" href="/dashboard">Shared dashboard</a>
-                <a class="nav-link" href="/records">Records workspace</a>
+                <a class="nav-link" aria-current="page" href="/">Start</a>
+                <a class="nav-link" href="/dashboard">Review runs</a>
+                <a class="nav-link" href="/records">Contact list</a>
             </nav>
         </header>
         <div class="masthead">
-            <span class="eyebrow">Shared RSS queue + lead drafting</span>
+            <span class="eyebrow">Simple podcast follow-up</span>
             <div class="top-actions">
                 <span class="pill" id="sessionBadge">Signed in</span>
                 <button class="btn btn-secondary" id="signOutButton" type="button">Sign out</button>
@@ -957,31 +1146,29 @@
             <section class="hero">
                 <div class="hero-header">
                     <div class="hero-copy-block">
-                        <span class="hero-kicker">Workflow posture</span>
-                        <h1>Turn podcast feeds into a <span class="headline-accent">reviewable lead board.</span></h1>
+                        <span class="hero-kicker">Start here</span>
+                        <h1>Add a podcast feed and let the app do the rest.</h1>
                         <p class="hero-copy">
-                            Queue a feed from your active session. The worker fans out episode discovery,
-                            AssemblyAI transcription, OpenAI lead extraction, and email drafting without blocking the
-                            next teammate. Every run lands in a shared dashboard so the team can inspect status,
-                            transcripts, and outreach.
+                        Paste a podcast source to pull episodes, create lead notes, and draft outreach emails.
+                            When the run starts, the next page shows what is finished and what still needs time.
                         </p>
                     </div>
 
                     <div class="hero-stats">
                         <article class="hero-stat">
-                            <small>Episode cap</small>
+                            <small>How many episodes</small>
                             <strong>5 latest only</strong>
-                            <span>Large historical feeds never flood the queue in a single submission.</span>
+                            <span>Large feeds stay easy to review because only the newest episodes are used.</span>
                         </article>
                         <article class="hero-stat">
-                            <small>Reuse policy</small>
-                            <strong>Canonical episodes</strong>
-                            <span>Previously seen episodes are reused instead of retranscribed and regenerated.</span>
+                            <small>Already seen before</small>
+                            <strong>Past results are reused</strong>
+                            <span>If an episode was processed earlier, the app keeps the existing transcript and lead.</span>
                         </article>
                         <article class="hero-stat">
-                            <small>Board model</small>
-                            <strong>Shared review flow</strong>
-                            <span>Runs, transcripts, lead identity, and email drafts stay visible to the team.</span>
+                            <small>What happens next</small>
+                            <strong>Review runs and contacts</strong>
+                            <span>You can check progress first, then open the saved contact list later.</span>
                         </article>
                     </div>
                 </div>
@@ -993,16 +1180,16 @@
                 <div class="panel-loader" id="panelLoader" aria-hidden="true">
                     <div class="loader-orbit"></div>
                     <div class="panel-loader-copy">
-                        <strong>Submitting run</strong>
-                        <span>Validating input, creating the run, and waiting for queue confirmation.</span>
+                        <strong>Starting run</strong>
+                        <span>Checking the feed and creating the new run.</span>
                     </div>
                 </div>
                 <div class="panel-header">
-                    <span class="panel-kicker">Feed intake</span>
-                    <h2>Queue a new run</h2>
+                    <span class="panel-kicker">New source</span>
+                    <h2>Start a new run</h2>
                     <p>
-                        Your current session is attached automatically. Submit the feed and optional tone guidance,
-                        then jump straight into the dashboard view for that run.
+                        Your account is used automatically. Add a podcast source URL and, if you want, a short note
+                        about how the email should sound.
                     </p>
                 </div>
 
@@ -1031,23 +1218,24 @@
                     </section>
 
                     <div class="field">
-                        <label for="rssUrl">RSS feed URL <span class="required">*</span></label>
-                        <input type="url" id="rssUrl" name="rssUrl"
-                            placeholder="https://feeds.buzzsprout.com/podcast.rss" required />
-                        <div class="field-error" id="rssFieldError" role="alert"></div>
+                        <label for="sourceUrl">Podcast source URL <span class="required">*</span></label>
+                        <input type="url" id="sourceUrl" name="sourceUrl"
+                            placeholder="https://feeds.buzzsprout.com/podcast.rss or https://podcast.show/episode/123" required />
+                        <div class="field-error" id="sourceFieldError" role="alert"></div>
+                        <p class="field-hint">Paste a full RSS feed, a podcast episode page, or a direct audio link.</p>
                     </div>
 
                     <div class="field">
                         <label for="toneInstructions">Email tone instructions</label>
                         <textarea id="toneInstructions" name="toneInstructions"
-                            placeholder="Keep it concise. Lead with empathy and operational pain. Sound like a peer, not a vendor."></textarea>
+                            placeholder="Example: keep it short, friendly, and professional."></textarea>
                     </div>
 
                     <div class="error-banner" id="errorBanner" role="alert"></div>
 
                     <div class="button-row">
                         <button class="btn btn-primary" id="submitButton" type="submit">
-                            Queue outreach run
+                            Start run
                         </button>
                         <button class="btn btn-secondary" id="resetButton" type="button">
                             Clear form
@@ -1058,10 +1246,10 @@
                 <section class="status-shell" id="statusShell" aria-live="polite">
                     <div class="status-top">
                         <div>
-                            <p class="status-title">Run accepted</p>
+                            <p class="status-title">Run started</p>
                             <p class="status-copy">
-                                The submission is now queued. Redirecting you to the shared dashboard so you can
-                                watch status, items, transcripts, and generated emails in context.
+                                The source was accepted. Opening the review page so you can watch progress and check the
+                                saved results.
                             </p>
                         </div>
                         <span class="pill">202 accepted</span>
@@ -1077,13 +1265,13 @@
                             <strong id="runStatusValue">queued</strong>
                         </div>
                         <div class="status-card">
-                            <small>Redirect target</small>
+                            <small>Next page</small>
                             <strong id="dashboardValue">/dashboard</strong>
                         </div>
                     </div>
 
                     <div class="status-actions">
-                        <a class="status-link" id="dashboardLink" href="/dashboard">Open dashboard now</a>
+                        <a class="status-link" id="dashboardLink" href="/dashboard">Open review page now</a>
                     </div>
                 </section>
             </section>
@@ -1097,7 +1285,7 @@
         const submitButton = document.getElementById("submitButton");
         const resetButton = document.getElementById("resetButton");
         const errorBanner = document.getElementById("errorBanner");
-        const rssFieldError = document.getElementById("rssFieldError");
+        const sourceFieldError = document.getElementById("sourceFieldError");
         const statusShell = document.getElementById("statusShell");
         const runIdValue = document.getElementById("runIdValue");
         const runStatusValue = document.getElementById("runStatusValue");
@@ -1117,16 +1305,16 @@
             errorBanner.classList.add("visible");
         }
 
-        function showRssFieldError(message) {
-            rssFieldError.textContent = message;
-            rssFieldError.classList.add("visible");
+        function showSourceFieldError(message) {
+            sourceFieldError.textContent = message;
+            sourceFieldError.classList.add("visible");
         }
 
         function clearError() {
             errorBanner.textContent = "";
             errorBanner.classList.remove("visible");
-            rssFieldError.textContent = "";
-            rssFieldError.classList.remove("visible");
+            sourceFieldError.textContent = "";
+            sourceFieldError.classList.remove("visible");
         }
 
         function buildNextPath() {
@@ -1138,17 +1326,17 @@
         }
 
         function validateForm(payload) {
-            if (!payload.rss_url.trim()) {
-                return "Please enter an RSS feed URL.";
+            if (!payload.source_url.trim()) {
+                return "Please enter a podcast source URL.";
             }
 
             try {
-                const parsed = new URL(payload.rss_url);
+                const parsed = new URL(payload.source_url);
                 if (!["http:", "https:"].includes(parsed.protocol)) {
-                    return "RSS URL must start with http:// or https://.";
+                    return "Source URL must start with http:// or https://.";
                 }
             } catch (error) {
-                return "Please enter a valid RSS feed URL.";
+                return "Please enter a valid podcast source URL.";
             }
 
             return null;
@@ -1217,12 +1405,12 @@
 
         function setSubmitting(isSubmitting) {
             submitButton.disabled = isSubmitting;
-            submitButton.textContent = isSubmitting ? "Queueing run..." : "Queue outreach run";
+            submitButton.textContent = isSubmitting ? "Starting run..." : "Start run";
             form.setAttribute("aria-busy", String(isSubmitting));
             panelLoader.classList.toggle("visible", isSubmitting);
             globalLoadingBar.classList.toggle("visible", isSubmitting);
             if (isSubmitting) {
-                setLoadingMessage("Talking to the queue", "Waiting for the API response");
+                setLoadingMessage("Working on your request", "Waiting for the app to respond");
             }
         }
 
@@ -1244,7 +1432,7 @@
             statusShell.classList.remove("visible");
 
             const payload = {
-                rss_url: document.getElementById("rssUrl").value.trim(),
+                source_url: document.getElementById("sourceUrl").value.trim(),
                 tone_instructions: document.getElementById("toneInstructions").value.trim() || null,
                 submitted_at: new Date().toISOString(),
             };
@@ -1273,8 +1461,16 @@
                     }
                     const errorPayload = await response.json().catch(() => ({}));
                     const parsedError = parseApiError(errorPayload);
-                    if (response.status === 422 && parsedError.code && parsedError.code.startsWith("feed_")) {
-                        showRssFieldError(parsedError.message);
+                    if (
+                        response.status === 422 &&
+                        parsedError.code &&
+                        (
+                            parsedError.code.startsWith("feed_") ||
+                            parsedError.code.startsWith("source_") ||
+                            parsedError.code === "episode_audio_not_found"
+                        )
+                    ) {
+                        showSourceFieldError(parsedError.message);
                         return;
                     }
                     throw new Error(parsedError.message);
@@ -1300,9 +1496,9 @@
         signOutButton.addEventListener("click", () => {
             void signOut();
         });
-        document.getElementById("rssUrl").addEventListener("input", () => {
-            rssFieldError.textContent = "";
-            rssFieldError.classList.remove("visible");
+        document.getElementById("sourceUrl").addEventListener("input", () => {
+            sourceFieldError.textContent = "";
+            sourceFieldError.classList.remove("visible");
         });
         void loadSession().catch((error) => {
             showError(error instanceof Error ? error.message : "Failed to load your session.");

@@ -5,7 +5,7 @@ import pytest
 
 from app.application.container import AppContainer
 from app.config import Settings
-from app.domain.enums import RunItemStatus, RunStatus, TranscriptStatus
+from app.domain.enums import RunItemStatus, RunStatus, SourceKind, TranscriptStatus
 from app.domain.errors import FeedFetchError
 from app.domain.models import LeadDraft, ParsedEpisode, Run, TranscriptResult
 from app.worker.orchestrator import PipelineOrchestrator
@@ -27,6 +27,15 @@ class FakeRSSProvider:
         if rss_url in self._failing_urls:
             raise self._failing_urls[rss_url]
         return self._feeds[rss_url][:max_results]
+
+    async def resolve_source(
+        self,
+        *,
+        source_url: str,
+        source_kind: SourceKind,
+        max_results: int,
+    ) -> list[ParsedEpisode]:
+        return await self.fetch_episodes(source_url, max_results)
 
 
 class FakeAssemblyAIProvider:
@@ -87,7 +96,8 @@ def build_episode(feed_url: str, number: int) -> ParsedEpisode:
         episode_url=f"https://example.com/{number}",
         audio_url=f"https://cdn.example.com/{feed_url.rsplit('/', 1)[-1]}-{number}.mp3",
         published_at="2026-04-01",
-        feed_url=feed_url,
+        source_url=feed_url,
+        source_kind=SourceKind.RSS_FEED,
         dedupe_key=f"{feed_url}-guid-{number}",
     )
 
@@ -108,7 +118,7 @@ async def build_worker(
         run_item_repository=container.run_item_repository,
         transcript_repository=container.transcript_repository,
         lead_repository=container.lead_repository,
-        rss_provider=FakeRSSProvider(feeds, failing_urls=failing_urls),
+        source_resolver=FakeRSSProvider(feeds, failing_urls=failing_urls),
         assemblyai_provider=assembly_provider or FakeAssemblyAIProvider(),
         openai_provider=openai_provider or FakeOpenAIProvider(),
     )
@@ -217,7 +227,7 @@ async def test_worker_retry_processes_only_target_failed_item(test_settings: Set
         run_item_repository=container.run_item_repository,
         transcript_repository=container.transcript_repository,
         lead_repository=container.lead_repository,
-        rss_provider=FakeRSSProvider({feed_url: [episode_one, episode_two]}),
+        source_resolver=FakeRSSProvider({feed_url: [episode_one, episode_two]}),
         assemblyai_provider=retry_assembly,
         openai_provider=retry_openai,
     )
@@ -316,7 +326,7 @@ async def test_duplicate_runs_reuse_canonical_episode_processing(test_settings: 
         run_item_repository=container.run_item_repository,
         transcript_repository=container.transcript_repository,
         lead_repository=container.lead_repository,
-        rss_provider=FakeRSSProvider({feed_url: [shared_episode]}),
+        source_resolver=FakeRSSProvider({feed_url: [shared_episode]}),
         assemblyai_provider=assembly,
         openai_provider=openai_provider,
     )
@@ -327,7 +337,7 @@ async def test_duplicate_runs_reuse_canonical_episode_processing(test_settings: 
         run_item_repository=container.run_item_repository,
         transcript_repository=container.transcript_repository,
         lead_repository=container.lead_repository,
-        rss_provider=FakeRSSProvider({feed_url: [shared_episode]}),
+        source_resolver=FakeRSSProvider({feed_url: [shared_episode]}),
         assemblyai_provider=assembly,
         openai_provider=openai_provider,
     )
@@ -409,7 +419,7 @@ async def test_worker_handles_eight_simultaneous_runs(test_settings: Settings) -
             run_item_repository=container.run_item_repository,
             transcript_repository=container.transcript_repository,
             lead_repository=container.lead_repository,
-            rss_provider=FakeRSSProvider(feeds),
+            source_resolver=FakeRSSProvider(feeds),
             assemblyai_provider=assembly,
             openai_provider=openai_provider,
         )

@@ -6,6 +6,7 @@ from collections.abc import Iterable
 import feedparser  # type: ignore[import-untyped]
 import httpx
 
+from app.domain.enums import SourceKind
 from app.domain.errors import FeedFetchError
 from app.domain.models import ParsedEpisode
 
@@ -78,7 +79,8 @@ class RSSProvider:
                     episode_url=str(episode_url) if episode_url else None,
                     audio_url=str(audio_url),
                     published_at=str(entry.get("published", "")) or None,
-                    feed_url=rss_url,
+                    source_url=rss_url,
+                    source_kind=SourceKind.RSS_FEED,
                     dedupe_key=dedupe_key,
                 ),
             )
