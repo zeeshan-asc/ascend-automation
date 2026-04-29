@@ -978,6 +978,77 @@
             background: #ffffff;
         }
 
+        .record-modal-backdrop {
+            background: rgba(12, 23, 38, 0.36);
+            backdrop-filter: blur(6px);
+        }
+
+        .record-modal {
+            border: 1px solid var(--border);
+            background: #ffffff;
+            box-shadow: 0 20px 54px rgba(16, 33, 50, 0.16);
+        }
+
+        .record-modal-header {
+            border-bottom: 1px solid var(--border);
+            background: #f8fbff;
+            backdrop-filter: none;
+        }
+
+        .record-modal-kicker {
+            color: var(--accent);
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .record-modal-kicker::before {
+            box-shadow: none;
+        }
+
+        .record-modal-header h2 {
+            color: var(--text);
+        }
+
+        .record-modal-header p {
+            color: var(--muted);
+        }
+
+        .record-modal-card,
+        .record-modal-wide {
+            border: 1px solid var(--border);
+            background: #ffffff;
+        }
+
+        .record-modal-card h3,
+        .record-modal-wide h3 {
+            color: var(--text);
+        }
+
+        .record-modal-row label {
+            color: var(--muted);
+            letter-spacing: 0.06em;
+        }
+
+        .record-modal-row a {
+            color: var(--accent);
+        }
+
+        .record-modal-row a:hover {
+            color: #1d4ed8;
+        }
+
+        .record-modal-note {
+            border: 1px solid #cfdff6;
+            background: #eef5ff;
+            color: #36587f;
+        }
+
+        .record-modal-body-copy {
+            border: 1px solid var(--border);
+            background: #f8fbff;
+            color: var(--text);
+        }
+
         .nav-brand-mark {
             background: var(--accent);
             color: #fff;
@@ -1053,10 +1124,7 @@
         }
 
         .records-layout {
-            display: grid;
-            grid-template-columns: 300px minmax(0, 1fr);
-            gap: 18px;
-            align-items: start;
+            display: block;
         }
 
         .records-main {
@@ -1066,8 +1134,7 @@
         }
 
         .filters-panel {
-            position: sticky;
-            top: 20px;
+            position: static;
         }
 
         .stats-grid {
@@ -1096,8 +1163,9 @@
         }
 
         .filters-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: minmax(260px, 1.2fr) repeat(2, minmax(220px, 0.9fr)) auto;
             gap: 10px;
+            align-items: end;
         }
 
         .filters-actions {
@@ -1113,11 +1181,17 @@
 
         .records-panel {
             padding: 18px;
+            min-height: calc(100vh - 280px);
+            display: flex;
+            flex-direction: column;
         }
 
         .table-shell {
             border-radius: 14px;
             background: #fff;
+            flex: 1 1 auto;
+            min-height: 0;
+            max-height: calc(100vh - 390px);
         }
 
         thead th {
@@ -1140,15 +1214,11 @@
         }
 
         @media (max-width: 1100px) {
-            .records-layout {
-                grid-template-columns: 1fr;
-            }
-
-            .filters-panel {
-                position: static;
-            }
-
             .stats-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .filters-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
@@ -1157,12 +1227,110 @@
             .stats-grid {
                 grid-template-columns: 1fr;
             }
+
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .records-panel {
+                min-height: 0;
+            }
+
+            .table-shell {
+                max-height: none;
+            }
         }
+    </style>
+    <style>
+        /* Unified app shell with dashboard */
+        .shell-app {
+            display: grid;
+            grid-template-columns: 232px minmax(0, 1fr);
+            min-height: 100vh;
+        }
+        .app-sidebar {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            background: #fff;
+            border-right: 1px solid #e3e8f0;
+            padding: 14px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 2;
+            overflow: hidden;
+        }
+        .sidebar-head { display: flex; align-items: center; gap: 10px; padding: 0 4px; }
+        .sidebar-toggle {
+            width: 36px; height: 36px; border-radius: 10px; border: 1px solid #e3e8f0; background: #fff; cursor: pointer;
+        }
+        .sidebar-brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: #0f172a; }
+        .brand-mark { width: 32px; height: 32px; border-radius: 8px; background: #0f172a; color: #fff; display: grid; place-items: center; font-weight: 700; }
+        .brand-text { display: grid; line-height: 1.15; }
+        .brand-text strong { font-size: 14px; font-family: var(--font-display); }
+        .brand-text small { font-size: 11px; color: #64748b; }
+        .sidebar-nav { display: grid; gap: 4px; margin-top: 8px; padding: 0 2px; }
+        .nav-item {
+            text-decoration: none; color: #64748b; border-radius: 10px; padding: 9px 10px; font-size: 13px; font-weight: 600;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .nav-item[aria-current="page"] { background: #eaf1ff; color: #2563eb; }
+        .nav-item:hover { background: #f1f5f9; color: #0f172a; }
+        .nav-icon { width: 16px; height: 16px; display: grid; place-items: center; }
+        .nav-icon svg { width: 16px; height: 16px; }
+        .app-main { min-width: 0; }
+        .app-main .shell { width: min(1320px, calc(100% - 24px)); }
+        .sidebar-foot { border-top: 1px solid #e3e8f0; padding-top: 10px; margin-top: auto; }
+        .user-card { padding: 8px; border-radius: 10px; background: #eef2f8; font-size: 12px; color: #0f172a; }
+        .user-action { width: 100%; margin-top: 8px; border: 1px solid #e3e8f0; background: #fff; border-radius: 10px; padding: 8px 10px; cursor: pointer; }
+        .shell-app.sidebar-collapsed { grid-template-columns: 70px minmax(0, 1fr); }
+        .shell-app.sidebar-collapsed .brand-text, .shell-app.sidebar-collapsed .nav-label { display: none; }
+        .shell-app.sidebar-collapsed .sidebar-brand { display: none; }
+        .shell-app.sidebar-collapsed .sidebar-nav { justify-items: center; }
+        .shell-app.sidebar-collapsed .nav-item { width: 40px; justify-content: center; padding: 10px 0; }
+        .app-main .app-nav { display: none; }
+        @media (max-width: 960px) { .shell-app { grid-template-columns: 1fr; } }
     </style>
 </head>
 
 <body>
-    <main class="shell">
+    <div class="shell-app" id="appShell">
+        <aside class="app-sidebar">
+            <div class="sidebar-head">
+                <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Toggle sidebar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="4" y1="6" x2="20" y2="6"></line>
+                        <line x1="4" y1="12" x2="20" y2="12"></line>
+                        <line x1="4" y1="18" x2="20" y2="18"></line>
+                    </svg>
+                </button>
+                <a class="sidebar-brand" href="/">
+                    <span class="brand-mark">A</span>
+                    <span class="brand-text"><strong>Ascend</strong><small>Lead operations</small></span>
+                </a>
+            </div>
+            <nav class="sidebar-nav" aria-label="Main">
+                <a class="nav-item" href="/">
+                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span>
+                    <span class="nav-label">New run</span>
+                </a>
+                <a class="nav-item" href="/dashboard">
+                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span>
+                    <span class="nav-label">Pipeline</span>
+                </a>
+                <a class="nav-item" aria-current="page" href="/records">
+                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+                    <span class="nav-label">Contacts</span>
+                </a>
+            </nav>
+            <div class="sidebar-foot">
+                <div class="user-card" id="sessionBadge">Loading session</div>
+                <button class="user-action" id="signOutButton" type="button">Sign out</button>
+            </div>
+        </aside>
+    <main class="app-main">
+    <div class="shell">
         <section class="loading-ribbon" id="loadingRibbon" aria-live="polite">
             <strong id="loadingTitle">Loading records</strong>
             <span id="loadingText">Fetching users, joined lead rows, and operational status.</span>
@@ -1192,47 +1360,11 @@
                 </p>
             </div>
             <div class="topbar-actions">
-                <span class="button button-ghost" id="sessionBadge" style="cursor: default;">Loading session</span>
-                <button class="button button-ghost" id="signOutButton" type="button">Sign out</button>
                 <button class="button button-primary" id="exportButton" type="button">Download CSV</button>
             </div>
         </header>
 
         <section class="records-layout">
-            <aside class="filters-panel">
-                <div class="section-title">
-                    <div>
-                        <h2>Filters</h2>
-                        <p>Search or narrow the list by submitter and contact status.</p>
-                    </div>
-                </div>
-                <div class="filters-grid">
-                    <div class="field">
-                        <label for="searchFilter">Search</label>
-                        <input id="searchFilter" type="search"
-                            placeholder="Guest, company, user, source, or episode title" />
-                    </div>
-                    <div class="field">
-                        <label for="submitterFilter">Submitted by</label>
-                        <select id="submitterFilter">
-                            <option value="">All teammates</option>
-                        </select>
-                    </div>
-                    <div class="field">
-                        <label for="outreachFilter">Outreach state</label>
-                        <select id="outreachFilter">
-                            <option value="">All outreach states</option>
-                            <option value="not_contacted">Not contacted</option>
-                            <option value="contacted">Contacted</option>
-                        </select>
-                    </div>
-                    <div class="filters-actions">
-                        <button class="button button-ghost" id="refreshButton" type="button">Refresh list</button>
-                        <button class="button button-ghost" id="resetButton" type="button">Clear filters</button>
-                    </div>
-                </div>
-            </aside>
-
             <div class="records-main">
                 <section class="stats-grid">
                     <article class="stat-card">
@@ -1255,6 +1387,40 @@
                         <strong id="pendingRows">0</strong>
                         <span>Contacts that still show <code>not_contacted</code></span>
                     </article>
+                </section>
+
+                <section class="filters-panel">
+                    <div class="section-title">
+                        <div>
+                            <h2>Filters</h2>
+                            <p>Search or narrow by submitter and outreach state.</p>
+                        </div>
+                    </div>
+                    <div class="filters-grid">
+                        <div class="field">
+                            <label for="searchFilter">Search</label>
+                            <input id="searchFilter" type="search"
+                                placeholder="Guest, company, user, source, or episode title" />
+                        </div>
+                        <div class="field">
+                            <label for="submitterFilter">Submitted by</label>
+                            <select id="submitterFilter">
+                                <option value="">All teammates</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="outreachFilter">Outreach state</label>
+                            <select id="outreachFilter">
+                                <option value="">All outreach states</option>
+                                <option value="not_contacted">Not contacted</option>
+                                <option value="contacted">Contacted</option>
+                            </select>
+                        </div>
+                        <div class="filters-actions">
+                            <button class="button button-ghost" id="refreshButton" type="button">Refresh list</button>
+                            <button class="button button-ghost" id="resetButton" type="button">Clear filters</button>
+                        </div>
+                    </div>
                 </section>
 
                 <section class="records-panel" id="recordsPanel">
@@ -1322,7 +1488,9 @@
                 <div class="record-modal-body" id="recordDetailBody"></div>
             </div>
         </div>
+    </div>
     </main>
+    </div>
 
     <script>
         const initialQuery = new URLSearchParams(window.location.search);
@@ -1895,6 +2063,13 @@
         signOutButton.addEventListener("click", () => {
             void signOut();
         });
+        const appShell = document.getElementById("appShell");
+        const sidebarToggle = document.getElementById("sidebarToggle");
+        if (sidebarToggle && appShell) {
+            sidebarToggle.addEventListener("click", () => {
+                appShell.classList.toggle("sidebar-collapsed");
+            });
+        }
 
         previousPageButton.addEventListener("click", () => {
             if (state.page <= 1) {
