@@ -81,6 +81,7 @@ async def test_create_submission_returns_accepted_and_persists_run(
     assert response.status_code == 202
     body = response.json()
     assert body["status"] == "queued"
+    assert body["dashboard_url"] == f"/dashboard?run_id={body['run_id']}"
     run = await app_container.run_repository.get_by_run_id(body["run_id"])
     assert run is not None
     assert run.submitted_by_email == auth_credentials["email"]

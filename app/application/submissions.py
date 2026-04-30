@@ -71,4 +71,6 @@ class SubmissionService:
         return created
 
     def build_dashboard_url(self, run_id: str) -> str:
-        return f"{self._settings.app_base_url}/dashboard?run_id={run_id}"
+        # Keep dashboard navigation host-relative so deployments do not depend on
+        # APP_BASE_URL being perfectly configured for every environment.
+        return f"/dashboard?run_id={run_id}"
