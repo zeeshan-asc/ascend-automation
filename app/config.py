@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     app_port: int = Field(default=8000, alias="APP_PORT")
     app_base_url: str = Field(default="http://127.0.0.1:8000", alias="APP_BASE_URL")
     app_cors_allowed_origins: str = Field(
-        default="http://localhost:5173,http://127.0.0.1:5173",
+        default="http://localhost:5173,http://127.0.0.1:5173,https://ascend-automation.onrender.com",
         alias="APP_CORS_ALLOWED_ORIGINS",
     )
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
