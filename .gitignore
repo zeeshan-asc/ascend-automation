@@ -10,3 +10,9 @@ __pycache__/
 *.pyd
 *.log
 rss_automation.egg-info/
+Frontend/node_modules/
+Frontend/dist/
+Frontend/.vite/
+Frontend/.DS_Store
+Frontend/
+tests/

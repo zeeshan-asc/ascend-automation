@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     app_host: str = Field(default="127.0.0.1", alias="APP_HOST")
     app_port: int = Field(default=8000, alias="APP_PORT")
     app_base_url: str = Field(default="http://127.0.0.1:8000", alias="APP_BASE_URL")
+    app_cors_allowed_origins: str = Field(
+        default="http://localhost:5173,http://127.0.0.1:5173,https://ascend-automation.onrender.com",
+        alias="APP_CORS_ALLOWED_ORIGINS",
+    )
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     log_dir: str = Field(default="logs", alias="LOG_DIR")
     auth_jwt_secret: SecretStr = Field(alias="AUTH_JWT_SECRET")
@@ -84,6 +88,10 @@ class Settings(BaseSettings):
         if path.is_absolute():
             return path
         return self.project_root / path
+
+    @property
+    def cors_allowed_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.app_cors_allowed_origins.split(",") if origin.strip()]
 
 
 @lru_cache

@@ -8,7 +8,8 @@ from urllib.parse import quote
 from uuid import uuid4
 
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
@@ -33,8 +34,6 @@ PROTECTED_PAGE_PATHS = {
     "/",
     "/dashboard",
     "/records",
-    "/static/dashboard.html",
-    "/static/records.html",
 }
 
 
@@ -49,6 +48,20 @@ def _sanitize_next_path(next_path: str | None) -> str:
     if not next_path.startswith("/") or next_path.startswith("//"):
         return "/"
     return next_path
+
+
+def _frontend_index_path(settings: Settings):
+    return settings.project_root / "Frontend" / "dist" / "index.html"
+
+
+def _require_frontend_index_path(settings: Settings):
+    frontend_index = _frontend_index_path(settings)
+    if not frontend_index.exists():
+        raise HTTPException(
+            status_code=503,
+            detail="Frontend build is missing. Run `cd Frontend && npm run build`.",
+        )
+    return frontend_index
 
 
 def _configure_logging(settings: Settings) -> None:
@@ -96,6 +109,14 @@ def create_app(
         redoc_url=None,
         openapi_url=None,
     )
+    if app_settings.cors_allowed_origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=app_settings.cors_allowed_origins,
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
 
     @app.middleware("http")
     async def request_logging_middleware(
@@ -162,32 +183,41 @@ def create_app(
     static_path = project_root / "app" / "static"
     static_path.mkdir(parents=True, exist_ok=True)
     app.mount("/static", StaticFiles(directory=static_path), name="static")
+    frontend_dist = project_root / "Frontend" / "dist"
+    frontend_assets_path = frontend_dist / "assets"
+    if frontend_assets_path.exists():
+        app.mount("/assets", StaticFiles(directory=frontend_assets_path), name="frontend-assets")
+
+    @app.get("/favicon.svg", include_in_schema=False)
+    async def frontend_favicon() -> FileResponse:
+        return FileResponse(frontend_dist / "favicon.svg")
+
+    @app.get("/icons.svg", include_in_schema=False)
+    async def frontend_icons() -> FileResponse:
+        return FileResponse(frontend_dist / "icons.svg")
 
     @app.get("/auth", include_in_schema=False)
     async def auth_page(request: Request) -> Response:
+        frontend_index = _require_frontend_index_path(app_settings)
         try:
             await authenticate_request_user(request)
         except AuthenticationError:
-            auth_path = project_root / "app" / "static" / "auth.html"
-            return FileResponse(auth_path)
+            return FileResponse(frontend_index)
 
         redirect_target = _sanitize_next_path(request.query_params.get("next"))
         return RedirectResponse(url=redirect_target, status_code=303)
 
     @app.get("/", include_in_schema=False)
     async def landing_page() -> FileResponse:
-        index_path = project_root / "index.html"
-        return FileResponse(index_path)
+        return FileResponse(_require_frontend_index_path(app_settings))
 
     @app.get("/dashboard", include_in_schema=False)
     async def dashboard_page() -> FileResponse:
-        dashboard_path = project_root / "app" / "static" / "dashboard.html"
-        return FileResponse(dashboard_path)
+        return FileResponse(_require_frontend_index_path(app_settings))
 
     @app.get("/records", include_in_schema=False)
     async def records_page() -> FileResponse:
-        records_path = project_root / "app" / "static" / "records.html"
-        return FileResponse(records_path)
+        return FileResponse(_require_frontend_index_path(app_settings))
 
     return app
 

@@ -131,7 +131,6 @@ async def test_protected_pages_and_apis_require_authentication(client: AsyncClie
     health_response = await client.get("/health")
     landing_response = await client.get("/", follow_redirects=False)
     dashboard_response = await client.get("/dashboard", follow_redirects=False)
-    static_dashboard_response = await client.get("/static/dashboard.html", follow_redirects=False)
     auth_page_response = await client.get("/auth")
 
     assert api_response.status_code == 401
@@ -140,11 +139,8 @@ async def test_protected_pages_and_apis_require_authentication(client: AsyncClie
     assert landing_response.headers["location"] == "/auth?next=%2F"
     assert dashboard_response.status_code == 303
     assert dashboard_response.headers["location"] == "/auth?next=%2Fdashboard"
-    assert static_dashboard_response.status_code == 303
-    assert static_dashboard_response.headers["location"] == "/auth?next=%2Fstatic%2Fdashboard.html"
     assert auth_page_response.status_code == 200
-    assert "Create account" in auth_page_response.text
-    assert "Sign in" in auth_page_response.text
+    assert "<!doctype html" in auth_page_response.text.lower()
 
 
 @pytest.mark.asyncio
