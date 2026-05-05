@@ -30,11 +30,6 @@ from app.logging import configure_logging
 from app.worker.runner import run_worker
 
 logger = logging.getLogger(__name__)
-PROTECTED_PAGE_PATHS = {
-    "/",
-    "/dashboard",
-    "/records",
-}
 
 
 def _normalize_path(path: str) -> str:
@@ -50,18 +45,7 @@ def _sanitize_next_path(next_path: str | None) -> str:
     return next_path
 
 
-def _frontend_index_path(settings: Settings):
-    return settings.project_root / "Frontend" / "dist" / "index.html"
 
-
-def _require_frontend_index_path(settings: Settings):
-    frontend_index = _frontend_index_path(settings)
-    if not frontend_index.exists():
-        raise HTTPException(
-            status_code=503,
-            detail="Frontend build is missing. Run `cd Frontend && npm run build`.",
-        )
-    return frontend_index
 
 
 def _configure_logging(settings: Settings) -> None:
@@ -153,23 +137,7 @@ def create_app(
         )
         return response
 
-    @app.middleware("http")
-    async def page_auth_middleware(
-        request: Request,
-        call_next: Callable[[Request], Awaitable[Response]],
-    ) -> Response:
-        if _normalize_path(request.url.path) not in PROTECTED_PAGE_PATHS:
-            return await call_next(request)
 
-        try:
-            request.state.current_user = await authenticate_request_user(request)
-        except AuthenticationError:
-            next_path = request.url.path
-            if request.url.query:
-                next_path = f"{next_path}?{request.url.query}"
-            redirect_target = quote(_sanitize_next_path(next_path), safe="")
-            return RedirectResponse(url=f"/auth?next={redirect_target}", status_code=303)
-        return await call_next(request)
 
     app.include_router(auth_router)
     app.include_router(dashboard_router)
@@ -183,41 +151,6 @@ def create_app(
     static_path = project_root / "app" / "static"
     static_path.mkdir(parents=True, exist_ok=True)
     app.mount("/static", StaticFiles(directory=static_path), name="static")
-    frontend_dist = project_root / "Frontend" / "dist"
-    frontend_assets_path = frontend_dist / "assets"
-    if frontend_assets_path.exists():
-        app.mount("/assets", StaticFiles(directory=frontend_assets_path), name="frontend-assets")
-
-    @app.get("/favicon.svg", include_in_schema=False)
-    async def frontend_favicon() -> FileResponse:
-        return FileResponse(frontend_dist / "favicon.svg")
-
-    @app.get("/icons.svg", include_in_schema=False)
-    async def frontend_icons() -> FileResponse:
-        return FileResponse(frontend_dist / "icons.svg")
-
-    @app.get("/auth", include_in_schema=False)
-    async def auth_page(request: Request) -> Response:
-        frontend_index = _require_frontend_index_path(app_settings)
-        try:
-            await authenticate_request_user(request)
-        except AuthenticationError:
-            return FileResponse(frontend_index)
-
-        redirect_target = _sanitize_next_path(request.query_params.get("next"))
-        return RedirectResponse(url=redirect_target, status_code=303)
-
-    @app.get("/", include_in_schema=False)
-    async def landing_page() -> FileResponse:
-        return FileResponse(_require_frontend_index_path(app_settings))
-
-    @app.get("/dashboard", include_in_schema=False)
-    async def dashboard_page() -> FileResponse:
-        return FileResponse(_require_frontend_index_path(app_settings))
-
-    @app.get("/records", include_in_schema=False)
-    async def records_page() -> FileResponse:
-        return FileResponse(_require_frontend_index_path(app_settings))
 
     return app
 
