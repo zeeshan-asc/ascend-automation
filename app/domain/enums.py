@@ -44,3 +44,4 @@ class SourceKind(StrEnum):
     RSS_FEED = "rss_feed"
     EPISODE_PAGE = "episode_page"
     AUDIO_FILE = "audio_file"
+    YOUTUBE_LINK = "youtube_link"
