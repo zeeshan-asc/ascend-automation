@@ -11,6 +11,7 @@ from app.application.container import AppContainer
 from app.config import Settings, get_settings
 from app.database import MongoManager, bootstrap_mongo
 from app.infrastructure.providers.assemblyai import AssemblyAIProvider
+from app.infrastructure.providers.youtube_audio import YouTubeAudioProvider
 from app.logging import configure_logging
 from app.worker.orchestrator import PipelineOrchestrator
 from app.worker.service import WorkerService
@@ -40,6 +41,7 @@ def build_orchestrator(
         source_resolver=container.source_resolver,
         assemblyai_provider=assemblyai_provider,
         openai_provider=container.openai_provider,
+        youtube_audio_provider=YouTubeAudioProvider(),
     )
 
 

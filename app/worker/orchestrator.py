@@ -5,7 +5,7 @@ import logging
 from datetime import timedelta
 
 from app.config import Settings
-from app.domain.enums import RunItemStatus, RunStatus, TranscriptStatus
+from app.domain.enums import RunItemStatus, RunStatus, SourceKind, TranscriptStatus
 from app.domain.interfaces import (
     AssemblyAIProviderProtocol,
     EpisodeRepositoryProtocol,
@@ -15,6 +15,7 @@ from app.domain.interfaces import (
     RunRepositoryProtocol,
     SourceResolverProtocol,
     TranscriptRepositoryProtocol,
+    YouTubeAudioProviderProtocol,
 )
 from app.domain.models import Episode, Lead, Run, RunItem, Transcript, utcnow
 
@@ -36,6 +37,7 @@ class PipelineOrchestrator:
         source_resolver: SourceResolverProtocol,
         assemblyai_provider: AssemblyAIProviderProtocol,
         openai_provider: OpenAIProviderProtocol,
+        youtube_audio_provider: YouTubeAudioProviderProtocol,
     ) -> None:
         self._settings = settings
         self._run_repository = run_repository
@@ -46,6 +48,7 @@ class PipelineOrchestrator:
         self._source_resolver = source_resolver
         self._assemblyai_provider = assemblyai_provider
         self._openai_provider = openai_provider
+        self._youtube_audio_provider = youtube_audio_provider
 
     async def process_run(self, *, run_id: str, worker_id: str) -> Run | None:
         run = await self._run_repository.get_by_run_id(run_id)
@@ -319,7 +322,16 @@ class PipelineOrchestrator:
             status=RunItemStatus.TRANSCRIBING,
             now=utcnow(),
         )
-        job_id = await self._assemblyai_provider.submit_transcription(episode.audio_url)
+        if str(episode.source_kind) == SourceKind.YOUTUBE_LINK.value and episode.episode_url:
+            audio_bytes, _content_type = await self._youtube_audio_provider.download_best_audio(
+                youtube_url=episode.episode_url,
+            )
+            job_id = await self._assemblyai_provider.submit_transcription_bytes(
+                audio_bytes=audio_bytes,
+                filename="youtube-audio",
+            )
+        else:
+            job_id = await self._assemblyai_provider.submit_transcription(episode.audio_url)
         result = await self._assemblyai_provider.poll_transcription(job_id)
         transcript = Transcript(
             episode_id=episode.episode_id,
