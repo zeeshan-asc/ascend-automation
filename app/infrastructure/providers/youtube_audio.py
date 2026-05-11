@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import mimetypes
+import os
+import tempfile
 from urllib.parse import urlparse
 
 import httpx
@@ -11,11 +13,11 @@ from app.domain.errors import SourceFetchError
 
 
 class YouTubeAudioProvider:
-    async def download_best_audio(
+    async def download_best_audio_to_tempfile(
         self,
         *,
         youtube_url: str,
-    ) -> tuple[bytes, str]:
+    ) -> tuple[str, str]:
         extracted = await self._extract_stream_info(youtube_url)
         audio_url = self._extract_audio_url(extracted)
         if not audio_url:
@@ -24,9 +26,9 @@ class YouTubeAudioProvider:
                 reason_code="youtube_audio_not_found",
             )
 
-        audio_bytes = await self._download_audio_bytes(audio_url)
+        audio_path = await self._download_audio_to_tempfile(audio_url, extracted)
         content_type = self._resolve_content_type(audio_url, extracted)
-        return audio_bytes, content_type
+        return audio_path, content_type
 
     async def _extract_stream_info(self, youtube_url: str) -> dict:
         options = {
@@ -88,13 +90,25 @@ class YouTubeAudioProvider:
         best = max(audio_only_formats, key=lambda fmt: float(fmt.get("abr") or 0))
         return str(best["url"]).strip()
 
-    async def _download_audio_bytes(self, audio_url: str) -> bytes:
+    async def _download_audio_to_tempfile(self, audio_url: str, payload: dict) -> str:
+        ext = str(payload.get("ext") or "").strip().lower()
+        suffix = f".{ext}" if ext else ".audio"
+        fd, temp_path = tempfile.mkstemp(prefix="yt-audio-", suffix=suffix)
+        os.close(fd)
         try:
             async with httpx.AsyncClient(timeout=120, follow_redirects=True) as client:
-                response = await client.get(audio_url)
-                response.raise_for_status()
-                return response.content
+                async with client.stream("GET", audio_url) as response:
+                    response.raise_for_status()
+                    with open(temp_path, "wb") as output_file:
+                        async for chunk in response.aiter_bytes():
+                            if chunk:
+                                output_file.write(chunk)
+            return temp_path
         except httpx.HTTPError as exc:
+            try:
+                os.remove(temp_path)
+            except OSError:
+                pass
             raise SourceFetchError(
                 "The extracted YouTube audio stream could not be downloaded.",
                 reason_code="youtube_audio_download_failed",

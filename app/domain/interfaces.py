@@ -211,6 +211,12 @@ class TokenManagerProtocol(Protocol):
 
 class AssemblyAIProviderProtocol(Protocol):
     async def submit_transcription(self, audio_url: str) -> str: ...
+    async def submit_transcription_file(
+        self,
+        *,
+        file_path: str,
+        filename: str = "audio.mp3",
+    ) -> str: ...
     async def submit_transcription_bytes(
         self,
         *,
@@ -244,8 +250,8 @@ class OpenAIProviderProtocol(Protocol):
 
 
 class YouTubeAudioProviderProtocol(Protocol):
-    async def download_best_audio(
+    async def download_best_audio_to_tempfile(
         self,
         *,
         youtube_url: str,
-    ) -> tuple[bytes, str]: ...
+    ) -> tuple[str, str]: ...

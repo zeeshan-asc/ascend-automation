@@ -18,6 +18,7 @@ from app.domain.interfaces import (
     YouTubeAudioProviderProtocol,
 )
 from app.domain.models import Episode, Lead, Run, RunItem, Transcript, utcnow
+from app.infrastructure.providers.youtube_captions import YouTubeCaptionExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,9 @@ class PipelineOrchestrator:
         self._assemblyai_provider = assemblyai_provider
         self._openai_provider = openai_provider
         self._youtube_audio_provider = youtube_audio_provider
+        self._youtube_caption_extractor = YouTubeCaptionExtractor(
+            timeout_seconds=max(settings.rss_fetch_timeout_seconds, 30),
+        )
 
     async def process_run(self, *, run_id: str, worker_id: str) -> Run | None:
         run = await self._run_repository.get_by_run_id(run_id)
@@ -323,23 +327,33 @@ class PipelineOrchestrator:
             now=utcnow(),
         )
         if str(episode.source_kind) == SourceKind.YOUTUBE_LINK.value and episode.episode_url:
-            audio_bytes, _content_type = await self._youtube_audio_provider.download_best_audio(
-                youtube_url=episode.episode_url,
+            transcript_text = await self._youtube_caption_extractor.extract_transcript(
+                episode.episode_url,
             )
-            job_id = await self._assemblyai_provider.submit_transcription_bytes(
-                audio_bytes=audio_bytes,
-                filename="youtube-audio",
+            if not transcript_text:
+                raise RuntimeError(
+                    "No usable YouTube transcript was found for this video.",
+                )
+            transcript = Transcript(
+                episode_id=episode.episode_id,
+                assemblyai_job_id=f"youtube-captions:{episode.episode_id}",
+                status=TranscriptStatus.COMPLETED,
+                text=transcript_text,
+                provider_metadata={
+                    "provider": "youtube_captions",
+                    "source_url": episode.episode_url,
+                },
             )
         else:
             job_id = await self._assemblyai_provider.submit_transcription(episode.audio_url)
-        result = await self._assemblyai_provider.poll_transcription(job_id)
-        transcript = Transcript(
-            episode_id=episode.episode_id,
-            assemblyai_job_id=result.assemblyai_job_id,
-            status=result.status or TranscriptStatus.COMPLETED,
-            text=result.text,
-            provider_metadata=result.provider_metadata,
-        )
+            result = await self._assemblyai_provider.poll_transcription(job_id)
+            transcript = Transcript(
+                episode_id=episode.episode_id,
+                assemblyai_job_id=result.assemblyai_job_id,
+                status=result.status or TranscriptStatus.COMPLETED,
+                text=result.text,
+                provider_metadata=result.provider_metadata,
+            )
         await self._transcript_repository.create(transcript)
         await self._run_item_repository.update_status(
             run_item_id=run_item.run_item_id,
