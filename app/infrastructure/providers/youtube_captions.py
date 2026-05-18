@@ -174,7 +174,13 @@ class YouTubeCaptionExtractor:
         word_count = len(words)
         if word_count < self._minimum_words:
             return False
-        unique_ratio = len(set(word.lower() for word in words)) / max(word_count, 1)
-        if unique_ratio < 0.2:
-            return False
+            
+        unique_words = len(set(word.lower() for word in words))
+        if word_count < 500:
+            if unique_words / max(word_count, 1) < 0.2:
+                return False
+        else:
+            if unique_words < 100:
+                return False
+                
         return True
