@@ -31,13 +31,28 @@ class YouTubeAudioProvider:
         return audio_path, content_type
 
     async def _extract_stream_info(self, youtube_url: str) -> dict:
-        options = {
+        options: dict[str, Any] = {
             "format": "bestaudio/best",
             "quiet": True,
             "no_warnings": True,
             "skip_download": True,
             "noplaylist": True,
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["android", "web"]
+                }
+            }
         }
+
+        import os
+        cookies_text = os.environ.get("YOUTUBE_COOKIES_TEXT")
+        cookie_path = None
+        if cookies_text:
+            import tempfile
+            fd, cookie_path = tempfile.mkstemp(suffix=".txt", text=True)
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(cookies_text.replace("\\n", "\n"))
+            options["cookiefile"] = cookie_path
 
         def _extract() -> dict:
             with yt_dlp.YoutubeDL(options) as ydl:
@@ -67,6 +82,12 @@ class YouTubeAudioProvider:
                 "The YouTube link could not be fetched. Check the URL and try again.",
                 reason_code="source_unreachable",
             ) from exc
+        finally:
+            if cookie_path:
+                try:
+                    os.remove(cookie_path)
+                except OSError:
+                    pass
 
     def _extract_audio_url(self, payload: dict) -> str | None:
         direct_url = payload.get("url")
