@@ -66,6 +66,11 @@ class YouTubeCaptionExtractor:
             "writesubtitles": True,
             "writeautomaticsub": True,
             "subtitleslangs": ["en.*", "en"],
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["android", "web"]
+                }
+            }
         }
 
         def extract() -> dict[str, Any]:
