@@ -372,7 +372,7 @@ class YouTubeResolver:
         ]
 
     async def _extract_with_yt_dlp(self, source_url: str) -> dict[str, Any]:
-        options = {
+        options: dict[str, Any] = {
             "format": "bestaudio/best",
             "quiet": True,
             "no_warnings": True,
@@ -384,6 +384,16 @@ class YouTubeResolver:
                 }
             }
         }
+
+        import os
+        cookies_text = os.environ.get("YOUTUBE_COOKIES_TEXT")
+        cookie_path = None
+        if cookies_text:
+            import tempfile
+            fd, cookie_path = tempfile.mkstemp(suffix=".txt", text=True)
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(cookies_text.replace("\\n", "\n"))
+            options["cookiefile"] = cookie_path
 
         try:
             return await self._run_extract(source_url, options)
@@ -397,6 +407,12 @@ class YouTubeResolver:
                 "The YouTube link could not be processed.",
                 reason_code="source_invalid",
             ) from exc
+        finally:
+            if cookie_path:
+                try:
+                    os.remove(cookie_path)
+                except OSError:
+                    pass
 
     async def _run_extract(self, source_url: str, options: dict[str, Any]) -> dict[str, Any]:
         def _extract() -> dict[str, Any]:

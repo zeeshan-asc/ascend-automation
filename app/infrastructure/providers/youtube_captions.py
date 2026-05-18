@@ -73,6 +73,16 @@ class YouTubeCaptionExtractor:
             }
         }
 
+        import os
+        cookies_text = os.environ.get("YOUTUBE_COOKIES_TEXT")
+        cookie_path = None
+        if cookies_text:
+            import tempfile
+            fd, cookie_path = tempfile.mkstemp(suffix=".txt", text=True)
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(cookies_text.replace("\\n", "\n"))
+            options["cookiefile"] = cookie_path
+
         def extract() -> dict[str, Any]:
             with yt_dlp.YoutubeDL(options) as client:
                 payload = client.extract_info(source_url, download=False)
@@ -80,7 +90,14 @@ class YouTubeCaptionExtractor:
                 return {}
             return payload
 
-        return await asyncio.to_thread(extract)
+        try:
+            return await asyncio.to_thread(extract)
+        finally:
+            if cookie_path:
+                try:
+                    os.remove(cookie_path)
+                except OSError:
+                    pass
 
     async def _download_caption_text(self, subtitle_track: dict[str, Any]) -> str:
         subtitle_url = str(subtitle_track.get("url") or "").strip()
