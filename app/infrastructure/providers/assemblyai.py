@@ -45,6 +45,71 @@ class AssemblyAIProvider:
         logger.info("assemblyai.submit.completed job_id=%s", payload["id"])
         return str(payload["id"])
 
+    async def submit_transcription_bytes(
+        self,
+        *,
+        audio_bytes: bytes,
+        filename: str = "audio.mp3",
+    ) -> str:
+        logger.info("assemblyai.submit_bytes.started bytes=%s filename=%s", len(audio_bytes), filename)
+        async with self._semaphore, httpx.AsyncClient(timeout=self._timeout_seconds) as client:
+            upload_response = await client.post(
+                f"{self._base_url}/v2/upload",
+                headers={"authorization": self._api_key},
+                content=audio_bytes,
+            )
+            upload_response.raise_for_status()
+            upload_payload = upload_response.json()
+            upload_url = upload_payload.get("upload_url")
+            if not isinstance(upload_url, str) or not upload_url.strip():
+                raise TranscriptError("AssemblyAI upload did not return an upload_url.")
+
+            transcript_response = await client.post(
+                f"{self._base_url}/v2/transcript",
+                headers={"authorization": self._api_key},
+                json={
+                    "audio_url": upload_url,
+                    "speech_models": ["universal-3-pro", "universal-2"],
+                },
+            )
+            transcript_response.raise_for_status()
+        payload = transcript_response.json()
+        logger.info("assemblyai.submit_bytes.completed job_id=%s", payload["id"])
+        return str(payload["id"])
+
+    async def submit_transcription_file(
+        self,
+        *,
+        file_path: str,
+        filename: str = "audio.mp3",
+    ) -> str:
+        logger.info("assemblyai.submit_file.started file_path=%s filename=%s", file_path, filename)
+        async with self._semaphore, httpx.AsyncClient(timeout=self._timeout_seconds) as client:
+            with open(file_path, "rb") as file_handle:
+                upload_response = await client.post(
+                    f"{self._base_url}/v2/upload",
+                    headers={"authorization": self._api_key},
+                    content=file_handle,
+                )
+            upload_response.raise_for_status()
+            upload_payload = upload_response.json()
+            upload_url = upload_payload.get("upload_url")
+            if not isinstance(upload_url, str) or not upload_url.strip():
+                raise TranscriptError("AssemblyAI upload did not return an upload_url.")
+
+            transcript_response = await client.post(
+                f"{self._base_url}/v2/transcript",
+                headers={"authorization": self._api_key},
+                json={
+                    "audio_url": upload_url,
+                    "speech_models": ["universal-3-pro", "universal-2"],
+                },
+            )
+            transcript_response.raise_for_status()
+        payload = transcript_response.json()
+        logger.info("assemblyai.submit_file.completed job_id=%s", payload["id"])
+        return str(payload["id"])
+
     async def poll_transcription(self, job_id: str) -> TranscriptResult:
         deadline = asyncio.get_running_loop().time() + self._timeout_seconds
         logger.info("assemblyai.poll.started job_id=%s", job_id)

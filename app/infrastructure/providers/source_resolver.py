@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import posixpath
 from collections import defaultdict
@@ -8,6 +9,7 @@ from typing import Any
 from urllib.parse import unquote, urljoin, urlparse
 
 import httpx
+import yt_dlp
 
 from app.domain.enums import SourceKind
 from app.domain.errors import FeedFetchError, SourceFetchError
@@ -34,6 +36,7 @@ EPISODE_PAGE_AUDIO_META_KEYS = (
     "twitter:player:stream",
 )
 PUBLISHED_META_KEYS = ("article:published_time", "og:published_time")
+YOUTUBE_HOST_SNIPPETS = ("youtube.com", "youtu.be", "m.youtube.com", "music.youtube.com")
 
 
 class _EpisodePageParser(HTMLParser):
@@ -337,6 +340,103 @@ class EpisodePageResolver:
                 self._collect_json_ld_dates(value, dates)
 
 
+class YouTubeResolver:
+    def supports_url(self, source_url: str) -> bool:
+        host = urlparse(source_url).netloc.lower()
+        return any(snippet in host for snippet in YOUTUBE_HOST_SNIPPETS)
+
+    async def resolve_youtube_link(self, source_url: str) -> list[ParsedEpisode]:
+        extracted = await self._extract_with_yt_dlp(source_url)
+        stream_url = self._extract_stream_url(extracted)
+        if not stream_url:
+            raise SourceFetchError(
+                "The YouTube link did not expose a playable audio stream.",
+                reason_code="youtube_audio_not_found",
+            )
+
+        title = str(extracted.get("title") or "YouTube episode").strip()
+        webpage_url = str(extracted.get("webpage_url") or source_url).strip()
+        published_at = str(extracted.get("upload_date") or "").strip() or None
+        video_id = str(extracted.get("id") or "").strip()
+        dedupe_key = f"youtube:{video_id or webpage_url}"
+        return [
+            ParsedEpisode(
+                title=title or "YouTube episode",
+                episode_url=webpage_url,
+                audio_url=stream_url,
+                published_at=published_at,
+                source_url=source_url,
+                source_kind=SourceKind.YOUTUBE_LINK,
+                dedupe_key=dedupe_key,
+            )
+        ]
+
+    async def _extract_with_yt_dlp(self, source_url: str) -> dict[str, Any]:
+        options = {
+            "format": "bestaudio/best",
+            "quiet": True,
+            "no_warnings": True,
+            "skip_download": True,
+            "noplaylist": True,
+        }
+
+        try:
+            return await self._run_extract(source_url, options)
+        except yt_dlp.utils.DownloadError as exc:
+            raise SourceFetchError(
+                "The YouTube link could not be fetched. Check the URL and try again.",
+                reason_code="source_unreachable",
+            ) from exc
+        except Exception as exc:  # pragma: no cover - defensive safety net for extractor failures
+            raise SourceFetchError(
+                "The YouTube link could not be processed.",
+                reason_code="source_invalid",
+            ) from exc
+
+    async def _run_extract(self, source_url: str, options: dict[str, Any]) -> dict[str, Any]:
+        def _extract() -> dict[str, Any]:
+            with yt_dlp.YoutubeDL(options) as ydl:
+                data = ydl.extract_info(source_url, download=False)
+            if not isinstance(data, dict):
+                raise SourceFetchError(
+                    "The YouTube link did not return media metadata.",
+                    reason_code="source_invalid",
+                )
+            if "entries" in data and isinstance(data["entries"], list):
+                first_entry = next((entry for entry in data["entries"] if isinstance(entry, dict)), None)
+                if first_entry is None:
+                    raise SourceFetchError(
+                        "The YouTube playlist did not contain a valid video entry.",
+                        reason_code="source_invalid",
+                    )
+                data = first_entry
+            return data
+
+        return await asyncio.to_thread(_extract)
+
+    def _extract_stream_url(self, payload: dict[str, Any]) -> str | None:
+        direct_url = payload.get("url")
+        if isinstance(direct_url, str) and direct_url.strip():
+            return direct_url.strip()
+
+        formats = payload.get("formats")
+        if not isinstance(formats, list):
+            return None
+        audio_only_formats = [
+            fmt
+            for fmt in formats
+            if isinstance(fmt, dict)
+            and isinstance(fmt.get("url"), str)
+            and fmt["url"].strip()
+            and fmt.get("acodec") not in (None, "none")
+            and fmt.get("vcodec") in (None, "none")
+        ]
+        if not audio_only_formats:
+            return None
+        best = max(audio_only_formats, key=lambda fmt: float(fmt.get("abr") or 0))
+        return str(best["url"]).strip()
+
+
 class SourceResolver(SourceResolverProtocol):
     def __init__(
         self,
@@ -344,10 +444,12 @@ class SourceResolver(SourceResolverProtocol):
         rss_resolver: RSSProviderProtocol,
         direct_audio_resolver: DirectAudioResolver,
         episode_page_resolver: EpisodePageResolver,
+        youtube_resolver: YouTubeResolver,
     ) -> None:
         self._rss_resolver = rss_resolver
         self._direct_audio_resolver = direct_audio_resolver
         self._episode_page_resolver = episode_page_resolver
+        self._youtube_resolver = youtube_resolver
 
     async def resolve_source(
         self,
@@ -362,9 +464,14 @@ class SourceResolver(SourceResolverProtocol):
             return await self._direct_audio_resolver.resolve_audio_url(source_url)
         if source_kind == SourceKind.EPISODE_PAGE:
             return await self._episode_page_resolver.resolve_episode_page(source_url)
+        if source_kind == SourceKind.YOUTUBE_LINK:
+            return await self._youtube_resolver.resolve_youtube_link(source_url)
         return await self._resolve_auto(source_url=source_url, max_results=max_results)
 
     async def _resolve_auto(self, *, source_url: str, max_results: int) -> list[ParsedEpisode]:
+        if self._youtube_resolver.supports_url(source_url):
+            return await self._youtube_resolver.resolve_youtube_link(source_url)
+
         if self._direct_audio_resolver.looks_like_audio_url(source_url):
             return await self._direct_audio_resolver.resolve_audio_url(source_url)
 

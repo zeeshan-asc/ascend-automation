@@ -1,6 +1,6 @@
 # RSS Automation
 
-FastAPI + worker implementation for an RSS-to-leads pipeline backed by MongoDB.
+FastAPI + worker implementation for a source-to-leads pipeline (RSS, audio URLs, episode pages, YouTube links) backed by MongoDB.
 
 The implementation plan is stored in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
 
