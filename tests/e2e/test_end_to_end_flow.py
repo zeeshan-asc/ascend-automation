@@ -73,6 +73,16 @@ class CountingOpenAIProvider:
         )
 
 
+class FakeYouTubeTranscriptProvider:
+    async def fetch_transcript(
+        self,
+        *,
+        video_url: str,
+        languages: list[str],
+    ) -> str:
+        return f"YouTube transcript for {video_url} ({','.join(languages)})"
+
+
 def build_episode(feed_url: str, number: int) -> ParsedEpisode:
     return ParsedEpisode(
         guid=f"{feed_url}-guid-{number}",
@@ -105,6 +115,7 @@ def build_worker(
         source_resolver=app_container.source_resolver,
         assemblyai_provider=assembly_provider,
         openai_provider=openai_provider,
+        youtube_transcript_provider=FakeYouTubeTranscriptProvider(),
     )
     return WorkerService(
         settings=test_settings,

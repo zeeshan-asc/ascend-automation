@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import asyncio
 import json
+import logging
 import posixpath
 from collections import defaultdict
 from html.parser import HTMLParser
@@ -9,13 +9,18 @@ from typing import Any
 from urllib.parse import unquote, urljoin, urlparse
 
 import httpx
-import yt_dlp
 
 from app.domain.enums import SourceKind
 from app.domain.errors import FeedFetchError, SourceFetchError
 from app.domain.interfaces import RSSProviderProtocol, SourceResolverProtocol
 from app.domain.models import ParsedEpisode
 from app.infrastructure.providers.rss import RSS_REQUEST_HEADERS
+from app.infrastructure.providers.youtube_transcript_api import (
+    canonical_youtube_video_url,
+    extract_youtube_video_id,
+)
+
+logger = logging.getLogger(__name__)
 
 HTML_REQUEST_HEADERS = {
     **RSS_REQUEST_HEADERS,
@@ -341,121 +346,62 @@ class EpisodePageResolver:
 
 
 class YouTubeResolver:
+    def __init__(self, *, timeout_seconds: int = 10) -> None:
+        self._timeout_seconds = timeout_seconds
+
     def supports_url(self, source_url: str) -> bool:
         host = urlparse(source_url).netloc.lower()
         return any(snippet in host for snippet in YOUTUBE_HOST_SNIPPETS)
 
     async def resolve_youtube_link(self, source_url: str) -> list[ParsedEpisode]:
-        extracted = await self._extract_with_yt_dlp(source_url)
-        stream_url = self._extract_stream_url(extracted)
-        if not stream_url:
+        logger.info("youtube_resolver.resolve.started source_url=%s", source_url)
+        video_id = extract_youtube_video_id(source_url)
+        if not video_id:
+            logger.warning("youtube_resolver.resolve.invalid_url source_url=%s", source_url)
             raise SourceFetchError(
-                "The YouTube link did not expose a playable audio stream.",
-                reason_code="youtube_audio_not_found",
+                "The YouTube URL is invalid or missing a video ID.",
+                reason_code="youtube_invalid_url",
             )
 
-        title = str(extracted.get("title") or "YouTube episode").strip()
-        webpage_url = str(extracted.get("webpage_url") or source_url).strip()
-        published_at = str(extracted.get("upload_date") or "").strip() or None
-        video_id = str(extracted.get("id") or "").strip()
-        dedupe_key = f"youtube:{video_id or webpage_url}"
+        canonical_url = canonical_youtube_video_url(video_id)
+        title = await self._resolve_title(canonical_url)
+        logger.info(
+            "youtube_resolver.resolve.completed source_url=%s video_id=%s canonical_url=%s title=%s",
+            source_url,
+            video_id,
+            canonical_url,
+            title,
+        )
         return [
             ParsedEpisode(
                 title=title or "YouTube episode",
-                episode_url=webpage_url,
-                audio_url=stream_url,
-                published_at=published_at,
+                episode_url=canonical_url,
+                audio_url=canonical_url,
+                published_at=None,
                 source_url=source_url,
                 source_kind=SourceKind.YOUTUBE_LINK,
-                dedupe_key=dedupe_key,
+                dedupe_key=f"youtube:{video_id}",
             )
         ]
 
-    async def _extract_with_yt_dlp(self, source_url: str) -> dict[str, Any]:
-        options: dict[str, Any] = {
-            "format": "bestaudio/best",
-            "quiet": True,
-            "no_warnings": True,
-            "skip_download": True,
-            "noplaylist": True,
-            "extractor_args": {
-                "youtube": {
-                    "player_client": ["android", "web"]
-                }
-            }
-        }
-
-        import os
-        cookies_text = os.environ.get("YOUTUBE_COOKIES_TEXT")
-        cookie_path = None
-        if cookies_text:
-            import tempfile
-            fd, cookie_path = tempfile.mkstemp(suffix=".txt", text=True)
-            with os.fdopen(fd, "w", encoding="utf-8") as f:
-                f.write(cookies_text.replace("\\n", "\n"))
-            options["cookiefile"] = cookie_path
-
+    async def _resolve_title(self, canonical_url: str) -> str:
+        oembed_url = "https://www.youtube.com/oembed"
         try:
-            return await self._run_extract(source_url, options)
-        except yt_dlp.utils.DownloadError as exc:
-            raise SourceFetchError(
-                "The YouTube link could not be fetched. Check the URL and try again.",
-                reason_code="source_unreachable",
-            ) from exc
-        except Exception as exc:  # pragma: no cover - defensive safety net for extractor failures
-            raise SourceFetchError(
-                "The YouTube link could not be processed.",
-                reason_code="source_invalid",
-            ) from exc
-        finally:
-            if cookie_path:
-                try:
-                    os.remove(cookie_path)
-                except OSError:
-                    pass
-
-    async def _run_extract(self, source_url: str, options: dict[str, Any]) -> dict[str, Any]:
-        def _extract() -> dict[str, Any]:
-            with yt_dlp.YoutubeDL(options) as ydl:
-                data = ydl.extract_info(source_url, download=False)
-            if not isinstance(data, dict):
-                raise SourceFetchError(
-                    "The YouTube link did not return media metadata.",
-                    reason_code="source_invalid",
+            async with httpx.AsyncClient(timeout=self._timeout_seconds) as client:
+                response = await client.get(
+                    oembed_url,
+                    params={"url": canonical_url, "format": "json"},
                 )
-            if "entries" in data and isinstance(data["entries"], list):
-                first_entry = next((entry for entry in data["entries"] if isinstance(entry, dict)), None)
-                if first_entry is None:
-                    raise SourceFetchError(
-                        "The YouTube playlist did not contain a valid video entry.",
-                        reason_code="source_invalid",
-                    )
-                data = first_entry
-            return data
-
-        return await asyncio.to_thread(_extract)
-
-    def _extract_stream_url(self, payload: dict[str, Any]) -> str | None:
-        direct_url = payload.get("url")
-        if isinstance(direct_url, str) and direct_url.strip():
-            return direct_url.strip()
-
-        formats = payload.get("formats")
-        if not isinstance(formats, list):
-            return None
-        audio_only_formats = [
-            fmt
-            for fmt in formats
-            if isinstance(fmt, dict)
-            and isinstance(fmt.get("url"), str)
-            and fmt["url"].strip()
-            and fmt.get("acodec") not in (None, "none")
-            and fmt.get("vcodec") in (None, "none")
-        ]
-        if not audio_only_formats:
-            return None
-        best = max(audio_only_formats, key=lambda fmt: float(fmt.get("abr") or 0))
-        return str(best["url"]).strip()
+                response.raise_for_status()
+        except httpx.HTTPError as exc:
+            logger.warning(
+                "youtube_resolver.title.fallback canonical_url=%s reason=%s",
+                canonical_url,
+                exc.__class__.__name__,
+            )
+            return "YouTube episode"
+        payload = response.json()
+        return str(payload.get("title") or "YouTube episode").strip() or "YouTube episode"
 
 
 class SourceResolver(SourceResolverProtocol):

@@ -69,6 +69,7 @@ class Settings(BaseSettings):
     )
     assemblyai_max_inflight: int = Field(default=6, alias="ASSEMBLYAI_MAX_INFLIGHT")
     openai_max_inflight: int = Field(default=6, alias="OPENAI_MAX_INFLIGHT")
+    youtube_transcript_languages: str = Field(default="en", alias="YOUTUBE_TRANSCRIPT_LANGUAGES")
     dashboard_refresh_seconds: int = Field(default=3, alias="DASHBOARD_REFRESH_SECONDS")
 
     model_config = SettingsConfigDict(
@@ -92,6 +93,14 @@ class Settings(BaseSettings):
     @property
     def cors_allowed_origins(self) -> list[str]:
         return [origin.strip() for origin in self.app_cors_allowed_origins.split(",") if origin.strip()]
+
+    @property
+    def youtube_transcript_language_priority(self) -> list[str]:
+        return [
+            code.strip()
+            for code in self.youtube_transcript_languages.split(",")
+            if code.strip()
+        ]
 
 
 @lru_cache

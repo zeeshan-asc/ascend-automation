@@ -60,6 +60,13 @@ async def authenticate_request_user(request: Request) -> AuthenticatedUser:
     return current_user
 
 
+async def get_current_user_optional(request: Request) -> AuthenticatedUser | None:
+    try:
+        return await authenticate_request_user(request)
+    except AuthenticationError:
+        return None
+
+
 async def get_current_user(request: Request) -> AuthenticatedUser:
     try:
         return await authenticate_request_user(request)
@@ -82,7 +89,7 @@ def get_dashboard_service(request: Request) -> DashboardQueryService:
     )
 
 
-def get_records_service(request: Request) -> RecordsWorkspaceService:
+def get_records_workspace_service(request: Request) -> RecordsWorkspaceService:
     container = get_container(request)
     return RecordsWorkspaceService(
         run_repository=container.run_repository,
@@ -92,13 +99,8 @@ def get_records_service(request: Request) -> RecordsWorkspaceService:
     )
 
 
-def get_lead_rewrite_service(request: Request) -> LeadRewriteService:
-    container = get_container(request)
-    return LeadRewriteService(
-        lead_repository=container.lead_repository,
-        transcript_repository=container.transcript_repository,
-        openai_provider=container.openai_provider,
-    )
+def get_records_service(request: Request) -> RecordsWorkspaceService:
+    return get_records_workspace_service(request)
 
 
 def get_run_item_retry_service(request: Request) -> RunItemRetryService:
@@ -106,4 +108,13 @@ def get_run_item_retry_service(request: Request) -> RunItemRetryService:
     return RunItemRetryService(
         run_repository=container.run_repository,
         run_item_repository=container.run_item_repository,
+    )
+
+
+def get_lead_rewrite_service(request: Request) -> LeadRewriteService:
+    container = get_container(request)
+    return LeadRewriteService(
+        lead_repository=container.lead_repository,
+        transcript_repository=container.transcript_repository,
+        openai_provider=container.openai_provider,
     )

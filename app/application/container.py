@@ -90,7 +90,9 @@ class AppContainer:
                 episode_page_resolver=EpisodePageResolver(
                     timeout_seconds=settings.rss_fetch_timeout_seconds,
                 ),
-                youtube_resolver=YouTubeResolver(),
+                youtube_resolver=YouTubeResolver(
+                    timeout_seconds=settings.rss_fetch_timeout_seconds,
+                ),
             ),
             password_hasher=PasswordHasher(iterations=settings.auth_password_hash_iterations),
             token_manager=JWTTokenManager(secret_key=settings.auth_jwt_secret.get_secret_value()),

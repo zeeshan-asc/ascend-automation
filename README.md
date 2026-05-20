@@ -17,3 +17,9 @@ The implementation plan is stored in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLA
 The backend now serves only the React frontend build from `Frontend/dist`.
 
 Logs are written to `logs\web.log` and `logs\worker.log`.
+
+## YouTube Transcripts
+
+- YouTube URLs are resolved to canonical video URLs and processed with `youtube-transcript-api`.
+- Configure preferred transcript language priority via `YOUTUBE_TRANSCRIPT_LANGUAGES` (comma-separated, default `en`).
+- If YouTube blocks requests from your IP, transcript fetches may fail with a YouTube-specific reason code. In hosted environments you may need rotating proxies.

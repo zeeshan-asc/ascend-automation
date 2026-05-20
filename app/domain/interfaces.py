@@ -249,9 +249,10 @@ class OpenAIProviderProtocol(Protocol):
     ) -> LeadEmailDraft: ...
 
 
-class YouTubeAudioProviderProtocol(Protocol):
-    async def download_best_audio_to_tempfile(
+class YouTubeTranscriptProviderProtocol(Protocol):
+    async def fetch_transcript(
         self,
         *,
-        youtube_url: str,
-    ) -> tuple[str, str]: ...
+        video_url: str,
+        languages: Sequence[str],
+    ) -> str: ...

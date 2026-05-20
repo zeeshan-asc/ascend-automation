@@ -89,6 +89,16 @@ class FakeOpenAIProvider:
         )
 
 
+class FakeYouTubeTranscriptProvider:
+    async def fetch_transcript(
+        self,
+        *,
+        video_url: str,
+        languages: list[str],
+    ) -> str:
+        return f"YouTube transcript for {video_url} ({','.join(languages)})"
+
+
 def build_episode(feed_url: str, number: int) -> ParsedEpisode:
     return ParsedEpisode(
         guid=f"{feed_url}-guid-{number}",
@@ -121,6 +131,7 @@ async def build_worker(
         source_resolver=FakeRSSProvider(feeds, failing_urls=failing_urls),
         assemblyai_provider=assembly_provider or FakeAssemblyAIProvider(),
         openai_provider=openai_provider or FakeOpenAIProvider(),
+        youtube_transcript_provider=FakeYouTubeTranscriptProvider(),
     )
     worker = WorkerService(
         settings=test_settings,
@@ -230,6 +241,7 @@ async def test_worker_retry_processes_only_target_failed_item(test_settings: Set
         source_resolver=FakeRSSProvider({feed_url: [episode_one, episode_two]}),
         assemblyai_provider=retry_assembly,
         openai_provider=retry_openai,
+        youtube_transcript_provider=FakeYouTubeTranscriptProvider(),
     )
     retry_worker = WorkerService(
         settings=test_settings,
@@ -329,6 +341,7 @@ async def test_duplicate_runs_reuse_canonical_episode_processing(test_settings: 
         source_resolver=FakeRSSProvider({feed_url: [shared_episode]}),
         assemblyai_provider=assembly,
         openai_provider=openai_provider,
+        youtube_transcript_provider=FakeYouTubeTranscriptProvider(),
     )
     orchestrator_two = PipelineOrchestrator(
         settings=test_settings,
@@ -340,6 +353,7 @@ async def test_duplicate_runs_reuse_canonical_episode_processing(test_settings: 
         source_resolver=FakeRSSProvider({feed_url: [shared_episode]}),
         assemblyai_provider=assembly,
         openai_provider=openai_provider,
+        youtube_transcript_provider=FakeYouTubeTranscriptProvider(),
     )
     worker_one = WorkerService(
         settings=test_settings,
@@ -422,6 +436,7 @@ async def test_worker_handles_eight_simultaneous_runs(test_settings: Settings) -
             source_resolver=FakeRSSProvider(feeds),
             assemblyai_provider=assembly,
             openai_provider=openai_provider,
+            youtube_transcript_provider=FakeYouTubeTranscriptProvider(),
         )
         workers.append(
             WorkerService(

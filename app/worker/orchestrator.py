@@ -6,6 +6,7 @@ from datetime import timedelta
 
 from app.config import Settings
 from app.domain.enums import RunItemStatus, RunStatus, SourceKind, TranscriptStatus
+from app.domain.errors import SourceFetchError
 from app.domain.interfaces import (
     AssemblyAIProviderProtocol,
     EpisodeRepositoryProtocol,
@@ -15,10 +16,9 @@ from app.domain.interfaces import (
     RunRepositoryProtocol,
     SourceResolverProtocol,
     TranscriptRepositoryProtocol,
-    YouTubeAudioProviderProtocol,
+    YouTubeTranscriptProviderProtocol,
 )
 from app.domain.models import Episode, Lead, Run, RunItem, Transcript, utcnow
-from app.infrastructure.providers.youtube_captions import YouTubeCaptionExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ class PipelineOrchestrator:
         source_resolver: SourceResolverProtocol,
         assemblyai_provider: AssemblyAIProviderProtocol,
         openai_provider: OpenAIProviderProtocol,
-        youtube_audio_provider: YouTubeAudioProviderProtocol,
+        youtube_transcript_provider: YouTubeTranscriptProviderProtocol,
     ) -> None:
         self._settings = settings
         self._run_repository = run_repository
@@ -49,10 +49,7 @@ class PipelineOrchestrator:
         self._source_resolver = source_resolver
         self._assemblyai_provider = assemblyai_provider
         self._openai_provider = openai_provider
-        self._youtube_audio_provider = youtube_audio_provider
-        self._youtube_caption_extractor = YouTubeCaptionExtractor(
-            timeout_seconds=max(settings.rss_fetch_timeout_seconds, 30),
-        )
+        self._youtube_transcript_provider = youtube_transcript_provider
 
     async def process_run(self, *, run_id: str, worker_id: str) -> Run | None:
         run = await self._run_repository.get_by_run_id(run_id)
@@ -189,6 +186,13 @@ class PipelineOrchestrator:
             source_url=run.source_url,
             source_kind=run.source_kind,
             max_results=self._settings.max_episodes_per_run,
+        )
+        logger.info(
+            "pipeline.run.source_resolved run_id=%s source_url=%s source_kind=%s episodes=%s",
+            run.run_id,
+            run.source_url,
+            run.source_kind,
+            len(parsed_episodes),
         )
         prepared_items: list[tuple[Episode, RunItem]] = []
         new_items: list[RunItem] = []
@@ -327,21 +331,34 @@ class PipelineOrchestrator:
             now=utcnow(),
         )
         if str(episode.source_kind) == SourceKind.YOUTUBE_LINK.value and episode.episode_url:
-            transcript_text = await self._youtube_caption_extractor.extract_transcript(
-                episode.episode_url,
-            )
+            try:
+                transcript_text = await self._youtube_transcript_provider.fetch_transcript(
+                    video_url=episode.episode_url,
+                    languages=self._settings.youtube_transcript_language_priority,
+                )
+            except SourceFetchError as exc:
+                logger.warning(
+                    "pipeline.transcript.youtube.failed run_item_id=%s episode_id=%s source_url=%s reason_code=%s detail=%s",
+                    run_item.run_item_id,
+                    episode.episode_id,
+                    episode.episode_url,
+                    exc.reason_code,
+                    str(exc),
+                )
+                raise
             if not transcript_text:
                 raise RuntimeError(
                     "No usable YouTube transcript was found for this video.",
                 )
             transcript = Transcript(
                 episode_id=episode.episode_id,
-                assemblyai_job_id=f"youtube-captions:{episode.episode_id}",
+                assemblyai_job_id=f"youtube-transcript-api:{episode.episode_id}",
                 status=TranscriptStatus.COMPLETED,
                 text=transcript_text,
                 provider_metadata={
-                    "provider": "youtube_captions",
+                    "provider": "youtube_transcript_api",
                     "source_url": episode.episode_url,
+                    "languages": self._settings.youtube_transcript_language_priority,
                 },
             )
         else:

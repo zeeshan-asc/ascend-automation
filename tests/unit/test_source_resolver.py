@@ -9,6 +9,7 @@ from app.infrastructure.providers.source_resolver import (
     DirectAudioResolver,
     EpisodePageResolver,
     SourceResolver,
+    YouTubeResolver,
 )
 
 
@@ -86,6 +87,7 @@ async def test_source_resolver_auto_detects_episode_pages_after_invalid_feed_par
         rss_resolver=RSSProvider(timeout_seconds=10),
         direct_audio_resolver=DirectAudioResolver(timeout_seconds=10),
         episode_page_resolver=EpisodePageResolver(timeout_seconds=10),
+        youtube_resolver=YouTubeResolver(timeout_seconds=10),
     )
 
     episodes = await resolver.resolve_source(
