@@ -70,6 +70,16 @@ class Settings(BaseSettings):
     assemblyai_max_inflight: int = Field(default=6, alias="ASSEMBLYAI_MAX_INFLIGHT")
     openai_max_inflight: int = Field(default=6, alias="OPENAI_MAX_INFLIGHT")
     youtube_transcript_languages: str = Field(default="en", alias="YOUTUBE_TRANSCRIPT_LANGUAGES")
+    youtube_proxy_http_url: str = Field(default="", alias="YOUTUBE_PROXY_HTTP_URL")
+    youtube_proxy_https_url: str = Field(default="", alias="YOUTUBE_PROXY_HTTPS_URL")
+    youtube_webshare_proxy_username: str = Field(default="", alias="YOUTUBE_WEBSHARE_PROXY_USERNAME")
+    youtube_webshare_proxy_password: str = Field(default="", alias="YOUTUBE_WEBSHARE_PROXY_PASSWORD")
+    youtube_webshare_filter_locations: str = Field(default="", alias="YOUTUBE_WEBSHARE_FILTER_LOCATIONS")
+    youtube_webshare_retries_when_blocked: int = Field(
+        default=10,
+        alias="YOUTUBE_WEBSHARE_RETRIES_WHEN_BLOCKED",
+        ge=1,
+    )
     dashboard_refresh_seconds: int = Field(default=3, alias="DASHBOARD_REFRESH_SECONDS")
 
     model_config = SettingsConfigDict(
@@ -99,6 +109,14 @@ class Settings(BaseSettings):
         return [
             code.strip()
             for code in self.youtube_transcript_languages.split(",")
+            if code.strip()
+        ]
+
+    @property
+    def youtube_webshare_location_filters(self) -> list[str]:
+        return [
+            code.strip().lower()
+            for code in self.youtube_webshare_filter_locations.split(",")
             if code.strip()
         ]
 

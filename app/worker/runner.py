@@ -41,7 +41,14 @@ def build_orchestrator(
         source_resolver=container.source_resolver,
         assemblyai_provider=assemblyai_provider,
         openai_provider=container.openai_provider,
-        youtube_transcript_provider=YouTubeTranscriptProvider(),
+        youtube_transcript_provider=YouTubeTranscriptProvider(
+            proxy_http_url=settings.youtube_proxy_http_url,
+            proxy_https_url=settings.youtube_proxy_https_url,
+            webshare_proxy_username=settings.youtube_webshare_proxy_username,
+            webshare_proxy_password=settings.youtube_webshare_proxy_password,
+            webshare_filter_locations=settings.youtube_webshare_location_filters,
+            webshare_retries_when_blocked=settings.youtube_webshare_retries_when_blocked,
+        ),
     )
 
 

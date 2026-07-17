@@ -23,3 +23,7 @@ Logs are written to `logs\web.log` and `logs\worker.log`.
 - YouTube URLs are resolved to canonical video URLs and processed with `youtube-transcript-api`.
 - Configure preferred transcript language priority via `YOUTUBE_TRANSCRIPT_LANGUAGES` (comma-separated, default `en`).
 - If YouTube blocks requests from your IP, transcript fetches may fail with a YouTube-specific reason code. In hosted environments you may need rotating proxies.
+- Proxy options for hosted environments:
+  - Generic proxy URLs: `YOUTUBE_PROXY_HTTP_URL` and/or `YOUTUBE_PROXY_HTTPS_URL`
+  - Webshare rotating residential proxy: `YOUTUBE_WEBSHARE_PROXY_USERNAME`, `YOUTUBE_WEBSHARE_PROXY_PASSWORD`
+  - Optional Webshare tuning: `YOUTUBE_WEBSHARE_FILTER_LOCATIONS` (comma-separated country codes like `us,de`) and `YOUTUBE_WEBSHARE_RETRIES_WHEN_BLOCKED` (default `10`)

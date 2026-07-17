@@ -4,9 +4,11 @@ import asyncio
 import logging
 import re
 from collections.abc import Sequence
+from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api.proxies import GenericProxyConfig, WebshareProxyConfig
 
 from app.domain.errors import SourceFetchError
 
@@ -50,8 +52,28 @@ def canonical_youtube_video_url(video_id: str) -> str:
 
 
 class YouTubeTranscriptProvider:
-    def __init__(self) -> None:
-        self._client = YouTubeTranscriptApi()
+    def __init__(
+        self,
+        *,
+        proxy_http_url: str | None = None,
+        proxy_https_url: str | None = None,
+        webshare_proxy_username: str | None = None,
+        webshare_proxy_password: str | None = None,
+        webshare_filter_locations: Sequence[str] | None = None,
+        webshare_retries_when_blocked: int = 10,
+    ) -> None:
+        proxy_config = self._build_proxy_config(
+            proxy_http_url=proxy_http_url,
+            proxy_https_url=proxy_https_url,
+            webshare_proxy_username=webshare_proxy_username,
+            webshare_proxy_password=webshare_proxy_password,
+            webshare_filter_locations=webshare_filter_locations or [],
+            webshare_retries_when_blocked=webshare_retries_when_blocked,
+        )
+        if proxy_config is None:
+            self._client = YouTubeTranscriptApi()
+        else:
+            self._client = YouTubeTranscriptApi(proxy_config=proxy_config)
 
     async def fetch_transcript(
         self,
@@ -143,3 +165,45 @@ class YouTubeTranscriptProvider:
             "The YouTube transcript could not be fetched.",
             reason_code="source_unreachable",
         )
+
+    def _build_proxy_config(
+        self,
+        *,
+        proxy_http_url: str | None,
+        proxy_https_url: str | None,
+        webshare_proxy_username: str | None,
+        webshare_proxy_password: str | None,
+        webshare_filter_locations: Sequence[str],
+        webshare_retries_when_blocked: int,
+    ) -> Any | None:
+        username = (webshare_proxy_username or "").strip()
+        password = (webshare_proxy_password or "").strip()
+        if username and password:
+            logger.info(
+                "youtube_transcript.proxy.webshare.enabled location_filter_count=%s retries_when_blocked=%s",
+                len(webshare_filter_locations),
+                webshare_retries_when_blocked,
+            )
+            kwargs: dict[str, Any] = {
+                "proxy_username": username,
+                "proxy_password": password,
+                "retries_when_blocked": webshare_retries_when_blocked,
+            }
+            if webshare_filter_locations:
+                kwargs["filter_ip_locations"] = list(webshare_filter_locations)
+            return WebshareProxyConfig(**kwargs)
+
+        http_url = (proxy_http_url or "").strip()
+        https_url = (proxy_https_url or "").strip()
+        if http_url or https_url:
+            logger.info(
+                "youtube_transcript.proxy.generic.enabled http_url=%s https_url=%s",
+                bool(http_url),
+                bool(https_url),
+            )
+            return GenericProxyConfig(
+                http_url=http_url or None,
+                https_url=https_url or None,
+            )
+
+        return None

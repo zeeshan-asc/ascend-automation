@@ -37,10 +37,18 @@ class AssemblyAIProvider:
                 headers={"authorization": self._api_key},
                 json={
                     "audio_url": audio_url,
-                    "speech_models": ["universal-3-pro", "universal-2"],
+                    "speech_models": ["universal-3-5-pro", "universal-2"],
                 },
             )
-            response.raise_for_status()
+            try:
+                response.raise_for_status()
+            except httpx.HTTPStatusError:
+                logger.error(
+                    "assemblyai.submit.failed status=%s body=%s",
+                    response.status_code,
+                    response.text,
+                )
+                raise
         payload = response.json()
         logger.info("assemblyai.submit.completed job_id=%s", payload["id"])
         return str(payload["id"])
@@ -69,10 +77,18 @@ class AssemblyAIProvider:
                 headers={"authorization": self._api_key},
                 json={
                     "audio_url": upload_url,
-                    "speech_models": ["universal-3-pro", "universal-2"],
+                    "speech_models": ["universal-3-5-pro", "universal-2"],
                 },
             )
-            transcript_response.raise_for_status()
+            try:
+                transcript_response.raise_for_status()
+            except httpx.HTTPStatusError:
+                logger.error(
+                    "assemblyai.submit_bytes.failed status=%s body=%s",
+                    transcript_response.status_code,
+                    transcript_response.text,
+                )
+                raise
         payload = transcript_response.json()
         logger.info("assemblyai.submit_bytes.completed job_id=%s", payload["id"])
         return str(payload["id"])
@@ -102,10 +118,18 @@ class AssemblyAIProvider:
                 headers={"authorization": self._api_key},
                 json={
                     "audio_url": upload_url,
-                    "speech_models": ["universal-3-pro", "universal-2"],
+                    "speech_models": ["universal-3-5-pro", "universal-2"],
                 },
             )
-            transcript_response.raise_for_status()
+            try:
+                transcript_response.raise_for_status()
+            except httpx.HTTPStatusError:
+                logger.error(
+                    "assemblyai.submit_file.failed status=%s body=%s",
+                    transcript_response.status_code,
+                    transcript_response.text,
+                )
+                raise
         payload = transcript_response.json()
         logger.info("assemblyai.submit_file.completed job_id=%s", payload["id"])
         return str(payload["id"])
@@ -119,7 +143,16 @@ class AssemblyAIProvider:
                     f"{self._base_url}/v2/transcript/{job_id}",
                     headers={"authorization": self._api_key},
                 )
-                response.raise_for_status()
+                try:
+                    response.raise_for_status()
+                except httpx.HTTPStatusError:
+                    logger.error(
+                        "assemblyai.poll.http_error job_id=%s status=%s body=%s",
+                        job_id,
+                        response.status_code,
+                        response.text,
+                    )
+                    raise
                 payload: dict[str, Any] = response.json()
                 status = payload.get("status")
                 if status == TranscriptStatus.COMPLETED.value:
